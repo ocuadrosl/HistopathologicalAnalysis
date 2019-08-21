@@ -8,19 +8,16 @@
 
 class ImageReader
 {
-
 public:
+    using pixelType = unsigned char;
+    using imageType = itk::Image<pixelType, 2>;
+    using readerType = itk::ImageFileReader<imageType>;
 
     ImageReader();
     ~ImageReader(){}
-    void read(std::string fileName);
 
-    void readVSI(std::string inFileName, std::string outFileName, short outMagnification) const;
-
-private:
-    using pixelType = unsigned char;
-    using imageType = itk::Image<pixelType, 2>;
-
+    imageType::Pointer readVSI(std::string inFileName, std::string outFileName, short outMagnification) const;
+    imageType::Pointer read(std::string fileName) const;
 
 };
 

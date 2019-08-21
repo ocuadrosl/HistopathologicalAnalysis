@@ -57,7 +57,7 @@ def readVSI(inFileName, outMag=5, nTilesX = 20, nTilesY=20):
     Reading a vsi image tile by tile and return an small TIFF image
     :param outMag:  output magnification
     '''
-        # starting jvm
+    # starting jvm
     javabridge.start_vm(class_path=bioformats.JARS, run_headless=True, max_heap_size='8G')
 
     try:
@@ -74,8 +74,8 @@ def readVSI(inFileName, outMag=5, nTilesX = 20, nTilesY=20):
         reader = imageReader()
         reader.setId(inFileName)
 
-        print('Original image size: ', sizeX, sizeY)
-        print('Original physical pixel size in micrometers: ', physicalX, physicalY)
+        #print('Original image size: ', sizeX, sizeY)
+        #print('Original physical pixel size in micrometers: ', physicalX, physicalY)
 
         # computing input magnification
         inMag = np.round(np.float(ome.instrument(0).Objective.get_NominalMagnification()), 0)
@@ -135,7 +135,7 @@ def readVSI(inFileName, outMag=5, nTilesX = 20, nTilesY=20):
     finally:
         javabridge.kill_vm()
 
-    print("Resize microscope magnification OK")
+    #print("Resize microscope magnification OK")
 
 
     return vMosaicGray
@@ -144,17 +144,19 @@ def readVSI(inFileName, outMag=5, nTilesX = 20, nTilesY=20):
 
 if __name__ == '__main__':
 
-    inFileName = "/home/oscar/data/biopsy/Dataset 1/B 2009 8854/B 2009 8854 A.vsi"
-    outFileName = "/home/oscar/image.tiff"
-    #readVSI(sys.argv[1], sys.argv[2])
+    #just for testing
+    #inFileName = "/home/oscar/data/biopsy/Dataset 1/B 2009 8854/B 2009 8854 A.vsi"
+    #inFileName = "/home/oscar/data/biopsy/B2046-18 B20181107/Image01B2046-18 B.vsi"
+    #outFileName = "/home/oscar/image.tiff"
+    #print(sys.argv[1], sys.argv[2], sys.argv[3])
 
-    print(sys.argv[1], sys.argv[2], sys.argv[3])
-
-    image = readVSI(sys.argv[1], int(sys.argv[3]))
-
-    cv2.imwrite(sys.argv[2], image)
-
-    plt.imshow(image)
-    plt.show()
-
+    try:
+        image = readVSI(sys.argv[1], int(sys.argv[3]))
+        cv2.imwrite(sys.argv[2], image)
+        #plt.imshow(image)
+        #plt.show()
+        print("1")
+    except:
+        print("0")
+        quit()
 
