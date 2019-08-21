@@ -4,28 +4,44 @@
 #include "core/imagereader.h"
 #include "itkImage.h"
 #include "QuickView.h"
+#include "core/roiextractor.h"
 
 
 int main(/*int argc, char **argv*/)
 {
 
-    //std::string inFileName = "/home/oscar/data/biopsy/Dataset\\ 1/B\\ 2009\\ 8854/B\\ 2009\\ 8854\\ A.vsi";
-    std::string inFileName ="/home/oscar/data/biopsy/B2046-18\\ B20181107/Image01B2046-18\\ B.vsi";
+    std::string inFileName = "/home/oscar/data/biopsy/Dataset\\ 1/B\\ 2009\\ 8854/B\\ 2009\\ 8854\\ A.vsi";
+    //std::string inFileName ="/home/oscar/data/biopsy/B2046-18\\ B20181107/Image01B2046-18\\ B.vsi";
     std::string outFileName = "tmpImage.tiff";
     short magnification= 5;
 
-    ImageReader reader;
 
-    using  imageType = ImageReader::imageType;
-    imageType::Pointer image;
+    //usings
 
-    //image = reader.readVSI(inFileName, outFileName, magnification);
+    using pixelType = unsigned int;
+    using grayImageType = itk::Image<pixelType, 2>;
 
-    image = reader.read(outFileName);
+    //read image
+    std::unique_ptr<ImageReader<grayImageType>> reader(new ImageReader<grayImageType>());
+    grayImageType::Pointer image;
 
-    QuickView viewer;
-    viewer.AddImage(image.GetPointer());
-    viewer.Visualize();
+    //image = reader->readVSI(inFileName, outFileName, magnification);
+
+    image = reader->read(outFileName);
+
+    //ROI extraction
+    std::unique_ptr<ROIExtractor> roiExtractor(new ROIExtractor());
+    roiExtractor->setImage(image);
+    roiExtractor->process();
+
+
+
+
+
+    /*visualizing*/
+    std::unique_ptr<QuickView> viewer(new QuickView());
+    viewer->AddImage(image.GetPointer());
+    viewer->Visualize();
 
 
     return 0;

@@ -1,30 +1,42 @@
 #include "imagereader.h"
 
-ImageReader::ImageReader()
+
+
+
+template<typename grayImageType>
+ImageReader<grayImageType>::ImageReader()
 {
 
 }
 
-
-ImageReader::imageType::Pointer ImageReader::readVSI(std::string inFileName, std::string outFileName,  short outMagnification) const
+template<typename grayImageType>
+typename ImageReader<grayImageType>::grayImagePointer
+ImageReader<grayImageType>::readVSI(std::string inFileName, std::string outFileName,  short outMagnification) const
 {
 
     std::string pyCommand = "python  /home/oscar/src/HistopathologicalAnalysis/python/vsiReader.py "+inFileName+" "+outFileName+" "+std::to_string(outMagnification);
 
     std::system(pyCommand.c_str());
 
-
-    readerType::Pointer reader = readerType::New();
+    typename readerType::Pointer reader = readerType::New();
     reader->SetFileName( "tmpImage.tiff" );
     reader->Update();
     return reader->GetOutput();
 }
-
-ImageReader::imageType::Pointer ImageReader::read(std::string fileName) const
+template<typename grayImageType>
+typename grayImageType::Pointer
+ImageReader<grayImageType>::read(std::string fileName) const
 {
-    using ReaderType = itk::ImageFileReader< imageType >;
-    ReaderType::Pointer reader = ReaderType::New();
+    using ReaderType = itk::ImageFileReader< grayImageType >;
+    typename ReaderType::Pointer reader = ReaderType::New();
     reader->SetFileName(fileName);
     reader->Update();
     return reader->GetOutput();
+}
+
+void linker()
+{
+    using pixelType = unsigned int;
+    using imageType = itk::Image<pixelType, 2>;
+    ImageReader<imageType> tmpObj;
 }

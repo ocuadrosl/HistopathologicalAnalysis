@@ -6,19 +6,25 @@
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 
+template<typename grayImageType>
 class ImageReader
 {
 public:
-    using pixelType = unsigned char;
-    using imageType = itk::Image<pixelType, 2>;
-    using readerType = itk::ImageFileReader<imageType>;
+    // gray scale itk image
+    //using pixelType = unsigned int;
+    //using imageType = itk::Image<pixelType, 2>;
+    using readerType = itk::ImageFileReader<grayImageType>;
+    using grayImagePointer = typename grayImageType::Pointer;
 
     ImageReader();
     ~ImageReader(){}
 
-    imageType::Pointer readVSI(std::string inFileName, std::string outFileName, short outMagnification) const;
-    imageType::Pointer read(std::string fileName) const;
+    grayImagePointer readVSI(std::string inFileName, std::string outFileName, short outMagnification) const;
+    typename grayImageType::Pointer read(std::string fileName) const;
+
+
 
 };
+
 
 #endif // IMAGEREADER_H
