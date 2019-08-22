@@ -6,7 +6,7 @@
 #include "itkImage.h"
 #include "itkImageFileReader.h"
 
-template<typename grayImageType>
+template<typename grayImageType=itk::Image<unsigned int,2>>
 class ImageReader
 {
 public:
@@ -26,5 +26,8 @@ public:
 
 };
 
+//Explicit instantiation
+template class ImageReader<itk::Image<unsigned char, 2>>;
+template class ImageReader<itk::Image<unsigned int, 2>>;
 
 #endif // IMAGEREADER_H

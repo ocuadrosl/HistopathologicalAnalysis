@@ -10,29 +10,27 @@
 int main(/*int argc, char **argv*/)
 {
 
-    std::string inFileName = "/home/oscar/data/biopsy/Dataset\\ 1/B\\ 2009\\ 8854/B\\ 2009\\ 8854\\ A.vsi";
-    //std::string inFileName ="/home/oscar/data/biopsy/B2046-18\\ B20181107/Image01B2046-18\\ B.vsi";
+    //std::string inFileName = "/home/oscar/data/biopsy/Dataset\\ 1/B\\ 2009\\ 8854/B\\ 2009\\ 8854\\ A.vsi";
+    std::string inFileName ="/home/oscar/data/biopsy/B2046-18\\ B20181107/Image01B2046-18\\ B.vsi";
     std::string outFileName = "tmpImage.tiff";
     short magnification= 5;
 
 
     //usings
 
-    using pixelType = unsigned int;
-    using grayImageType = itk::Image<pixelType, 2>;
 
     //read image
-    std::unique_ptr<ImageReader<grayImageType>> reader(new ImageReader<grayImageType>());
-    grayImageType::Pointer image;
+    std::unique_ptr<ImageReader<>> reader(new ImageReader<>());
 
-    //image = reader->readVSI(inFileName, outFileName, magnification);
+    //auto image = reader->readVSI(inFileName, outFileName, magnification);
 
-    image = reader->read(outFileName);
+    auto image = reader->read(outFileName);
 
     //ROI extraction
-    std::unique_ptr<ROIExtractor> roiExtractor(new ROIExtractor());
+    std::unique_ptr<ROIExtractor<>> roiExtractor(new ROIExtractor<>());
     roiExtractor->setImage(image);
     roiExtractor->process();
+
 
 
 

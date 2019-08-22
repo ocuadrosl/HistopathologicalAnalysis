@@ -4,33 +4,49 @@
 #include "itkImage.h"
 #include "itkOtsuMultipleThresholdsImageFilter.h"
 #include "itkRescaleIntensityImageFilter.h"
+#include "itkScalarToRGBColormapImageFilter.h"
 
+//testing include
 #include "QuickView.h"
 
+
+template<typename grayImageType=itk::Image<unsigned int,2>>
 class ROIExtractor
 {
 public:
 
-    using pixelType = unsigned int;
-    using grayImageType = itk::Image<pixelType, 2>;
 
-
-    //rgb image type
-    using rgbPixelType = itk::RGBPixel< unsigned char >;
+    //rgb image type, used to create the color map
+    using pixelType = typename grayImageType::PixelType;
+    using rgbPixelType = itk::RGBPixel<pixelType>;
     using rgbImageType = itk::Image< rgbPixelType, 2 >;
+
+    //pointers
+    using rgbImagePointer  = typename  rgbImageType::Pointer;
+    using grayImagePointer = typename grayImageType::Pointer;
 
     ROIExtractor();
 
-    void setImage(grayImageType::Pointer inputImage);
-    rgbImageType::Pointer getColorMapImage() const;
+    void setImage(grayImagePointer inputImage);
+    void setMaskSize(short maskSize);
+    auto getColorMap() const;
     void process();
 
 private:
-    grayImageType::Pointer image;
-    rgbImageType::Pointer colorMap;
+    grayImagePointer inputImage;
+    grayImagePointer densityImage;
+    rgbImagePointer colorMap;
 
-    grayImageType::Pointer otsuThreshold();
+    short maskSize;
+
+    grayImagePointer otsuThreshold();
+
+    void applyColorMap();
 
 };
+
+//Explicit instantiation
+template class ROIExtractor<itk::Image<unsigned int, 2>>;
+template class ROIExtractor<itk::Image<unsigned char,2>>;
 
 #endif // ROIEXTRACTOR_H
