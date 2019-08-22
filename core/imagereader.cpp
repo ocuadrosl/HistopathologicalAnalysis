@@ -1,35 +1,51 @@
 #include "imagereader.h"
 
 
-
-template<typename grayImageType>
-ImageReader<grayImageType>::ImageReader()
+ImageReader::ImageReader(): rgbImage(nullptr)
 {
-
+    //std::cout<<typeid(pixelType).name()<<std::endl;
 }
 
-template<typename grayImageType>
-typename ImageReader<grayImageType>::grayImagePointer
-ImageReader<grayImageType>::readVSI(std::string inFileName, std::string outFileName,  short outMagnification) const
+
+void ImageReader::readVSI(std::string inFileName, std::string outFileName,  short outMagnification)
 {
     std::string pyCommand = "python  /home/oscar/src/HistopathologicalAnalysis/python/vsiReader.py "+inFileName+" "+outFileName+" "+std::to_string(outMagnification);
 
     std::system(pyCommand.c_str());
 
-    typename readerType::Pointer reader = readerType::New();
+    typename rgbReaderType::Pointer reader = rgbReaderType::New();
     reader->SetFileName("tmpImage.tiff");
     reader->Update();
-    return reader->GetOutput();
+    rgbImage =  reader->GetOutput();
 }
-template<typename grayImageType>
-typename grayImageType::Pointer
-ImageReader<grayImageType>::read(std::string fileName) const
+
+
+
+void ImageReader::read(std::string fileName)
 {
-    using ReaderType = itk::ImageFileReader< grayImageType >;
-    typename ReaderType::Pointer reader = ReaderType::New();
+    typename rgbReaderType::Pointer reader = rgbReaderType::New();
     reader->SetFileName(fileName);
     reader->Update();
-    return reader->GetOutput();
+    rgbImage =  reader->GetOutput();
 }
 
 
+ImageReader::rgbImagePointer ImageReader::getRGBImage() const
+{
+    return rgbImage;
+
+}
+
+
+
+typename ImageReader::grayImagePointer ImageReader::getGrayScaleImage() const
+{
+
+    using FilterType = itk::RGBToLuminanceImageFilter< rgbImageType, grayImageType >;
+    typename FilterType::Pointer filter = FilterType::New();
+    filter->SetInput( rgbImage );
+    filter->Update();
+    return filter->GetOutput();
+
+
+}

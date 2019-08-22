@@ -5,29 +5,41 @@
 #include <cstdlib>
 #include "itkImage.h"
 #include "itkImageFileReader.h"
+#include "itkRGBToLuminanceImageFilter.h"
 
-template<typename grayImageType=itk::Image<unsigned int,2>>
+
 class ImageReader
 {
 public:
-    // gray scale itk image
-    //using pixelType = unsigned int;
-    //using imageType = itk::Image<pixelType, 2>;
-    using readerType = itk::ImageFileReader<grayImageType>;
+
+
+    using pixelType=unsigned char;
+    // RGB type  alias
+    using rgbPixelType = itk::RGBPixel<pixelType>;
+    using rgbImageType = itk::Image< rgbPixelType, 2 >;
+    using rgbImagePointer  =   typename  rgbImageType::Pointer;
+    using rgbReaderType = itk::ImageFileReader<rgbImageType>;
+
+    //gray scale type alias
+    using grayImageType = itk::Image< pixelType, 2>;
     using grayImagePointer = typename grayImageType::Pointer;
 
     ImageReader();
     ~ImageReader(){}
 
-    grayImagePointer readVSI(std::string inFileName, std::string outFileName, short outMagnification) const;
-    typename grayImageType::Pointer read(std::string fileName) const;
+    void readVSI(std::string inFileName, std::string outFileName, short outMagnification);
+    void read(std::string fileName);
 
+    //getters
+    rgbImagePointer getRGBImage() const;
+    grayImagePointer getGrayScaleImage() const;
+
+
+private:
+
+    rgbImagePointer rgbImage;
 
 
 };
-
-//Explicit instantiation
-template class ImageReader<itk::Image<unsigned char, 2>>;
-template class ImageReader<itk::Image<unsigned int, 2>>;
 
 #endif // IMAGEREADER_H

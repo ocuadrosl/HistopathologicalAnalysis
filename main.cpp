@@ -20,27 +20,26 @@ int main(/*int argc, char **argv*/)
 
 
     //read image
-    std::unique_ptr<ImageReader<>> reader(new ImageReader<>());
+    using pixelType = unsigned char;
+    std::unique_ptr<ImageReader> reader(new ImageReader());
 
     //auto image = reader->readVSI(inFileName, outFileName, magnification);
 
-    auto image = reader->read(outFileName);
+    reader->read(outFileName);
+    auto image = reader->getGrayScaleImage();
+
+
+
 
     //ROI extraction
-    std::unique_ptr<ROIExtractor<>> roiExtractor(new ROIExtractor<>());
+    std::unique_ptr<ROIExtractor> roiExtractor(new ROIExtractor());
     roiExtractor->setImage(image);
-    roiExtractor->process();
+    roiExtractor->extract();
 
-
-
-
-
-
-    /*visualizing*/
-    std::unique_ptr<QuickView> viewer(new QuickView());
-    viewer->AddImage(image.GetPointer());
-    viewer->Visualize();
-
+    //visualizing
+   // std::unique_ptr<QuickView> viewer(new QuickView());
+    //viewer->AddImage(image.GetPointer());
+   // viewer->Visualize();
 
     return 0;
     /*

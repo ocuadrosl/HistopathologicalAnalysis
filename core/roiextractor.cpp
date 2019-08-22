@@ -1,33 +1,35 @@
 #include "roiextractor.h"
 
 
-template<typename grayImageType>
-ROIExtractor<grayImageType>::ROIExtractor():
+
+
+ROIExtractor::ROIExtractor():
     maskSize(3)
 {
-
+    std::cout<<typeid(pixelType).name()<<std::endl;
 }
 
-template<typename grayImageType>
-void  ROIExtractor<grayImageType>::setMaskSize(short maskSize)
+
+void  ROIExtractor::setMaskSize(short maskSize)
 {
     this->maskSize = maskSize;
 }
 
-template<typename grayImageType>
-void ROIExtractor<grayImageType>::setImage(grayImagePointer inputImage)
+
+void ROIExtractor::setImage(grayImagePointer inputImage)
 {
 
     this->inputImage = inputImage;
 }
 
-template<typename grayImageType>
-void ROIExtractor<grayImageType>::process()
+
+void ROIExtractor::extract()
 {
 
     //Otsu threshold
     grayImagePointer binaryImage =  grayImageType::New();
     binaryImage = otsuThreshold();
+
 
     //typedefs
     using iteratorIndexType = itk::ImageRegionIteratorWithIndex<grayImageType>;
@@ -39,9 +41,9 @@ void ROIExtractor<grayImageType>::process()
     short maskHalfSize = maskSize/2;
     indexType index, lowerIndex, upperIndex;
     regionType localRegion;
-    sizeType imageSize = binaryImage->GetRequestedRegion().GetSize();
 
-    int maxDensity = std::pow(maskSize,2);
+
+    int maxDensity = maskSize * maskSize;
     short counter;
 
 
@@ -55,6 +57,11 @@ void ROIExtractor<grayImageType>::process()
     //iterators
     iteratorIndexType itI(binaryImage, binaryImage->GetRequestedRegion()); // inputImage iterator
     iteratorIndexType itD(densityImage, densityImage->GetRequestedRegion()); //densityImage iterator
+
+    //to void unsigned long  - signed long comparison
+    std::vector<long> imageSize(2);
+    imageSize[0] = static_cast<long>(binaryImage->GetRequestedRegion().GetSize()[0]);
+    imageSize[1] = static_cast<long>(binaryImage->GetRequestedRegion().GetSize()[1]);
 
     for (itI.GoToBegin() , itD.GoToBegin(); !itI.IsAtEnd(); ++itI, ++itD)
     {
@@ -86,7 +93,8 @@ void ROIExtractor<grayImageType>::process()
 
             }
 
-            itD.Set((counter*100)/maxDensity);
+            itD.Set(static_cast<pixelType>((counter*100)/maxDensity));
+            //std::cout<<(counter*100)/maxDensity<<std::endl;
 
         }
 
@@ -94,45 +102,67 @@ void ROIExtractor<grayImageType>::process()
     }
 
 
+
     //visualizing
     std::unique_ptr<QuickView> viewer(new QuickView());
-    viewer->AddImage(densityImage.GetPointer());
+    viewer->AddImage(densityImage.GetPointer(), true, "Density");
     viewer->Visualize();
+
 
     applyColorMap();
 
 
+
 }
 
-template<typename graImageType>
-void ROIExtractor<graImageType>::applyColorMap()
+
+
+void ROIExtractor::applyColorMap()
 {
 
-    //TODO verificar si se puede cambiar esto de char....
-    using rgbPixel = itk::RGBPixel<unsigned char>;
-    using rgbImage = itk::Image< rgbPixel, 2 >;
+
+    using SpecificColormapType = itk::Function::JetColormapFunction<pixelType, rgbPixelType >;
+    typename SpecificColormapType::Pointer colormap = SpecificColormapType::New();
+
+    colormap->SetMinimumInputValue(0);
+    colormap->SetMaximumInputValue(100);
 
 
-    using RGBFilterType = itk::ScalarToRGBColormapImageFilter< graImageType, rgbImage>;
-    typename RGBFilterType::Pointer rgbfilter = RGBFilterType::New();
-    rgbfilter->SetInput( densityImage );
-    rgbfilter->SetColormap( RGBFilterType::Jet );
-    rgbfilter->Update();
+    typename rgbImageType::Pointer colorMapImage  = rgbImageType::New();
+
+    colorMapImage->SetRegions(densityImage->GetRequestedRegion());
+    colorMapImage->Allocate();
+    colorMapImage->FillBuffer( itk::NumericTraits<rgbPixelType>::Zero);
+
+
+    itk::ImageRegionConstIterator< grayImageType > inputIt(densityImage, densityImage->GetRequestedRegion());
+    itk::ImageRegionIterator< rgbImageType >     outputIt(colorMapImage, colorMapImage->GetRequestedRegion());
+
+    while ( !inputIt.IsAtEnd() )
+    {
+        if(inputIt.Get()>0)
+        {
+            outputIt.Set(colormap->operator()( inputIt.Get() ) );
+        }
+        ++inputIt;
+        ++outputIt;
+    }
 
 
     //visualizing
+
     QuickView viewer;
-    viewer.AddRGBImage(rgbfilter->GetOutput());
+    viewer.AddRGBImage(colorMapImage.GetPointer());
     viewer.Visualize();
+
 
 }
 
 /*
 
 */
-template<typename grayImageType>
-typename ROIExtractor<grayImageType>::grayImagePointer
-ROIExtractor<grayImageType>::otsuThreshold()
+
+typename ROIExtractor::grayImagePointer ROIExtractor::otsuThreshold()
 {
 
     using otsuType = itk::OtsuMultipleThresholdsImageFilter< grayImageType, grayImageType >;
@@ -155,8 +185,8 @@ ROIExtractor<grayImageType>::otsuThreshold()
 
 }
 
-template<typename grayImageType>
-auto ROIExtractor<grayImageType>::getColorMap() const
+
+auto ROIExtractor::getColorMap() const
 {
      return colorMap;
 }
