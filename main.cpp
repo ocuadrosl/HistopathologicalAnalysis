@@ -10,8 +10,8 @@
 int main(/*int argc, char **argv*/)
 {
 
-    //std::string inFileName = "/home/oscar/data/biopsy/Dataset\\ 1/B\\ 2009\\ 8854/B\\ 2009\\ 8854\\ A.vsi";
-    std::string inFileName ="/home/oscar/data/biopsy/B2046-18\\ B20181107/Image01B2046-18\\ B.vsi";
+    std::string inFileName = "/home/oscar/data/biopsy/Dataset\\ 1/B\\ 2009\\ 8854/B\\ 2009\\ 8854\\ A.vsi";
+    //std::string inFileName ="/home/oscar/data/biopsy/B2046-18\\ B20181107/Image01B2046-18\\ B.vsi";
     std::string outFileName = "tmpImage.tiff";
     short magnification= 5;
 
@@ -26,7 +26,7 @@ int main(/*int argc, char **argv*/)
     //auto image = reader->readVSI(inFileName, outFileName, magnification);
 
     reader->read(outFileName);
-    auto image = reader->getGrayScaleImage();
+    auto image = reader->getRGBImage();
 
 
 

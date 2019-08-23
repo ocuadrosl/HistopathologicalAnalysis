@@ -1,22 +1,20 @@
 #include "roiextractor.h"
 
 
-
-
 ROIExtractor::ROIExtractor():
-    maskSize(3)
+    kernelSize(5), densityThreshold(50)
 {
-    std::cout<<typeid(pixelType).name()<<std::endl;
+
 }
 
 
-void  ROIExtractor::setMaskSize(short maskSize)
+void  ROIExtractor::setKernelSize(short kernelSize)
 {
-    this->maskSize = maskSize;
+    this->kernelSize = kernelSize;
 }
 
 
-void ROIExtractor::setImage(grayImagePointer inputImage)
+void ROIExtractor::setImage(rgbImagePointer inputImage)
 {
 
     this->inputImage = inputImage;
@@ -38,16 +36,15 @@ void ROIExtractor::extract()
     using sizeType  = typename grayImageType::SizeType;
 
     //definitions
-    short maskHalfSize = maskSize/2;
+    short maskHalfSize = kernelSize/2;
     indexType index, lowerIndex, upperIndex;
     regionType localRegion;
 
 
-    int maxDensity = maskSize * maskSize;
+    int maxDensity = kernelSize * kernelSize;
     short counter;
 
-
-    //allocate densityImage
+    //allocating densityImage
     densityImage = grayImageType::New();
     densityImage->SetRegions(binaryImage->GetRequestedRegion());
     densityImage->Allocate();
@@ -62,6 +59,9 @@ void ROIExtractor::extract()
     std::vector<long> imageSize(2);
     imageSize[0] = static_cast<long>(binaryImage->GetRequestedRegion().GetSize()[0]);
     imageSize[1] = static_cast<long>(binaryImage->GetRequestedRegion().GetSize()[1]);
+
+
+    pixelType  density = 0;
 
     for (itI.GoToBegin() , itD.GoToBegin(); !itI.IsAtEnd(); ++itI, ++itD)
     {
@@ -93,15 +93,15 @@ void ROIExtractor::extract()
 
             }
 
-            itD.Set(static_cast<pixelType>((counter*100)/maxDensity));
-            //std::cout<<(counter*100)/maxDensity<<std::endl;
+            density = static_cast<pixelType>((counter*100)/maxDensity);
+
+            //Set if the density is greater than a threshold
+            itD.Set( density >= densityThreshold ? density : 0 ) ;
 
         }
 
 
     }
-
-
 
     //visualizing
     std::unique_ptr<QuickView> viewer(new QuickView());
@@ -111,28 +111,27 @@ void ROIExtractor::extract()
 
     applyColorMap();
 
-
-
 }
-
-
 
 void ROIExtractor::applyColorMap()
 {
 
 
+    //Jet colormap
+    //Todo add more colormaps
     using SpecificColormapType = itk::Function::JetColormapFunction<pixelType, rgbPixelType >;
     typename SpecificColormapType::Pointer colormap = SpecificColormapType::New();
 
-    colormap->SetMinimumInputValue(0);
+    colormap->SetMinimumInputValue(densityThreshold);
     colormap->SetMaximumInputValue(100);
 
 
+    //RGB image
     typename rgbImageType::Pointer colorMapImage  = rgbImageType::New();
-
     colorMapImage->SetRegions(densityImage->GetRequestedRegion());
     colorMapImage->Allocate();
-    colorMapImage->FillBuffer( itk::NumericTraits<rgbPixelType>::Zero);
+    colorMapImage->FillBuffer( itk::NumericTraits<rgbPixelType>::Zero+255);
+
 
 
     itk::ImageRegionConstIterator< grayImageType > inputIt(densityImage, densityImage->GetRequestedRegion());
@@ -140,19 +139,19 @@ void ROIExtractor::applyColorMap()
 
     while ( !inputIt.IsAtEnd() )
     {
-        if(inputIt.Get()>0)
+        if(inputIt.Get() >= densityThreshold)
         {
             outputIt.Set(colormap->operator()( inputIt.Get() ) );
         }
+
         ++inputIt;
         ++outputIt;
     }
 
 
     //visualizing
-
     QuickView viewer;
-    viewer.AddRGBImage(colorMapImage.GetPointer());
+    viewer.AddRGBImage(colorMapImage.GetPointer(), true, " Colormap");
     viewer.Visualize();
 
 
@@ -165,23 +164,26 @@ void ROIExtractor::applyColorMap()
 typename ROIExtractor::grayImagePointer ROIExtractor::otsuThreshold()
 {
 
-    using otsuType = itk::OtsuMultipleThresholdsImageFilter< grayImageType, grayImageType >;
-    typename otsuType::Pointer filter = otsuType::New();
-    filter->SetInput( this->inputImage );
-    //filter->SetNumberOfHistogramBins( 50 );
-    filter->SetNumberOfThresholds( 1 );
-    //filter->SetLabelOffset( 100 );
-    filter->Update();
+    //rgb to grayscale, Ostu does not work with RGB images
+    using rgbToLuminanceFilterType = itk::RGBToLuminanceImageFilter< rgbImageType, grayImageType >;
+    typename rgbToLuminanceFilterType::Pointer rgbToLuminancefilter = rgbToLuminanceFilterType::New();
+    rgbToLuminancefilter->SetInput( inputImage );
 
-    using rescaleType = itk::RescaleIntensityImageFilter< grayImageType, grayImageType >;
-    typename rescaleType::Pointer rescaler = rescaleType::New();
-    rescaler->SetInput( filter->GetOutput() );
-    rescaler->SetOutputMinimum( 0 );
-    rescaler->SetOutputMaximum( 255 );
-    rescaler->Update();
 
-    //return a binary (0 - 255) image
-    return rescaler->GetOutput();
+    using otsuType = itk::OtsuThresholdImageFilter< grayImageType, grayImageType >;
+    typename otsuType::Pointer otsuFilter = otsuType::New();
+    otsuFilter->SetInput( rgbToLuminancefilter->GetOutput());
+    otsuFilter->SetOutsideValue(255);
+    otsuFilter->SetInsideValue(0);
+
+    /*
+    QuickView viewer;
+    viewer.AddImage(otsuFilter->GetOutput(), true, "Otsu");
+    viewer.Visualize();
+    */
+
+    otsuFilter->Update();
+    return otsuFilter->GetOutput();
 
 }
 

@@ -2,10 +2,10 @@
 #define ROIEXTRACTOR_H
 
 #include "itkImage.h"
-#include "itkOtsuMultipleThresholdsImageFilter.h"
-#include "itkRescaleIntensityImageFilter.h"
+#include "itkOtsuThresholdImageFilter.h"
 #include "itkScalarToRGBColormapImageFilter.h"
 #include "itkColormapFunction.h"
+#include "itkRGBToLuminanceImageFilter.h"
 
 //testing include
 #include "QuickView.h"
@@ -28,21 +28,22 @@ public:
 
     ROIExtractor();
 
-    void setImage(grayImagePointer inputImage);
-    void setMaskSize(short maskSize);
+    void setImage(rgbImagePointer inputImage);
+    void setKernelSize(short kernelSize);
     auto getColorMap() const;
     void extract();
 
 private:
 
     //grayscale images
-    grayImagePointer inputImage;
+    rgbImagePointer inputImage;
     grayImagePointer densityImage;
 
     //rgb image
     rgbImagePointer colorMap;
 
-    short maskSize;
+    short kernelSize;
+    pixelType densityThreshold;
 
     grayImagePointer otsuThreshold();
 
