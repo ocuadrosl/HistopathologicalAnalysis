@@ -22,12 +22,19 @@ file(GLOB core
    "core/*.cpp"
 )
 
+file(GLOB util
+    "util/*.h"
+   "util/*.cpp"
+)
+
+
 
 add_executable(${PROJECT_NAME}
     "main.cpp"
     "mainwindow.ui"
     "mainwindow.cpp"
     ${core}
+    ${util}
     )
 
 target_link_libraries(${PROJECT_NAME} Qt5::Widgets)

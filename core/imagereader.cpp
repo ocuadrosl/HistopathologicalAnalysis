@@ -1,13 +1,13 @@
 #include "imagereader.h"
 
-
-ImageReader::ImageReader(): rgbImage(nullptr)
+template< typename  pixelType>
+ImageReader<pixelType>::ImageReader(): rgbImage(nullptr)
 {
     //std::cout<<typeid(pixelType).name()<<std::endl;
 }
 
-
-void ImageReader::readVSI(std::string inFileName, std::string outFileName,  short outMagnification)
+template< typename  pixelType>
+void ImageReader<pixelType>::readVSI(std::string inFileName, std::string outFileName,  short outMagnification)
 {
     std::string pyCommand = "python  /home/oscar/src/HistopathologicalAnalysis/python/vsiReader.py "+inFileName+" "+outFileName+" "+std::to_string(outMagnification);
 
@@ -20,8 +20,8 @@ void ImageReader::readVSI(std::string inFileName, std::string outFileName,  shor
 }
 
 
-
-void ImageReader::read(std::string fileName)
+template< typename  pixelType>
+void ImageReader<pixelType>::read(std::string fileName)
 {
     typename rgbReaderType::Pointer reader = rgbReaderType::New();
     reader->SetFileName(fileName);
@@ -29,16 +29,18 @@ void ImageReader::read(std::string fileName)
     rgbImage =  reader->GetOutput();
 }
 
-
-ImageReader::rgbImagePointer ImageReader::getRGBImage() const
+template< typename  pixelType>
+typename ImageReader<pixelType>::rgbImagePointer
+ImageReader<pixelType>::getRGBImage() const
 {
     return rgbImage;
 
 }
 
 
-
-typename ImageReader::grayImagePointer ImageReader::getGrayScaleImage() const
+template< typename  pixelType>
+typename ImageReader<pixelType>::grayImagePointer
+ImageReader<pixelType>::getGrayScaleImage() const
 {
 
     using FilterType = itk::RGBToLuminanceImageFilter< rgbImageType, grayImageType >;

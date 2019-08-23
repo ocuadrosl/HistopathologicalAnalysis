@@ -5,7 +5,7 @@
 #include "itkImage.h"
 #include "QuickView.h"
 #include "core/roiextractor.h"
-
+#include "util/vtkviewer.h"
 
 int main(/*int argc, char **argv*/)
 {
@@ -20,26 +20,22 @@ int main(/*int argc, char **argv*/)
 
 
     //read image
-    using pixelType = unsigned char;
-    std::unique_ptr<ImageReader> reader(new ImageReader());
+
+    std::unique_ptr<ImageReader<>> reader(new ImageReader<>());
 
     //auto image = reader->readVSI(inFileName, outFileName, magnification);
 
     reader->read(outFileName);
     auto image = reader->getRGBImage();
 
-
-
+   VTKViewer<>::visualizeRGB(image, "Input Image RGB");
 
     //ROI extraction
-    std::unique_ptr<ROIExtractor> roiExtractor(new ROIExtractor());
+    std::unique_ptr<ROIExtractor<>> roiExtractor(new ROIExtractor<>());
     roiExtractor->setImage(image);
     roiExtractor->extract();
 
-    //visualizing
-   // std::unique_ptr<QuickView> viewer(new QuickView());
-    //viewer->AddImage(image.GetPointer());
-   // viewer->Visualize();
+
 
     return 0;
     /*

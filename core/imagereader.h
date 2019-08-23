@@ -7,13 +7,12 @@
 #include "itkImageFileReader.h"
 #include "itkRGBToLuminanceImageFilter.h"
 
-
+template< typename  pixelType = unsigned int >
 class ImageReader
 {
 public:
 
 
-    using pixelType=unsigned char;
     // RGB type  alias
     using rgbPixelType = itk::RGBPixel<pixelType>;
     using rgbImageType = itk::Image< rgbPixelType, 2 >;
@@ -42,4 +41,7 @@ private:
 
 };
 
+//template explicit instantiation
+template class ImageReader<unsigned int>;
+template class ImageReader<unsigned char>;
 #endif // IMAGEREADER_H

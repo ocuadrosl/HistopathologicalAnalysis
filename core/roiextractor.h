@@ -6,17 +6,17 @@
 #include "itkScalarToRGBColormapImageFilter.h"
 #include "itkColormapFunction.h"
 #include "itkRGBToLuminanceImageFilter.h"
+#include "itkMultiplyImageFilter.h"
 
-//testing include
-#include "QuickView.h"
+//for testing
+#include "../util/vtkviewer.h"
 
 
-
+template<typename pixelType = unsigned int>
 class ROIExtractor
 {
 public:
 
-    using pixelType=unsigned char;
     // RGB type  alias
     using rgbPixelType = itk::RGBPixel<pixelType>;
     using rgbImageType = itk::Image< rgbPixelType, 2 >;
@@ -35,21 +35,25 @@ public:
 
 private:
 
-    //grayscale images
+    //rgb images
     rgbImagePointer inputImage;
+    rgbImagePointer colorMapImage;
+
     grayImagePointer densityImage;
 
-    //rgb image
-    rgbImagePointer colorMap;
 
     short kernelSize;
     pixelType densityThreshold;
 
     grayImagePointer otsuThreshold();
 
+    void densityToColorMap();
     void applyColorMap();
 
 };
+
+template class ROIExtractor<unsigned int>;
+template class ROIExtractor<unsigned char>;
 
 
 #endif // ROIEXTRACTOR_H

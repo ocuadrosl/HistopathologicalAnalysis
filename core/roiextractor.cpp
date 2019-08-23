@@ -1,27 +1,31 @@
 #include "roiextractor.h"
 
 
-ROIExtractor::ROIExtractor():
+template<typename pixelType>
+ROIExtractor<pixelType>::ROIExtractor():
     kernelSize(5), densityThreshold(50)
 {
 
 }
 
 
-void  ROIExtractor::setKernelSize(short kernelSize)
+template<typename pixelType>
+void  ROIExtractor<pixelType>::setKernelSize(short kernelSize)
 {
     this->kernelSize = kernelSize;
 }
 
 
-void ROIExtractor::setImage(rgbImagePointer inputImage)
+template<typename pixelType>
+void ROIExtractor<pixelType>::setImage(rgbImagePointer inputImage)
 {
 
     this->inputImage = inputImage;
 }
 
 
-void ROIExtractor::extract()
+template<typename pixelType>
+void ROIExtractor<pixelType>::extract()
 {
 
     //Otsu threshold
@@ -103,17 +107,40 @@ void ROIExtractor::extract()
 
     }
 
+
+
     //visualizing
-    std::unique_ptr<QuickView> viewer(new QuickView());
-    viewer->AddImage(densityImage.GetPointer(), true, "Density");
-    viewer->Visualize();
+
+    VTKViewer<pixelType>::visualizeGray(densityImage, "Density");
 
 
+    densityToColorMap();
     applyColorMap();
 
 }
 
-void ROIExtractor::applyColorMap()
+
+template<typename pixelType>
+void ROIExtractor<pixelType>::applyColorMap()
+{
+
+/*
+    using FilterType = itk::MultiplyImageFilter< rgbImageType, rgbImageType, rgbImageType >;
+    FilterType::Pointer filter = FilterType::New();
+    filter->SetInput1( inputImage);
+    filter->SetInput2( colorMap );
+    //filter->Update();
+
+
+    //visualizing
+
+    VTKViewer<rgbImageType>::visualize(filter->GetOutput());
+*/
+
+}
+
+template<typename pixelType>
+void ROIExtractor<pixelType>::densityToColorMap()
 {
 
 
@@ -127,7 +154,7 @@ void ROIExtractor::applyColorMap()
 
 
     //RGB image
-    typename rgbImageType::Pointer colorMapImage  = rgbImageType::New();
+    colorMapImage  = rgbImageType::New();
     colorMapImage->SetRegions(densityImage->GetRequestedRegion());
     colorMapImage->Allocate();
     colorMapImage->FillBuffer( itk::NumericTraits<rgbPixelType>::Zero+255);
@@ -148,11 +175,7 @@ void ROIExtractor::applyColorMap()
         ++outputIt;
     }
 
-
-    //visualizing
-    QuickView viewer;
-    viewer.AddRGBImage(colorMapImage.GetPointer(), true, " Colormap");
-    viewer.Visualize();
+    //VTKViewer<>::visualizeRGB(colorMapImage, "Colormap");
 
 
 }
@@ -161,7 +184,10 @@ void ROIExtractor::applyColorMap()
 
 */
 
-typename ROIExtractor::grayImagePointer ROIExtractor::otsuThreshold()
+
+template<typename pixelType>
+typename ROIExtractor<pixelType>::grayImagePointer
+ROIExtractor<pixelType>::otsuThreshold()
 {
 
     //rgb to grayscale, Ostu does not work with RGB images
@@ -176,21 +202,21 @@ typename ROIExtractor::grayImagePointer ROIExtractor::otsuThreshold()
     otsuFilter->SetOutsideValue(255);
     otsuFilter->SetInsideValue(0);
 
-    /*
-    QuickView viewer;
-    viewer.AddImage(otsuFilter->GetOutput(), true, "Otsu");
-    viewer.Visualize();
-    */
+
 
     otsuFilter->Update();
+
+    VTKViewer<pixelType>::visualizeGray(otsuFilter->GetOutput(), "Otsu");
+
     return otsuFilter->GetOutput();
 
 }
 
 
-auto ROIExtractor::getColorMap() const
+template<typename pixelType>
+auto ROIExtractor<pixelType>::getColorMap() const
 {
-     return colorMap;
+     return colorMapImage;
 }
 
 
