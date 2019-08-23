@@ -7,6 +7,7 @@
 #include "itkColormapFunction.h"
 #include "itkRGBToLuminanceImageFilter.h"
 #include "itkMultiplyImageFilter.h"
+#include "../util/math.h"
 
 //for testing
 #include "../util/vtkviewer.h"

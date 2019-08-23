@@ -85,7 +85,8 @@ void ROIExtractor<pixelType>::extract()
             localRegion.SetIndex(lowerIndex);
             localRegion.SetUpperIndex(upperIndex);
 
-            iteratorIndexType itM(binaryImage, localRegion); //localMask iterator
+            iteratorIndexType itM(binaryImage, localRegion); //localMask iterator#include "math.h"
+
 
             counter = 0;
             for (itM.GoToBegin() ; !itM.IsAtEnd(); ++itM)
@@ -124,18 +125,36 @@ template<typename pixelType>
 void ROIExtractor<pixelType>::applyColorMap()
 {
 
-/*
-    using FilterType = itk::MultiplyImageFilter< rgbImageType, rgbImageType, rgbImageType >;
-    FilterType::Pointer filter = FilterType::New();
-    filter->SetInput1( inputImage);
-    filter->SetInput2( colorMap );
-    //filter->Update();
+    itk::ImageRegionConstIterator< rgbImageType > inputIt(inputImage, densityImage->GetRequestedRegion());
+    itk::ImageRegionIterator< rgbImageType >     cmapIt(colorMapImage, colorMapImage->GetRequestedRegion());
+
+    rgbPixelType inputPixelTmp, cmapPixelTmp;
+
+    itk::RGBPixel<int>  pixelTmp;
+
+    while ( !inputIt.IsAtEnd() )
+    {
+        inputPixelTmp = inputIt.Get();
+        pixelTmp = static_cast<itk::RGBPixel<int>>(cmapIt.Get());
+
+        pixelTmp[0] *= inputPixelTmp[0];
+        pixelTmp[1] *= inputPixelTmp[1];
+        pixelTmp[2] *= inputPixelTmp[2];
+
+        cmapPixelTmp[0] = Math::minMax<int, pixelType>( pixelTmp[0], 0, 255*255, 0, 255 );
+        cmapPixelTmp[1] = Math::minMax<int, pixelType>( pixelTmp[1], 0, 255*255, 0, 255 );
+        cmapPixelTmp[2] = Math::minMax<int, pixelType>( pixelTmp[2], 0, 255*255, 0, 255 );
 
 
-    //visualizing
+        cmapIt.Set(cmapPixelTmp);
 
-    VTKViewer<rgbImageType>::visualize(filter->GetOutput());
-*/
+
+        ++inputIt;
+        ++cmapIt;
+    }
+
+
+     VTKViewer<pixelType>::visualizeRGB(colorMapImage, "Colormap applied");
 
 }
 
@@ -175,7 +194,7 @@ void ROIExtractor<pixelType>::densityToColorMap()
         ++outputIt;
     }
 
-    //VTKViewer<>::visualizeRGB(colorMapImage, "Colormap");
+    VTKViewer<pixelType>::visualizeRGB(colorMapImage, "Colormap");
 
 
 }
