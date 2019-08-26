@@ -32,13 +32,6 @@ public:
     using grayImageType = itk::Image< pixelType, 2>;
     using grayImagePointer = typename grayImageType::Pointer;
 
-
-    //labelmap
-    using labelObjectType = itk::LabelObject< pixelType, 2>;
-    using labelMapType = itk::LabelMap< labelObjectType >;
-    using labelMapPointer = typename labelMapType::Pointer;
-
-
     ROIExtractor();
 
     void setImage(rgbImagePointer inputImage);
@@ -61,7 +54,7 @@ private:
     grayImagePointer otsuThreshold();
 
     void densityToColorMap();
-    void applyColorMap();
+    void overlayColorMap();
 
 };
 

@@ -5,6 +5,7 @@
 #include "itkRGBPixel.h"
 #include <itkImageRegionConstIterator.h>
 #include <itkImageRegionIterator.h>
+#include "rescalergbimagefilter.h"
 
 template<typename pixelType = unsigned int>
 class OverlayRGBImageFilter

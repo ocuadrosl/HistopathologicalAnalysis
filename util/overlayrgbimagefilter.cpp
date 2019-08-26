@@ -130,18 +130,20 @@ void OverlayRGBImageFilter<pixelType>:: overlay()
     rgbPixelFloat backPixel;
     rgbPixelFloat forePixel;
 
-    float oneMinusAlpha = 1.f - alpha;
-
 
     while ( !backIt.IsAtEnd() )
     {
 
         backPixel = static_cast<rgbPixelFloat>(backIt.Get());
         forePixel = static_cast<rgbPixelFloat>(foreIt.Get());
+        backPixel *= alpha;
+        forePixel *= alpha;
 
-        outputPixel[0] = static_cast<pixelType>((alpha * forePixel[0]) + (oneMinusAlpha * backPixel[0]));
-        outputPixel[1] = static_cast<pixelType>((alpha * forePixel[1]) + (oneMinusAlpha * backPixel[1]));
-        outputPixel[2] = static_cast<pixelType>((alpha * forePixel[2]) + (oneMinusAlpha * backPixel[2]));
+        outputPixel[0] = static_cast<pixelType>((forePixel[0]) + (255 - forePixel[0])*backPixel[0] );
+        outputPixel[1] = static_cast<pixelType>((forePixel[1]) + (255 - forePixel[1])*backPixel[1] );
+        outputPixel[2] = static_cast<pixelType>((forePixel[2]) + (255 - forePixel[2])*backPixel[2] );
+
+        //std::cout<<outputPixel<<std::endl;
 
         outputIt.Set(outputPixel);
 
@@ -151,15 +153,15 @@ void OverlayRGBImageFilter<pixelType>:: overlay()
     }
 
 
+    using rescaleRGBImageFilterType = RescaleRGBImageFilter<pixelType, pixelType>;
+    std::unique_ptr<rescaleRGBImageFilterType> rescaleRGBImageFilter(new rescaleRGBImageFilterType());
+
+    rescaleRGBImageFilter->setInput(outputImage);
+    rescaleRGBImageFilter->rescale();
+    outputImage = rescaleRGBImageFilter->getOutput();
+
+
 }
-
-
-
-
-
-
-
-
 
 
 
