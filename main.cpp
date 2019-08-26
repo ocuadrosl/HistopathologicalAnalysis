@@ -28,7 +28,7 @@ int main(/*int argc, char **argv*/)
     reader->read(outFileName);
     auto image = reader->getRGBImage();
 
-   VTKViewer<>::visualizeRGB(image, "Input Image RGB");
+   //VTKViewer<>::visualizeRGB(image, "Input Image RGB");
 
     //ROI extraction
     std::unique_ptr<ROIExtractor<>> roiExtractor(new ROIExtractor<>());

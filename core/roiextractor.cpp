@@ -112,7 +112,7 @@ void ROIExtractor<pixelType>::extract()
 
     //visualizing
 
-    VTKViewer<pixelType>::visualizeGray(densityImage, "Density");
+   // VTKViewer<pixelType>::visualizeGray(densityImage, "Density");
 
 
     densityToColorMap();
@@ -125,36 +125,16 @@ template<typename pixelType>
 void ROIExtractor<pixelType>::applyColorMap()
 {
 
-    itk::ImageRegionConstIterator< rgbImageType > inputIt(inputImage, densityImage->GetRequestedRegion());
-    itk::ImageRegionIterator< rgbImageType >     cmapIt(colorMapImage, colorMapImage->GetRequestedRegion());
+   // itk::ImageRegionConstIterator< rgbImageType > inputIt(inputImage, densityImage->GetRequestedRegion());
+  //  itk::ImageRegionIterator< rgbImageType >     cmapIt(colorMapImage, colorMapImage->GetRequestedRegion());
 
     rgbPixelType inputPixelTmp, cmapPixelTmp;
 
     itk::RGBPixel<int>  pixelTmp;
 
-    while ( !inputIt.IsAtEnd() )
-    {
-        inputPixelTmp = inputIt.Get();
-        pixelTmp = static_cast<itk::RGBPixel<int>>(cmapIt.Get());
-
-        pixelTmp[0] *= inputPixelTmp[0];
-        pixelTmp[1] *= inputPixelTmp[1];
-        pixelTmp[2] *= inputPixelTmp[2];
-
-        cmapPixelTmp[0] = Math::minMax<int, pixelType>( pixelTmp[0], 0, 255*255, 0, 255 );
-        cmapPixelTmp[1] = Math::minMax<int, pixelType>( pixelTmp[1], 0, 255*255, 0, 255 );
-        cmapPixelTmp[2] = Math::minMax<int, pixelType>( pixelTmp[2], 0, 255*255, 0, 255 );
 
 
-        cmapIt.Set(cmapPixelTmp);
-
-
-        ++inputIt;
-        ++cmapIt;
-    }
-
-
-     VTKViewer<pixelType>::visualizeRGB(colorMapImage, "Colormap applied");
+   //  VTKViewer<pixelType>::visualizeRGB(colorMapImage, "Colormap applied");
 
 }
 
@@ -165,14 +145,14 @@ void ROIExtractor<pixelType>::densityToColorMap()
 
     //Jet colormap
     //Todo add more colormaps
-    using SpecificColormapType = itk::Function::JetColormapFunction<pixelType, rgbPixelType >;
+    using SpecificColormapType = itk::Function::HotColormapFunction<pixelType, rgbPixelType >;
     typename SpecificColormapType::Pointer colormap = SpecificColormapType::New();
 
     colormap->SetMinimumInputValue(densityThreshold);
     colormap->SetMaximumInputValue(100);
 
 
-    //RGB image
+
     colorMapImage  = rgbImageType::New();
     colorMapImage->SetRegions(densityImage->GetRequestedRegion());
     colorMapImage->Allocate();
@@ -187,7 +167,7 @@ void ROIExtractor<pixelType>::densityToColorMap()
     {
         if(inputIt.Get() >= densityThreshold)
         {
-            outputIt.Set(colormap->operator()( inputIt.Get() ) );
+            outputIt.Set( colormap->operator()( inputIt.Get() ) );
         }
 
         ++inputIt;
@@ -195,6 +175,14 @@ void ROIExtractor<pixelType>::densityToColorMap()
     }
 
     VTKViewer<pixelType>::visualizeRGB(colorMapImage, "Colormap");
+
+    std::unique_ptr<OverlayRGBImageFilter<pixelType>> overlayImageFilter( new OverlayRGBImageFilter<pixelType>());
+    overlayImageFilter->setBackgroundImage(inputImage);
+    overlayImageFilter->setForegroundImage(colorMapImage);
+    overlayImageFilter->setAlpha(0.8);
+    overlayImageFilter->softLigh();
+
+    VTKViewer<pixelType>::visualizeRGB(overlayImageFilter->getOutput(), "Colormap image");
 
 
 }
@@ -225,7 +213,7 @@ ROIExtractor<pixelType>::otsuThreshold()
 
     otsuFilter->Update();
 
-    VTKViewer<pixelType>::visualizeGray(otsuFilter->GetOutput(), "Otsu");
+    //VTKViewer<pixelType>::visualizeGray(otsuFilter->GetOutput(), "Otsu");
 
     return otsuFilter->GetOutput();
 

@@ -43,5 +43,5 @@ private:
 
 //template explicit instantiation
 template class ImageReader<unsigned int>;
-template class ImageReader<unsigned char>;
+//template class ImageReader<unsigned char>;
 #endif // IMAGEREADER_H

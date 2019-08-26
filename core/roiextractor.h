@@ -6,8 +6,13 @@
 #include "itkScalarToRGBColormapImageFilter.h"
 #include "itkColormapFunction.h"
 #include "itkRGBToLuminanceImageFilter.h"
-#include "itkMultiplyImageFilter.h"
+#include <itkLabelObject.h>
+#include <itkLabelMap.h>
+#include "itkLabelImageToLabelMapFilter.h"
+#include "itkLabelMapOverlayImageFilter.h"
+
 #include "../util/math.h"
+#include "../util/overlayrgbimagefilter.h"
 
 //for testing
 #include "../util/vtkviewer.h"
@@ -26,6 +31,13 @@ public:
     //gray scale type alias
     using grayImageType = itk::Image< pixelType, 2>;
     using grayImagePointer = typename grayImageType::Pointer;
+
+
+    //labelmap
+    using labelObjectType = itk::LabelObject< pixelType, 2>;
+    using labelMapType = itk::LabelMap< labelObjectType >;
+    using labelMapPointer = typename labelMapType::Pointer;
+
 
     ROIExtractor();
 
@@ -54,7 +66,7 @@ private:
 };
 
 template class ROIExtractor<unsigned int>;
-template class ROIExtractor<unsigned char>;
+//template class ROIExtractor<unsigned char>;
 
 
 #endif // ROIEXTRACTOR_H
