@@ -109,8 +109,6 @@ void ROIExtractor<pixelType>::extract()
 
     }
 
-
-
     //visualizing
 
     //VTKViewer<pixelType>::visualizeGray(densityImage, "Density");
@@ -129,8 +127,12 @@ void ROIExtractor<pixelType>::overlayColorMap()
     std::unique_ptr<OverlayRGBImageFilter<pixelType>> overlayImageFilter( new OverlayRGBImageFilter<pixelType>());
     overlayImageFilter->setBackgroundImage(inputImage);
     overlayImageFilter->setForegroundImage(colorMapImage);
-    overlayImageFilter->setAlpha(0.5);
-    overlayImageFilter->overlay();
+    overlayImageFilter->setAlpha(0.8);
+    overlayImageFilter->softLigh();
+
+
+    //VTKViewer<pixelType>::visualizeRGB(inputImage, "Input image");
+    //VTKViewer<pixelType>::visualizeRGB(colorMapImage, "Colormap");
 
     VTKViewer<pixelType>::visualizeRGB(overlayImageFilter->getOutput(), "Colormap image");
 
@@ -149,7 +151,8 @@ void ROIExtractor<pixelType>::densityToColorMap()
 
     colormap->SetMinimumInputValue(densityThreshold);
     colormap->SetMaximumInputValue(100);
-
+    colormap->SetMinimumRGBComponentValue(0);
+    colormap->SetMaximumRGBComponentValue(255);
 
 
     colorMapImage  = rgbImageType::New();

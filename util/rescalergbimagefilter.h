@@ -30,13 +30,19 @@ public:
 
     //setters
     void setInput(rgbInputImagePointer inputImage);
-    void setMinValue(const rgbInputPixelType& minValue);
-    void setMaxValue(const rgbInputPixelType& maxValue);
+    void setMinInputValue(const rgbInputPixelType& minValue);
+    void setMaxInputValue(const rgbInputPixelType& maxValue);
+
+    void setMinOutputValue(const rgbOutputPixelType& minValue);
+    void setMaxOutputValue(const rgbOutputPixelType& maxValue);
 
 
     rgbOutputImagePointer getOutput() const;
 
+    //no max min
+    void rescaleAuto();
     void rescale();
+
 
 private:
 
@@ -44,8 +50,11 @@ private:
     rgbInputImagePointer inputImage;
     rgbOutputImagePointer outputImage;
 
-    rgbInputPixelType minValue;
-    rgbInputPixelType maxValue;
+    rgbInputPixelType minInputValue;
+    rgbInputPixelType maxInputValue;
+
+    rgbOutputPixelType minOutputValue;
+    rgbOutputPixelType maxOutputValue;
 
 
 

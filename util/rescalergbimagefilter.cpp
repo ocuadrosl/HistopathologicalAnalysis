@@ -25,7 +25,7 @@ RescaleRGBImageFilter<inputPixelType, outputPixelType>::getOutput() const
 
 
 template<typename inputPixelType, typename outputPixelType>
-void RescaleRGBImageFilter<inputPixelType, outputPixelType>::rescale()
+void RescaleRGBImageFilter<inputPixelType, outputPixelType>::rescaleAuto()
 {
 
     //compute min and max inputImage values
@@ -38,36 +38,33 @@ void RescaleRGBImageFilter<inputPixelType, outputPixelType>::rescale()
     auto minInputValue = minMaxRGBImageCalculator->getMinValue();
     auto maxInputValue = minMaxRGBImageCalculator->getMaxValue();
 
-
+    //allocate output image
     outputImage  = rgbOutputImageType::New();
     outputImage->SetRegions(inputImage->GetRequestedRegion());
     outputImage->Allocate();
 
+    //iterators
     itk::ImageRegionConstIterator< rgbInputImageType > inputIt(inputImage, inputImage->GetRequestedRegion());
     itk::ImageRegionIterator< rgbOutputImageType >     outputIt(outputImage, outputImage->GetRequestedRegion());
 
     rgbInputPixelType  inputPixel;
     rgbOutputPixelType  outputPixel;
 
-    //functions alias
-
-
-
+    //min-max template function objects
     Math::MinMax<inputPixelType, outputPixelType> minMax0(minInputValue[0], maxInputValue[0], 0, 255);
     Math::MinMax<inputPixelType, outputPixelType> minMax1(minInputValue[1], maxInputValue[1], 0, 255);
-    Math::MinMax<inputPixelType, outputPixelType> minMax2(minInputValue[1], maxInputValue[2], 0, 255);
+    Math::MinMax<inputPixelType, outputPixelType> minMax2(minInputValue[2], maxInputValue[2], 0, 255);
 
-
+    //rescaling
     while ( !inputIt.IsAtEnd() )
     {
 
         inputPixel = inputIt.Get();
-        //std::cout<<inputPixel<<std::endl;
+
         outputPixel[0] = minMax0( inputPixel[0] );
         outputPixel[1] = minMax1( inputPixel[1] );
         outputPixel[2] = minMax2( inputPixel[2] );
 
-        //std::cout<<outputPixel<<std::endl;
         outputIt.Set(outputPixel);
 
         ++inputIt;
@@ -79,17 +76,81 @@ void RescaleRGBImageFilter<inputPixelType, outputPixelType>::rescale()
 
 
 template<typename inputPixelType, typename outputPixelType>
-void RescaleRGBImageFilter<inputPixelType, outputPixelType>::setMinValue(const rgbInputPixelType& minValue)
+void RescaleRGBImageFilter<inputPixelType, outputPixelType>::rescale()
 {
-    this->minValue = minValue;
+
+
+    //allocate output image
+    outputImage  = rgbOutputImageType::New();
+    outputImage->SetRegions(inputImage->GetRequestedRegion());
+    outputImage->Allocate();
+
+    //iterators
+    itk::ImageRegionConstIterator< rgbInputImageType > inputIt(inputImage, inputImage->GetRequestedRegion());
+    itk::ImageRegionIterator< rgbOutputImageType >     outputIt(outputImage, outputImage->GetRequestedRegion());
+
+    rgbInputPixelType  inputPixel;
+    rgbOutputPixelType  outputPixel;
+
+    //min-max template function objects
+    Math::MinMax<inputPixelType, outputPixelType> minMax0(minInputValue[0], maxInputValue[0], minOutputValue[0], maxOutputValue[0]);
+    Math::MinMax<inputPixelType, outputPixelType> minMax1(minInputValue[1], maxInputValue[1], minOutputValue[1], maxOutputValue[1]);
+    Math::MinMax<inputPixelType, outputPixelType> minMax2(minInputValue[2], maxInputValue[2], minOutputValue[2], maxOutputValue[2]);
+
+    //rescaling
+    while ( !inputIt.IsAtEnd() )
+    {
+
+        inputPixel = inputIt.Get();
+
+        outputPixel[0] = minMax0( inputPixel[0] );
+        outputPixel[1] = minMax1( inputPixel[1] );
+        outputPixel[2] = minMax2( inputPixel[2] );
+
+        outputIt.Set(outputPixel);
+
+        ++inputIt;
+        ++outputIt;
+    }
+
+
+}
+
+
+
+
+
+
+
+
+
+
+template<typename inputPixelType, typename outputPixelType>
+void RescaleRGBImageFilter<inputPixelType, outputPixelType>::setMinInputValue(const rgbInputPixelType& minValue)
+{
+    this->minInputValue = minValue;
 }
 
 
 template<typename inputPixelType, typename outputPixelType>
-void RescaleRGBImageFilter<inputPixelType, outputPixelType>:: setMaxValue(const rgbInputPixelType& maxValue)
+void RescaleRGBImageFilter<inputPixelType, outputPixelType>:: setMaxInputValue(const rgbInputPixelType& maxValue)
 {
-    this->maxValue = maxValue;
+    this->maxInputValue = maxValue;
 }
+
+template<typename inputPixelType, typename outputPixelType>
+void RescaleRGBImageFilter<inputPixelType, outputPixelType>::setMinOutputValue(const rgbOutputPixelType& minValue)
+{
+    this->minOutputValue = minValue;
+}
+
+
+template<typename inputPixelType, typename outputPixelType>
+void RescaleRGBImageFilter<inputPixelType, outputPixelType>:: setMaxOutputValue(const rgbOutputPixelType& maxValue)
+{
+    this->maxOutputValue = maxValue;
+}
+
 
 
 
