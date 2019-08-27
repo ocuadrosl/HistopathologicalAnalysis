@@ -12,10 +12,12 @@
 #include "itkLabelMapOverlayImageFilter.h"
 #include <itkConnectedComponentImageFilter.h>
 #include <itkLabelToRGBImageFilter.h>
+#include <itkLabelImageToLabelMapFilter.h>
 
 //local includes
 #include "../util/math.h"
 #include "../util/overlayrgbimagefilter.h"
+#include "../util/labelmaptomultiplegrayimagesfilter.h"
 
 
 //for testing
@@ -63,9 +65,11 @@ private:
 
     grayImagePointer densityImage;
 
-
     short kernelSize;
     pixelComponentT densityThreshold;
+
+    //ROIs
+    //std::vector<grayImagePointer> highDensitySubImages;
 
     grayImagePointer otsuThreshold();
 

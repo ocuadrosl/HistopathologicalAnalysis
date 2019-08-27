@@ -238,24 +238,36 @@ void ROIExtractor<pixelComponentT>::connectedComponents()
     grayImagePointer highDensity, lowDensity;
     divideDensityIntoHighAndLow(highDensity, lowDensity);
 
-
+    //delete it
     VTKViewer<pixelComponentT>::visualizeGray(highDensity, "High density");
     //VTKViewer<pixelComponentT>::visualizeGray(lowDensity, "Low density");
 
-
-
     //connected components
     using ConnectedComponentImageFilterType = itk::ConnectedComponentImageFilter <grayImageType, grayImageType>;
-    typename ConnectedComponentImageFilterType::Pointer connected =   ConnectedComponentImageFilterType::New ();
+    typename ConnectedComponentImageFilterType::Pointer connectedComponentImageFilter =   ConnectedComponentImageFilterType::New ();
     //connected->SetBackgroundValue(255);
-    connected->SetInput(highDensity);
+    connectedComponentImageFilter->SetInput(highDensity);
 
+
+    //Just to visualize, delete it
     using RGBFilterType = itk::LabelToRGBImageFilter<grayImageType, rgbImageType>;
     typename RGBFilterType::Pointer rgbFilter = RGBFilterType::New();
-    rgbFilter->SetInput( connected->GetOutput() );
+    rgbFilter->SetInput( connectedComponentImageFilter->GetOutput() );
     rgbFilter->Update();
     VTKViewer<pixelComponentT>::visualizeRGB(rgbFilter->GetOutput(), "connected");
 
+
+    //labelImage to labelMap
+    using LabelImageToLabelMapFilterType = itk::LabelImageToLabelMapFilter <grayImageType>;
+    typename LabelImageToLabelMapFilterType::Pointer labelImageToLabelMapFilter = LabelImageToLabelMapFilterType::New ();
+    labelImageToLabelMapFilter->SetInput(connectedComponentImageFilter->GetOutput());
+    labelImageToLabelMapFilter->Update();
+
+
+    //label map to gray images
+    std::unique_ptr< LabelMapToMultipleGrayImagesFilter<pixelComponentT>> labelMapToImagesFilter(new LabelMapToMultipleGrayImagesFilter<pixelComponentT>());
+    labelMapToImagesFilter->setLabelMap(labelImageToLabelMapFilter->GetOutput());
+    labelMapToImagesFilter->createImages();
 
 
 
