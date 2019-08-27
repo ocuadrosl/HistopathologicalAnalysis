@@ -1,31 +1,31 @@
 #include "roiextractor.h"
 
 
-template<typename pixelType>
-ROIExtractor<pixelType>::ROIExtractor():
+template<typename pixelComponentT>
+ROIExtractor<pixelComponentT>::ROIExtractor():
     kernelSize(5), densityThreshold(50)
 {
 
 }
 
 
-template<typename pixelType>
-void  ROIExtractor<pixelType>::setKernelSize(short kernelSize)
+template<typename pixelComponentT>
+void  ROIExtractor<pixelComponentT>::setKernelSize(short kernelSize)
 {
     this->kernelSize = kernelSize;
 }
 
 
-template<typename pixelType>
-void ROIExtractor<pixelType>::setImage(rgbImagePointer inputImage)
+template<typename pixelComponentT>
+void ROIExtractor<pixelComponentT>::setImage(rgbImagePointer inputImage)
 {
 
     this->inputImage = inputImage;
 }
 
 
-template<typename pixelType>
-void ROIExtractor<pixelType>::extract()
+template<typename pixelComponentT>
+void ROIExtractor<pixelComponentT>::extract()
 {
 
     //Otsu threshold
@@ -65,12 +65,12 @@ void ROIExtractor<pixelType>::extract()
     imageSize[1] = static_cast<long>(binaryImage->GetRequestedRegion().GetSize()[1]);
 
 
-    pixelType  density = 0;
+    pixelComponentT  density = 0;
     short counter;
     for (itI.GoToBegin() , itD.GoToBegin(); !itI.IsAtEnd(); ++itI, ++itD)
     {
 
-        if(itI.Get()==0) //otsu inside value
+        if(itI.Get()== FOREGROUND ) //otsu inside value
         {
             index = itI.GetIndex();
 
@@ -92,17 +92,17 @@ void ROIExtractor<pixelType>::extract()
 
             for (itK.GoToBegin() ; !itK.IsAtEnd(); ++itK)
             {
-                if(itK.Get() == 0) //otsu inside value
+                if(itK.Get() == FOREGROUND) //otsu inside value
                 {
                     ++counter;
                 }
 
             }
 
-            density = static_cast<pixelType>( (counter * 100) / maxDensity);
+            density = static_cast<pixelComponentT>( (counter * 100) / maxDensity);
 
-            //Set if the density is greater than a threshold
-            itD.Set( density >= densityThreshold ? density : 0 ) ;
+            itD.Set(density);
+            //itD.Set( density >= densityThreshold ? density : 0 ) ;
 
         }
 
@@ -111,42 +111,43 @@ void ROIExtractor<pixelType>::extract()
 
     //visualizing
 
-    //VTKViewer<pixelType>::visualizeGray(densityImage, "Density");
+   // VTKViewer<pixelComponentT>::visualizeGray(densityImage, "Density");
 
 
-    densityToColorMap();
-    overlayColorMap();
+    //densityToColorMap();
+    //blendColorMap();
+    connectedComponents();
 
 }
 
 
-template<typename pixelType>
-void ROIExtractor<pixelType>::overlayColorMap()
+template<typename pixelComponentT>
+void ROIExtractor<pixelComponentT>::blendColorMap()
 {
 
-    std::unique_ptr<OverlayRGBImageFilter<pixelType>> overlayImageFilter( new OverlayRGBImageFilter<pixelType>());
+    std::unique_ptr<OverlayRGBImageFilter<pixelComponentT>> overlayImageFilter( new OverlayRGBImageFilter<pixelComponentT>());
     overlayImageFilter->setBackgroundImage(inputImage);
     overlayImageFilter->setForegroundImage(colorMapImage);
     overlayImageFilter->setAlpha(0.8);
     overlayImageFilter->softLigh();
 
 
-    //VTKViewer<pixelType>::visualizeRGB(inputImage, "Input image");
-    //VTKViewer<pixelType>::visualizeRGB(colorMapImage, "Colormap");
+    //VTKViewer<pixelComponentT>::visualizeRGB(inputImage, "Input image");
+    //VTKViewer<pixelComponentT>::visualizeRGB(colorMapImage, "Colormap");
 
-    VTKViewer<pixelType>::visualizeRGB(overlayImageFilter->getOutput(), "Colormap image");
+    VTKViewer<pixelComponentT>::visualizeRGB(overlayImageFilter->getOutput(), "Colormap image");
 
 
 }
 
-template<typename pixelType>
-void ROIExtractor<pixelType>::densityToColorMap()
+template<typename pixelComponentT>
+void ROIExtractor<pixelComponentT>::densityToColorMap()
 {
 
 
     //Jet colormap
     //Todo add more colormaps
-    using SpecificColormapType = itk::Function::JetColormapFunction<pixelType, rgbPixelType >;
+    using SpecificColormapType = itk::Function::JetColormapFunction<pixelComponentT, rgbPixelType >;
     typename SpecificColormapType::Pointer colormap = SpecificColormapType::New();
 
     colormap->SetMinimumInputValue(densityThreshold);
@@ -167,7 +168,7 @@ void ROIExtractor<pixelType>::densityToColorMap()
 
     while ( !inputIt.IsAtEnd() )
     {
-        if(inputIt.Get() >= densityThreshold)
+        if(inputIt.Get() > 0) //lowest density
         {
             outputIt.Set( colormap->operator()( inputIt.Get() ) );
         }
@@ -178,7 +179,7 @@ void ROIExtractor<pixelType>::densityToColorMap()
 
     //TODO rgb rescale here
 
-    //VTKViewer<pixelType>::visualizeRGB(colorMapImage, "Colormap");
+    VTKViewer<pixelComponentT>::visualizeRGB(colorMapImage, "Colormap");
 
 
 
@@ -189,9 +190,9 @@ void ROIExtractor<pixelType>::densityToColorMap()
 */
 
 
-template<typename pixelType>
-typename ROIExtractor<pixelType>::grayImagePointer
-ROIExtractor<pixelType>::otsuThreshold()
+template<typename pixelComponentT>
+typename ROIExtractor<pixelComponentT>::grayImagePointer
+ROIExtractor<pixelComponentT>::otsuThreshold()
 {
 
     //rgb to grayscale, Ostu does not work with RGB images
@@ -203,25 +204,140 @@ ROIExtractor<pixelType>::otsuThreshold()
     using otsuType = itk::OtsuThresholdImageFilter< grayImageType, grayImageType >;
     typename otsuType::Pointer otsuFilter = otsuType::New();
     otsuFilter->SetInput( rgbToLuminancefilter->GetOutput());
-    otsuFilter->SetOutsideValue(255);
-    otsuFilter->SetInsideValue(0);
+    otsuFilter->SetOutsideValue(BACKGROUND);
+    otsuFilter->SetInsideValue(FOREGROUND);
 
 
 
     otsuFilter->Update();
 
-    //VTKViewer<pixelType>::visualizeGray(otsuFilter->GetOutput(), "Otsu");
+    //VTKViewer<pixelComponentT>::visualizeGray(otsuFilter->GetOutput(), "Otsu");
 
     return otsuFilter->GetOutput();
 
 }
 
 
-template<typename pixelType>
-auto ROIExtractor<pixelType>::getColorMap() const
+template<typename pixelComponentT>
+auto ROIExtractor<pixelComponentT>::getColorMap() const
 {
      return colorMapImage;
 }
+
+template<typename pixelComponentT>
+void ROIExtractor<pixelComponentT>::setDensityThreshold(pixelComponentT threshold)
+{
+    densityThreshold = threshold;
+}
+
+template<typename pixelComponentT>
+void ROIExtractor<pixelComponentT>::connectedComponents()
+{
+
+    //divide density into high and low density images
+    grayImagePointer highDensity, lowDensity;
+    divideDensityIntoHighAndLow(highDensity, lowDensity);
+
+
+    VTKViewer<pixelComponentT>::visualizeGray(highDensity, "High density");
+    //VTKViewer<pixelComponentT>::visualizeGray(lowDensity, "Low density");
+
+
+
+    //connected components
+    using ConnectedComponentImageFilterType = itk::ConnectedComponentImageFilter <grayImageType, grayImageType>;
+    typename ConnectedComponentImageFilterType::Pointer connected =   ConnectedComponentImageFilterType::New ();
+    //connected->SetBackgroundValue(255);
+    connected->SetInput(highDensity);
+
+    using RGBFilterType = itk::LabelToRGBImageFilter<grayImageType, rgbImageType>;
+    typename RGBFilterType::Pointer rgbFilter = RGBFilterType::New();
+    rgbFilter->SetInput( connected->GetOutput() );
+    rgbFilter->Update();
+    VTKViewer<pixelComponentT>::visualizeRGB(rgbFilter->GetOutput(), "connected");
+
+
+
+
+
+
+}
+
+
+template<typename pixelComponentT>
+void ROIExtractor<pixelComponentT>::divideDensityIntoHighAndLow(grayImagePointer &highDensity, grayImagePointer &lowDensity)
+{
+
+    highDensity  = grayImageType::New();
+    lowDensity  = grayImageType::New();
+
+    highDensity->SetRegions(densityImage->GetRequestedRegion());
+    highDensity->Allocate();
+    highDensity->FillBuffer(itk::NumericTraits<pixelComponentT>::Zero);
+
+    lowDensity->SetRegions(densityImage->GetRequestedRegion());
+    lowDensity->Allocate();
+    lowDensity->FillBuffer(itk::NumericTraits<pixelComponentT>::Zero);
+
+    itk::ImageRegionConstIterator< grayImageType > inputIt(densityImage, densityImage->GetRequestedRegion());
+    itk::ImageRegionIterator< grayImageType > highIt(highDensity, highDensity->GetRequestedRegion());
+    itk::ImageRegionIterator< grayImageType > lowIt(lowDensity, lowDensity->GetRequestedRegion());
+
+    //aux var
+    auto pixelValue = inputIt.Get();
+
+    while (!inputIt.IsAtEnd())
+    {
+
+        pixelValue = inputIt.Get();
+        //std::cout<<pixelValue<<std::endl;
+
+        if(pixelValue >= densityThreshold)
+        {
+            highIt.Set(pixelValue);
+        }
+        else if (pixelValue > 0) // no zero density
+        {
+            lowIt.Set(pixelValue) ;
+        }
+
+        ++inputIt;
+        ++highIt;
+        ++lowIt;
+    }
+
+    //VTKViewer<pixelComponentT>::visualizeGray(highDensity, "High density");
+    //VTKViewer<pixelComponentT>::visualizeGray(lowDensity, "Low density");
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

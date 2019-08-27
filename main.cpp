@@ -33,6 +33,7 @@ int main(/*int argc, char **argv*/)
     //ROI extraction
     std::unique_ptr<ROIExtractor<>> roiExtractor(new ROIExtractor<>());
     roiExtractor->setImage(image);
+    roiExtractor->setDensityThreshold(70);
     roiExtractor->extract();
 
 
