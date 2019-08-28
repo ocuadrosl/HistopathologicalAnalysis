@@ -57,6 +57,8 @@ public:
     auto getColorMap() const;
     void extract();
 
+    void writeComponents(std::string directory);
+
 private:
 
     //rgb images
@@ -64,6 +66,8 @@ private:
     rgbImagePointer colorMapImage;
 
     grayImagePointer densityImage;
+
+    grayImagePointer grayImage;
 
     short kernelSize;
     pixelComponentT densityThreshold;
@@ -79,6 +83,11 @@ private:
     void connectedComponents();
 
     void divideDensityIntoHighAndLow(grayImagePointer &highDensity, grayImagePointer &lowDensity);
+
+    void rgbToGrayImage();
+
+
+
 
 
 };

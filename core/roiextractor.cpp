@@ -28,6 +28,9 @@ template<typename pixelComponentT>
 void ROIExtractor<pixelComponentT>::extract()
 {
 
+    //rgb to gray image, otsu does not work with rgb images
+    rgbToGrayImage();
+
     //Otsu threshold
     grayImagePointer binaryImage =  grayImageType::New();
     binaryImage = otsuThreshold();
@@ -113,6 +116,7 @@ void ROIExtractor<pixelComponentT>::extract()
 
    // VTKViewer<pixelComponentT>::visualizeGray(densityImage, "Density");
 
+    //todo these functions do not go here...
 
     //densityToColorMap();
     //blendColorMap();
@@ -177,8 +181,6 @@ void ROIExtractor<pixelComponentT>::densityToColorMap()
         ++outputIt;
     }
 
-    //TODO rgb rescale here
-
     VTKViewer<pixelComponentT>::visualizeRGB(colorMapImage, "Colormap");
 
 
@@ -196,18 +198,16 @@ ROIExtractor<pixelComponentT>::otsuThreshold()
 {
 
     //rgb to grayscale, Ostu does not work with RGB images
-    using rgbToLuminanceFilterType = itk::RGBToLuminanceImageFilter< rgbImageType, grayImageType >;
-    typename rgbToLuminanceFilterType::Pointer rgbToLuminancefilter = rgbToLuminanceFilterType::New();
-    rgbToLuminancefilter->SetInput( inputImage );
+   // using rgbToLuminanceFilterType = itk::RGBToLuminanceImageFilter< rgbImageType, grayImageType >;
+   // typename rgbToLuminanceFilterType::Pointer rgbToLuminancefilter = rgbToLuminanceFilterType::New();
+    //rgbToLuminancefilter->SetInput( inputImage );
 
 
     using otsuType = itk::OtsuThresholdImageFilter< grayImageType, grayImageType >;
     typename otsuType::Pointer otsuFilter = otsuType::New();
-    otsuFilter->SetInput( rgbToLuminancefilter->GetOutput());
+    otsuFilter->SetInput(grayImage);
     otsuFilter->SetOutsideValue(BACKGROUND);
     otsuFilter->SetInsideValue(FOREGROUND);
-
-
 
     otsuFilter->Update();
 
@@ -217,6 +217,17 @@ ROIExtractor<pixelComponentT>::otsuThreshold()
 
 }
 
+
+template<typename pixelComponentT>
+void ROIExtractor<pixelComponentT>::rgbToGrayImage()
+{
+    using rgbToLuminanceFilterType = itk::RGBToLuminanceImageFilter< rgbImageType, grayImageType >;
+    typename rgbToLuminanceFilterType::Pointer rgbToLuminancefilter = rgbToLuminanceFilterType::New();
+    rgbToLuminancefilter->SetInput( inputImage );
+    rgbToLuminancefilter->Update();
+    grayImage = rgbToLuminancefilter->GetOutput();
+
+}
 
 template<typename pixelComponentT>
 auto ROIExtractor<pixelComponentT>::getColorMap() const
@@ -271,8 +282,6 @@ void ROIExtractor<pixelComponentT>::connectedComponents()
 
 
 
-
-
 }
 
 
@@ -323,7 +332,13 @@ void ROIExtractor<pixelComponentT>::divideDensityIntoHighAndLow(grayImagePointer
 
 }
 
+template<typename pixelComponentT>
+void ROIExtractor<pixelComponentT>:: writeComponents(std::string directory)
+{
 
+
+
+}
 
 
 

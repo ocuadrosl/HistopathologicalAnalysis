@@ -20,10 +20,23 @@ void LabelMapToMultipleGrayImagesFilter<pixelComponentT>::createImages()
 
     labelObjectT * labelObject;
 
-    for(unsigned int i = 0; i < labelMap->GetNumberOfLabelObjects(); ++i)
+    for(unsigned int objI = 0; objI < labelMap->GetNumberOfLabelObjects(); ++objI)
     {
-        labelObject = labelMap->GetNthLabelObject(i);
+        labelObject = labelMap->GetNthLabelObject(objI);
+
+
+
+        for(unsigned int pixelId = 0; pixelId < labelObject->Size(); pixelId++)
+        {
+            //std::cout << labelObject->GetIndex(pixelId);
+        }
+
+
+
     }
+
+
+
 
 
 
