@@ -30,6 +30,8 @@ public:
 
 template class VTKViewer<unsigned int>;
 template class VTKViewer<unsigned char>;
+template class VTKViewer<float>;
+template class VTKViewer<short>;
 
 
 #endif // VTKVIEWER_H

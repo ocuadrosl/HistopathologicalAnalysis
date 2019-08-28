@@ -9,6 +9,12 @@
 #include "minmaxrgbimagecalculator.h"
 #include "math.h"
 
+
+/*
+rescale rgb values
+
+*/
+
 template<typename inputPixelType, typename outputPixelType>
 class RescaleRGBImageFilter
 {
@@ -61,6 +67,7 @@ private:
 };
 
 template class RescaleRGBImageFilter<unsigned int, unsigned int>;
+template class RescaleRGBImageFilter<unsigned char, unsigned char>;
 template class RescaleRGBImageFilter<float, unsigned int>;
 template class RescaleRGBImageFilter<unsigned int, float>;
 template class RescaleRGBImageFilter<float, float>;

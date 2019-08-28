@@ -250,7 +250,7 @@ void ROIExtractor<pixelComponentT>::connectedComponents()
     divideDensityIntoHighAndLow(highDensity, lowDensity);
 
     //delete it
-    VTKViewer<pixelComponentT>::visualizeGray(highDensity, "High density");
+    //VTKViewer<pixelComponentT>::visualizeGray(highDensity, "High density");
     //VTKViewer<pixelComponentT>::visualizeGray(lowDensity, "Low density");
 
     //connected components
@@ -265,7 +265,8 @@ void ROIExtractor<pixelComponentT>::connectedComponents()
     typename RGBFilterType::Pointer rgbFilter = RGBFilterType::New();
     rgbFilter->SetInput( connectedComponentImageFilter->GetOutput() );
     rgbFilter->Update();
-    VTKViewer<pixelComponentT>::visualizeRGB(rgbFilter->GetOutput(), "connected");
+
+    //VTKViewer<pixelComponentT>::visualizeRGB(rgbFilter->GetOutput(), "connected");
 
 
     //labelImage to labelMap
@@ -278,9 +279,10 @@ void ROIExtractor<pixelComponentT>::connectedComponents()
     //label map to gray images
     std::unique_ptr< LabelMapToMultipleGrayImagesFilter<pixelComponentT>> labelMapToImagesFilter(new LabelMapToMultipleGrayImagesFilter<pixelComponentT>());
     labelMapToImagesFilter->setLabelMap(labelImageToLabelMapFilter->GetOutput());
-    labelMapToImagesFilter->createImages();
-
-
+    labelMapToImagesFilter->setGrayImage(grayImage);
+    labelMapToImagesFilter->extractROIs();
+    //labelMapToImagesFilter->resizeROIs(4);
+    labelMapToImagesFilter->writeROIs("/home/oscar/roi/");
 
 }
 

@@ -93,7 +93,8 @@ private:
 };
 
 template class ROIExtractor<unsigned int>;
-//template class ROIExtractor<unsigned char>;
+template class ROIExtractor<short>;
+template class ROIExtractor<unsigned char>;
 
 
 #endif // ROIEXTRACTOR_H

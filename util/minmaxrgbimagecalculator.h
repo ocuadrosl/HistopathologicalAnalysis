@@ -40,6 +40,7 @@ private:
 
 template class MinMaxRGBImageCalculator<float>;
 template class MinMaxRGBImageCalculator<unsigned int>;
+template class MinMaxRGBImageCalculator<unsigned char>;
 
 
 #endif // MINMAXRGBIMAGECALCULATOR_H

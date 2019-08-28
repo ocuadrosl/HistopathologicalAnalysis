@@ -24,7 +24,8 @@ public:
 };
 
 template class LabelMapToMultipleRGBImagesFilter<unsigned int>;
-template class LabelMapToMultipleRGBImagesFilter<float>;
+template class LabelMapToMultipleRGBImagesFilter<unsigned char>;
+template class LabelMapToMultipleRGBImagesFilter<short>;
 
 
 #endif // LABELMAPTOMULTIPLERGBIMAGESFILTER_H

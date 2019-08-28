@@ -47,6 +47,7 @@ private:
 };
 
 template class OverlayRGBImageFilter<unsigned int>;
-//template class OverlayRGBImageFilter<unsigned char>;
+template class OverlayRGBImageFilter<unsigned char>;
+template class OverlayRGBImageFilter<short>;
 
 #endif // OVERLAYRGBIMAGEFILTER_H
