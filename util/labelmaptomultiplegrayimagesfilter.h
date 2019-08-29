@@ -11,11 +11,19 @@
 #include <vector>
 #include <itkCastImageFilter.h>
 
+//local includes
+
+#include "../util/customprint.h"
+
 //for testing
 #include "../util/vtkviewer.h"
 
+/*
 
-template<typename pixelComponentT>
+
+*/
+//TODO implement this class to support gray and rgb images-> template it!!
+template<typename pixelComponentT=unsigned int>
 class LabelMapToMultipleGrayImagesFilter
 {
 public:
@@ -30,29 +38,30 @@ public:
     using labelMapP    = typename labelMapT::Pointer;
 
     //vector of gray scale images
-    using roisT = std::vector<grayImageP>;
+    using subImagesVT = std::vector<grayImageP>;
+
+    //setters
+    void setLabelMap (labelMapP  labelMap);
+    void setGrayImage(grayImageP image);
+
+    //getters
+    subImagesVT getSubImages() const;
+
+
+    //process
+    void extractSubImages();
+    void resizeSubImages(unsigned shrinkFactor=2);
+
+    void writeSubImages(std::string directory,  std::string prefix = "sub-image" ,std::string format="tiff");
 
     LabelMapToMultipleGrayImagesFilter();
 
-
-    //setters
-    void setLabelMap(labelMapP labelMap);
-    void setGrayImage(grayImageP image);
-
-    //process
-    void extractROIs();
-    void resizeROIs(unsigned shrinkFactor=2);
-
-    void writeROIs(std::string directory);
-
-
-
 private:
 
-    roisT    roiImages;
-    labelMapP  labelMap;
-    grayImageP inputImage;
-    unsigned   sizeThreshold;
+    subImagesVT subImages;
+    labelMapP   labelMap;
+    grayImageP  inputImage;
+    unsigned    sizeThreshold;
 
 
 

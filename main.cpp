@@ -28,17 +28,29 @@ int main(/*int argc, char **argv*/)
     reader->read(outFileName);
     auto image = reader->getRGBImage();
 
-   //VTKViewer<>::visualizeRGB(image, "Input Image RGB");
+    //VTKViewer<>::visualizeRGB(image, "Input Image RGB");
+
 
     //ROI extraction
     std::unique_ptr<ROIExtractor<>> roiExtractor(new ROIExtractor<>());
     roiExtractor->setImage(image);
     roiExtractor->setDensityThreshold(70);
-    roiExtractor->extract();
+    roiExtractor->computeDensity();
+    roiExtractor->densityToColorMap();
+    roiExtractor->blendColorMap();
+    roiExtractor->computeConnectedComponents();
 
-
+    //writing ROIs
+    std::unique_ptr<LabelMapToMultipleGrayImagesFilter<>> labelMapToImagesFilter(new LabelMapToMultipleGrayImagesFilter<>());
+    labelMapToImagesFilter->setLabelMap(roiExtractor->getConnectedComponents());
+    labelMapToImagesFilter->setGrayImage(roiExtractor->getGrayImage());
+    labelMapToImagesFilter->extractSubImages();
+    labelMapToImagesFilter->resizeSubImages(2);
+    labelMapToImagesFilter->writeSubImages("/home/oscar/roi", "roi");
 
     return 0;
+
+
     /*
     QApplication app (argc, argv);
 

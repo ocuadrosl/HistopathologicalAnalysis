@@ -16,12 +16,12 @@ void LabelMapToMultipleGrayImagesFilter<pixelComponentT>::setLabelMap( labelMapP
 }
 
 template<typename pixelComponentT>
-void LabelMapToMultipleGrayImagesFilter<pixelComponentT>::extractROIs()
+void LabelMapToMultipleGrayImagesFilter<pixelComponentT>::extractSubImages()
 {
 
+    IO::printWait("Extracting sub-images");
+
     labelObjectT * labelObj;
-
-
 
     //white color
     const auto white = itk::NumericTraits<pixelComponentT>::Zero+255;
@@ -50,9 +50,12 @@ void LabelMapToMultipleGrayImagesFilter<pixelComponentT>::extractROIs()
 
         }
 
-        roiImages.push_back(roi);
+        subImages.push_back(roi);
         //VTKViewer<pixelComponentT>::visualizeGray(*roiImages.rbegin(), "ROI");
     }
+
+
+    IO::printOK("Extracting sub-images");
 
 
 }
@@ -67,15 +70,15 @@ void LabelMapToMultipleGrayImagesFilter<pixelComponentT>::setGrayImage(grayImage
 
 
 template<typename pixelComponentT>
-void LabelMapToMultipleGrayImagesFilter<pixelComponentT>::resizeROIs(unsigned shrinkFactor)
+void LabelMapToMultipleGrayImagesFilter<pixelComponentT>::resizeSubImages(unsigned shrinkFactor)
 {
 
     using shrinkImageFilterT = itk::ShrinkImageFilter< grayImageType, grayImageType>;
 
 
-    roisT resizedROIs;
+    subImagesVT resizedROIs;
 
-    for(typename roisT::iterator it = roiImages.begin();  it != roiImages.end(); ++it)
+    for(typename subImagesVT::iterator it = subImages.begin();  it != subImages.end(); ++it)
     {
 
 
@@ -87,16 +90,19 @@ void LabelMapToMultipleGrayImagesFilter<pixelComponentT>::resizeROIs(unsigned sh
 
     }
 
+    IO::printOK("Resizing sub-images");
+
 
 }
 
 
 template<typename pixelComponentT>
-void LabelMapToMultipleGrayImagesFilter<pixelComponentT>::writeROIs(std::string directory)
+void
+LabelMapToMultipleGrayImagesFilter<pixelComponentT>::writeSubImages(std::string directory ,std::string prefix ,std::string format)
 {
 
 
-    using imageChar = itk::Image< unsigned char, 2 >;
+    using imageChar  = itk::Image< unsigned char, 2 >;
     using WriterType = itk::ImageFileWriter<imageChar>;
     typename WriterType::Pointer writer = WriterType::New();
 
@@ -108,21 +114,18 @@ void LabelMapToMultipleGrayImagesFilter<pixelComponentT>::writeROIs(std::string 
 
 
     //TIFF only supports short, float, and char types
-
     using castFilterCastType = itk::CastImageFilter< grayImageType, imageChar >;
     typename castFilterCastType::Pointer castFilter = castFilterCastType::New();
 
-
-
     std::string fileName="";
-    unsigned roiI = 1; //roi index
-    for(typename roisT::iterator it = roiImages.begin();  it != roiImages.end(); ++it, ++roiI)
+    unsigned subI = 1; //roi index
+    for(typename subImagesVT::iterator it = subImages.begin();  it != subImages.end(); ++it, ++subI)
     {
 
 
-        fileName = "roi_"+std::to_string(roiI) + ".tiff";
+        fileName = prefix+"_"+std::to_string(subI) + "."+format;
 
-        std::cout<<directory+fileName<<std::endl;
+        //std::cout<<directory+fileName<<std::endl;
 
         castFilter->SetInput(*it);
         castFilter->Update();
@@ -145,14 +148,18 @@ void LabelMapToMultipleGrayImagesFilter<pixelComponentT>::writeROIs(std::string 
     }
 
 
-
-
-
+    IO::printOK("Writing sub-images");
 
 }
 
 
+template<typename pixelComponentT>
+typename LabelMapToMultipleGrayImagesFilter<pixelComponentT>::subImagesVT
+LabelMapToMultipleGrayImagesFilter<pixelComponentT>::getSubImages() const
+{
+    return subImages;
 
+}
 
 
 

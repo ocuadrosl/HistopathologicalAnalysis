@@ -17,7 +17,7 @@ void  ROIExtractor<pixelComponentT>::setKernelSize(short kernelSize)
 
 
 template<typename pixelComponentT>
-void ROIExtractor<pixelComponentT>::setImage(rgbImagePointer inputImage)
+void ROIExtractor<pixelComponentT>::setImage(rgbImageP inputImage)
 {
 
     this->inputImage = inputImage;
@@ -25,14 +25,16 @@ void ROIExtractor<pixelComponentT>::setImage(rgbImagePointer inputImage)
 
 
 template<typename pixelComponentT>
-void ROIExtractor<pixelComponentT>::extract()
+void ROIExtractor<pixelComponentT>::computeDensity(bool showResult)
 {
+
+    //IO::printWait("Computing density");
 
     //rgb to gray image, otsu does not work with rgb images
     rgbToGrayImage();
 
     //Otsu threshold
-    grayImagePointer binaryImage =  grayImageType::New();
+    grayImageP binaryImage =  grayImageType::New();
     binaryImage = otsuThreshold();
 
 
@@ -62,7 +64,7 @@ void ROIExtractor<pixelComponentT>::extract()
     iteratorIndexType itI(binaryImage, binaryImage->GetRequestedRegion()); // inputImage iterator
     iteratorIndexType itD(densityImage, densityImage->GetRequestedRegion()); //densityImage iterator
 
-    //to void unsigned long  - signed long comparison
+    //to avoid unsigned long  - signed long comparison
     std::vector<long> imageSize(2);
     imageSize[0] = static_cast<long>(binaryImage->GetRequestedRegion().GetSize()[0]);
     imageSize[1] = static_cast<long>(binaryImage->GetRequestedRegion().GetSize()[1]);
@@ -112,22 +114,29 @@ void ROIExtractor<pixelComponentT>::extract()
 
     }
 
+    IO::printOK("Computing density");
+
     //visualizing
+    if(showResult)
+    {
+        VTKViewer<pixelComponentT>::visualizeGray(densityImage, "Density");
+    }
 
-   // VTKViewer<pixelComponentT>::visualizeGray(densityImage, "Density");
 
-    //todo these functions do not go here...
-
-    //densityToColorMap();
-    //blendColorMap();
-    connectedComponents();
 
 }
 
 
 template<typename pixelComponentT>
-void ROIExtractor<pixelComponentT>::blendColorMap()
+void ROIExtractor<pixelComponentT>::blendColorMap(bool showResult)
 {
+
+    if(colorMapImage.IsNull())
+    {
+        IO::printFail("Blending colormap", "Call densityToColorMap before");
+        return;
+
+    }
 
     std::unique_ptr<OverlayRGBImageFilter<pixelComponentT>> overlayImageFilter( new OverlayRGBImageFilter<pixelComponentT>());
     overlayImageFilter->setBackgroundImage(inputImage);
@@ -135,18 +144,27 @@ void ROIExtractor<pixelComponentT>::blendColorMap()
     overlayImageFilter->setAlpha(0.8);
     overlayImageFilter->softLigh();
 
+    IO::printOK("Blending colormap");
 
-    //VTKViewer<pixelComponentT>::visualizeRGB(inputImage, "Input image");
-    //VTKViewer<pixelComponentT>::visualizeRGB(colorMapImage, "Colormap");
+    if(showResult)
+    {
 
-    VTKViewer<pixelComponentT>::visualizeRGB(overlayImageFilter->getOutput(), "Colormap image");
+        VTKViewer<pixelComponentT>::visualizeRGB(overlayImageFilter->getOutput(), "Blended colormap");
+    }
 
 
 }
 
 template<typename pixelComponentT>
-void ROIExtractor<pixelComponentT>::densityToColorMap()
+void ROIExtractor<pixelComponentT>::densityToColorMap(bool showResult)
 {
+
+    if(densityImage.IsNull())
+    {
+        IO::printFail("Density to colormap", "Call computeDensity before");
+        return;
+
+    }
 
 
     //Jet colormap
@@ -181,7 +199,13 @@ void ROIExtractor<pixelComponentT>::densityToColorMap()
         ++outputIt;
     }
 
-    VTKViewer<pixelComponentT>::visualizeRGB(colorMapImage, "Colormap");
+
+    IO::printOK("Density to colormap");
+
+    if(showResult)
+    {
+        VTKViewer<pixelComponentT>::visualizeRGB(colorMapImage, "Colormap");
+    }
 
 
 
@@ -193,7 +217,7 @@ void ROIExtractor<pixelComponentT>::densityToColorMap()
 
 
 template<typename pixelComponentT>
-typename ROIExtractor<pixelComponentT>::grayImagePointer
+typename ROIExtractor<pixelComponentT>::grayImageP
 ROIExtractor<pixelComponentT>::otsuThreshold()
 {
 
@@ -230,7 +254,8 @@ void ROIExtractor<pixelComponentT>::rgbToGrayImage()
 }
 
 template<typename pixelComponentT>
-auto ROIExtractor<pixelComponentT>::getColorMap() const
+typename ROIExtractor<pixelComponentT>::rgbImageP
+ROIExtractor<pixelComponentT>::getColorMap() const
 {
      return colorMapImage;
 }
@@ -242,11 +267,11 @@ void ROIExtractor<pixelComponentT>::setDensityThreshold(pixelComponentT threshol
 }
 
 template<typename pixelComponentT>
-void ROIExtractor<pixelComponentT>::connectedComponents()
+void ROIExtractor<pixelComponentT>::computeConnectedComponents(bool showResult)
 {
 
     //divide density into high and low density images
-    grayImagePointer highDensity, lowDensity;
+    grayImageP highDensity, lowDensity;
     divideDensityIntoHighAndLow(highDensity, lowDensity);
 
     //delete it
@@ -260,35 +285,33 @@ void ROIExtractor<pixelComponentT>::connectedComponents()
     connectedComponentImageFilter->SetInput(highDensity);
 
 
-    //Just to visualize, delete it
-    using RGBFilterType = itk::LabelToRGBImageFilter<grayImageType, rgbImageType>;
-    typename RGBFilterType::Pointer rgbFilter = RGBFilterType::New();
-    rgbFilter->SetInput( connectedComponentImageFilter->GetOutput() );
-    rgbFilter->Update();
-
-    //VTKViewer<pixelComponentT>::visualizeRGB(rgbFilter->GetOutput(), "connected");
-
-
     //labelImage to labelMap
     using LabelImageToLabelMapFilterType = itk::LabelImageToLabelMapFilter <grayImageType>;
-    typename LabelImageToLabelMapFilterType::Pointer labelImageToLabelMapFilter = LabelImageToLabelMapFilterType::New ();
+    typename LabelImageToLabelMapFilterType::Pointer labelImageToLabelMapFilter = LabelImageToLabelMapFilterType::New();
     labelImageToLabelMapFilter->SetInput(connectedComponentImageFilter->GetOutput());
     labelImageToLabelMapFilter->Update();
+    connectedComponents = labelImageToLabelMapFilter->GetOutput();
 
 
-    //label map to gray images
-    std::unique_ptr< LabelMapToMultipleGrayImagesFilter<pixelComponentT>> labelMapToImagesFilter(new LabelMapToMultipleGrayImagesFilter<pixelComponentT>());
-    labelMapToImagesFilter->setLabelMap(labelImageToLabelMapFilter->GetOutput());
-    labelMapToImagesFilter->setGrayImage(grayImage);
-    labelMapToImagesFilter->extractROIs();
-    //labelMapToImagesFilter->resizeROIs(4);
-    labelMapToImagesFilter->writeROIs("/home/oscar/roi/");
+    IO::printOK("Computing connected components");
+
+    if(showResult)
+    {
+        using RGBFilterType = itk::LabelToRGBImageFilter<grayImageType, rgbImageType>;
+        typename RGBFilterType::Pointer rgbFilter = RGBFilterType::New();
+        rgbFilter->SetInput( connectedComponentImageFilter->GetOutput() );
+        rgbFilter->Update();
+        VTKViewer<pixelComponentT>::visualizeRGB(rgbFilter->GetOutput(), "Connected components");
+    }
+
+
+
 
 }
 
 
 template<typename pixelComponentT>
-void ROIExtractor<pixelComponentT>::divideDensityIntoHighAndLow(grayImagePointer &highDensity, grayImagePointer &lowDensity)
+void ROIExtractor<pixelComponentT>::divideDensityIntoHighAndLow(grayImageP &highDensity, grayImageP &lowDensity)
 {
 
     highDensity  = grayImageType::New();
@@ -335,12 +358,33 @@ void ROIExtractor<pixelComponentT>::divideDensityIntoHighAndLow(grayImagePointer
 }
 
 template<typename pixelComponentT>
-void ROIExtractor<pixelComponentT>:: writeComponents(std::string directory)
+typename ROIExtractor<pixelComponentT>::labelMapP
+ROIExtractor<pixelComponentT>::getConnectedComponents() const
 {
-
-
-
+    return connectedComponents;
 }
+
+template<typename pixelComponentT>
+typename ROIExtractor<pixelComponentT>::grayImageP
+ROIExtractor<pixelComponentT>::getGrayImage() const
+{
+    return grayImage;
+}
+
+
+//template<typename pixelComponentT>
+//void ROIExtractor<pixelComponentT>:: writeComponents(std::string directory)
+//{
+/*
+    //label map to gray images
+    std::unique_ptr< LabelMapToMultipleGrayImagesFilter<pixelComponentT>> labelMapToImagesFilter(new LabelMapToMultipleGrayImagesFilter<pixelComponentT>());
+    labelMapToImagesFilter->setLabelMap(labelImageToLabelMapFilter->GetOutput());
+    labelMapToImagesFilter->setGrayImage(grayImage);
+    labelMapToImagesFilter->extractROIs();
+    //labelMapToImagesFilter->resizeROIs(4);
+    labelMapToImagesFilter->writeROIs("/home/oscar/roi/");
+*/
+//}
 
 
 
