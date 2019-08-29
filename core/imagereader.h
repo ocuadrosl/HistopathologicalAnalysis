@@ -7,6 +7,9 @@
 #include "itkImageFileReader.h"
 #include "itkRGBToLuminanceImageFilter.h"
 
+//local includes
+#include "../util/customprint.h"
+
 template< typename  pixelType = unsigned int >
 class ImageReader
 {

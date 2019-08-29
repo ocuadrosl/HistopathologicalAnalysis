@@ -1,19 +1,24 @@
 #include <iostream>
 #include <QApplication>
 #include "mainwindow.h"
-#include "core/imagereader.h"
 #include "itkImage.h"
 #include "QuickView.h"
+
+//local includes
+#include "core/imagereader.h"
 #include "core/roiextractor.h"
 #include "util/vtkviewer.h"
+#include "core/hestainfilter.h"
 
 int main(/*int argc, char **argv*/)
 {
 
-    //std::string inFileName = "/home/oscar/data/biopsy/Dataset\\ 1/B\\ 2009\\ 8854/B\\ 2009\\ 8854\\ A.vsi";
-    std::string inFileName ="/home/oscar/data/biopsy/B2046-18\\ B20181107/Image01B2046-18\\ B.vsi";
-    std::string outFileName = "tmpImage.tiff";
-    short magnification= 5;
+    std::string inFileName = "/home/oscar/data/biopsy/Dataset\\ 1/B\\ 2009\\ 8854/B\\ 2009\\ 8854\\ A.vsi";
+    std::string inputNoisyFile = "/home/oscar/data/biopsy/Dataset\\ 1/B\\ 2013\\ 1363/B\\ 2017\\ 7051\\ REVISAO\\ DA\\ 2013\\ 1363/FolderB\\ 2017\\ 7051\\ NHE/Image_Overview.vsi";
+    //std::string inFileName ="/home/oscar/data/biopsy/B2046-18\\ B20181107/Image01B2046-18\\ B.vsi";
+    //std::string inFileName ="/home/oscar/data/biopsy/B2046-18\\ B20181107/Image01B2046-18\\ B.vsi";
+    std::string outFileName = "/home/oscar/src/HistopathologicalAnalysis/output/tmpImage.tiff";
+    //short magnification= 5;
 
 
     //usings
@@ -23,12 +28,22 @@ int main(/*int argc, char **argv*/)
 
     std::unique_ptr<ImageReader<>> reader(new ImageReader<>());
 
-    //auto image = reader->readVSI(inFileName, outFileName, magnification);
-
+    //reader->readVSI(inputNoisyFile, outFileName, 5);
     reader->read(outFileName);
+
     auto image = reader->getRGBImage();
 
     //VTKViewer<>::visualizeRGB(image, "Input Image RGB");
+
+
+    //H&E color normalization HERE
+
+    std::unique_ptr<HEStainFilter<>> stainFilter(new HEStainFilter<>());
+    stainFilter->setImage(image);
+    stainFilter->denoise(true);
+
+
+    return 0;
 
 
     //ROI extraction

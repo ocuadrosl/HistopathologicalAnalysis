@@ -9,14 +9,23 @@ ImageReader<pixelType>::ImageReader(): rgbImage(nullptr)
 template< typename  pixelType>
 void ImageReader<pixelType>::readVSI(std::string inFileName, std::string outFileName,  short outMagnification)
 {
-    std::string pyCommand = "python  /home/oscar/src/HistopathologicalAnalysis/python/vsiReader.py "+inFileName+" "+outFileName+" "+std::to_string(outMagnification);
+
+
+    IO::printWait("Reading VSI file", "a few minutes");
+    std::string pyCommand = "python  /home/oscar/src/HistopathologicalAnalysis/python/vsiReader.py "+
+            inFileName+" "+
+            outFileName+" "+std::to_string(outMagnification);
 
     std::system(pyCommand.c_str());
 
     typename rgbReaderType::Pointer reader = rgbReaderType::New();
-    reader->SetFileName("tmpImage.tiff");
+    reader->SetFileName(outFileName);
     reader->Update();
     rgbImage =  reader->GetOutput();
+
+    IO::printOK("Reading VSI file");
+
+
 }
 
 
