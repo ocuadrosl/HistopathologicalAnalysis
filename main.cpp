@@ -14,7 +14,7 @@ int main(/*int argc, char **argv*/)
 {
 
     std::string inFileName = "/home/oscar/data/biopsy/Dataset\\ 1/B\\ 2009\\ 8854/B\\ 2009\\ 8854\\ A.vsi";
-    std::string inputNoisyFile = "/home/oscar/data/biopsy/Dataset\\ 1/B\\ 2013\\ 1363/B\\ 2017\\ 7051\\ REVISAO\\ DA\\ 2013\\ 1363/FolderB\\ 2017\\ 7051\\ NHE/Image_Overview.vsi";
+    std::string inputNoisyFile = "/home/oscar/data/biopsy/Dataset\\ 1/B\\ 2017\\ 5479/FolderB\\ 2017\\ 5479\\ F/B\\ 2017\\ 5479\\ F.vsi";
     //std::string inFileName ="/home/oscar/data/biopsy/B2046-18\\ B20181107/Image01B2046-18\\ B.vsi";
     //std::string inFileName ="/home/oscar/data/biopsy/B2046-18\\ B20181107/Image01B2046-18\\ B.vsi";
     std::string outFileName = "/home/oscar/src/HistopathologicalAnalysis/output/tmpImage.tiff";
@@ -36,23 +36,20 @@ int main(/*int argc, char **argv*/)
     //VTKViewer<>::visualizeRGB(image, "Input Image RGB");
 
 
-    //H&E color normalization HERE
+    //H&E color normalization
 
     std::unique_ptr<HEStainFilter<>> stainFilter(new HEStainFilter<>());
     stainFilter->setImage(image);
-    stainFilter->denoise(true);
-
-
-    return 0;
+    stainFilter->denoise();
 
 
     //ROI extraction
     std::unique_ptr<ROIExtractor<>> roiExtractor(new ROIExtractor<>());
-    roiExtractor->setImage(image);
+    roiExtractor->setImage(stainFilter->getOutput());
     roiExtractor->setDensityThreshold(70);
     roiExtractor->computeDensity();
     roiExtractor->densityToColorMap();
-    roiExtractor->blendColorMap();
+    roiExtractor->blendColorMap(true);
     roiExtractor->computeConnectedComponents();
 
     //writing ROIs

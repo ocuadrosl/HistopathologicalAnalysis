@@ -1,58 +1,96 @@
 #include "hestainfilter.h"
 
 
-template<typename inputPixeComponentT, typename outputPixeComponentT >
-HEStainFilter<inputPixeComponentT, outputPixeComponentT>::HEStainFilter()
+template<typename inputPixeComponentT >
+HEStainFilter<inputPixeComponentT>::HEStainFilter():
+    hueThresholdRed(60), hueThresholdBlue(180), saturationThreshold(0.7), lightnessThreshold(0.6)
 {
 
 }
 
+template<typename inputPixeComponentT >
+typename HEStainFilter<inputPixeComponentT>::rgbInputImageP
+HEStainFilter<inputPixeComponentT>::getOutput() const
+{
 
-template<typename inputPixeComponentT, typename outputPixeComponentT >
-void HEStainFilter<inputPixeComponentT, outputPixeComponentT>::denoise(bool showResult)
+    return outputImage;
+
+}
+
+template<typename inputPixeComponentT >
+void HEStainFilter<inputPixeComponentT>::denoise(bool showResult)
 {
 
 
-    //
-
-    std::unique_ptr<ColorConverterFilter<inputPixeComponentT, float>> colorConverterFilter(new ColorConverterFilter<inputPixeComponentT, float>());
+    //To HSV
+    using colorConverterFilterT = ColorConverterFilter<inputPixeComponentT, double>;
+    std::unique_ptr< colorConverterFilterT> colorConverterFilter(new colorConverterFilterT());
     colorConverterFilter->setInput(inputImage);
-    colorConverterFilter->rgbToHsv();
+    colorConverterFilter->rgbToHsl();
+    auto hsvImage = colorConverterFilter->getOutput();
+
+    //HSV typedefs
+    using hsvPixelDouble = itk::RGBPixel<double>;
+    using hsvImageDouble = itk::Image< hsvPixelDouble, 2 >;
 
 
-     itk::ImageRegionIterator< rgbInputImageT > it(inputImage  , inputImage->GetRequestedRegion());
+    outputImage = rgbInputImageT::New();
+    outputImage->SetRegions(inputImage->GetRequestedRegion());
+    outputImage->Allocate();
 
 
-     auto white = itk::NumericTraits<rgbInputPixelT>::Zero+255;
 
-     auto pixel = it.Get();
+    itk::ImageRegionConstIterator< rgbInputImageT > inputit(inputImage  , inputImage->GetRequestedRegion());
+    itk::ImageRegionConstIterator< hsvImageDouble > hslIt   (hsvImage   , hsvImage->GetRequestedRegion());
+    itk::ImageRegionIterator     < rgbInputImageT > outputit(outputImage, outputImage->GetRequestedRegion());
 
-     while(!it.IsAtEnd())
-     {
 
-        pixel = it.Get();
+    auto white = itk::NumericTraits<rgbInputPixelT>::Zero+255;
 
-        if(!( pixel.GetGreen() > 127  && pixel.GetRed() < 255 && pixel.GetRed() < 255))
+    auto pixel = inputit.Get();
+    auto hslPixel = hslIt.Get();
+
+    while(!inputit.IsAtEnd())
+    {
+
+        pixel = inputit.Get();
+        hslPixel = hslIt.Get();
+
+        if(hslPixel[0] < hueThresholdBlue ) // not in H&E color space
+        //if(hslPixel[0] > hueThresholdRed &&  hslPixel[0] < hueThresholdBlue ) // not in H&E color space
         {
-            it.Set(white);
+            outputit.Set(white);
+            //std::cout<< pixel<<"->"<<hslPixel<<std::endl;
+        }
+        else if(hslPixel[2] < lightnessThreshold &&  hslPixel[1] < saturationThreshold)
+        {
+            outputit.Set(white);
+
+        }
+        else
+        {
+            outputit.Set(pixel);
         }
 
-        ++it;
 
-     }
+        ++inputit;
+        ++hslIt;
+        ++outputit;
 
-     if(showResult)
-     {
+    }
 
-         VTKViewer<inputPixeComponentT>::visualizeRGB(inputImage, "Denoised image");
-     }
+    if(showResult)
+    {
+
+        VTKViewer<inputPixeComponentT>::visualizeRGB(outputImage, "Denoised image");
+    }
 
 }
 
 
 
-template<typename inputPixeComponentT, typename outputPixeComponentT >
-void HEStainFilter<inputPixeComponentT, outputPixeComponentT>::setImage(rgbInputImageP inputImage)
+template<typename inputPixeComponentT >
+void HEStainFilter<inputPixeComponentT>::setImage(rgbInputImageP inputImage)
 {
     this->inputImage = inputImage;
 }
