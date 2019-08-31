@@ -40,8 +40,10 @@ int main(/*int argc, char **argv*/)
 
     std::unique_ptr<HEStainFilter<>> stainFilter(new HEStainFilter<>());
     stainFilter->setImage(image);
-    stainFilter->denoise();
+    stainFilter->denoise(true);
 
+
+   //TODO otsu problem...
 
     //ROI extraction
     std::unique_ptr<ROIExtractor<>> roiExtractor(new ROIExtractor<>());
@@ -49,7 +51,7 @@ int main(/*int argc, char **argv*/)
     roiExtractor->setDensityThreshold(70);
     roiExtractor->computeDensity();
     roiExtractor->densityToColorMap();
-    roiExtractor->blendColorMap(true);
+    roiExtractor->blendColorMap();
     roiExtractor->computeConnectedComponents();
 
     //writing ROIs

@@ -221,11 +221,6 @@ typename ROIExtractor<pixelComponentT>::grayImageP
 ROIExtractor<pixelComponentT>::otsuThreshold()
 {
 
-    //rgb to grayscale, Ostu does not work with RGB images
-   // using rgbToLuminanceFilterType = itk::RGBToLuminanceImageFilter< rgbImageType, grayImageType >;
-   // typename rgbToLuminanceFilterType::Pointer rgbToLuminancefilter = rgbToLuminanceFilterType::New();
-    //rgbToLuminancefilter->SetInput( inputImage );
-
 
     using otsuType = itk::OtsuThresholdImageFilter< grayImageType, grayImageType >;
     typename otsuType::Pointer otsuFilter = otsuType::New();
@@ -235,7 +230,7 @@ ROIExtractor<pixelComponentT>::otsuThreshold()
 
     otsuFilter->Update();
 
-    //VTKViewer<pixelComponentT>::visualizeGray(otsuFilter->GetOutput(), "Otsu");
+    VTKViewer<pixelComponentT>::visualizeGray(otsuFilter->GetOutput(), "Otsu");
 
     return otsuFilter->GetOutput();
 
@@ -370,24 +365,6 @@ ROIExtractor<pixelComponentT>::getGrayImage() const
 {
     return grayImage;
 }
-
-
-//template<typename pixelComponentT>
-//void ROIExtractor<pixelComponentT>:: writeComponents(std::string directory)
-//{
-/*
-    //label map to gray images
-    std::unique_ptr< LabelMapToMultipleGrayImagesFilter<pixelComponentT>> labelMapToImagesFilter(new LabelMapToMultipleGrayImagesFilter<pixelComponentT>());
-    labelMapToImagesFilter->setLabelMap(labelImageToLabelMapFilter->GetOutput());
-    labelMapToImagesFilter->setGrayImage(grayImage);
-    labelMapToImagesFilter->extractROIs();
-    //labelMapToImagesFilter->resizeROIs(4);
-    labelMapToImagesFilter->writeROIs("/home/oscar/roi/");
-*/
-//}
-
-
-
 
 
 
