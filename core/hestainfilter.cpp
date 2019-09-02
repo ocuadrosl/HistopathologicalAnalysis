@@ -1,29 +1,29 @@
 #include "hestainfilter.h"
 
 
-template<typename inputPixeComponentT >
-HEStainFilter<inputPixeComponentT>::HEStainFilter():
+
+HEStainFilter::HEStainFilter():
     hueThresholdRed(60), hueThresholdBlue(180), saturationThreshold(0.7), lightnessThreshold(0.6)
 {
 
 }
 
-template<typename inputPixeComponentT >
-typename HEStainFilter<inputPixeComponentT>::rgbInputImageP
-HEStainFilter<inputPixeComponentT>::getOutput() const
+
+typename HEStainFilter::rgbInputImageP
+HEStainFilter::getOutput() const
 {
 
     return outputImage;
 
 }
 
-template<typename inputPixeComponentT >
-void HEStainFilter<inputPixeComponentT>::denoise(bool showResult)
+
+void HEStainFilter::denoise(bool showResult)
 {
 
 
     //To HSV
-    using colorConverterFilterT = ColorConverterFilter<inputPixeComponentT, double>;
+    using colorConverterFilterT = ColorConverterFilter<rgbInputImageT, rgbOutputImageT>;
     std::unique_ptr< colorConverterFilterT> colorConverterFilter(new colorConverterFilterT());
     colorConverterFilter->setInput(inputImage);
     colorConverterFilter->rgbToHsl();
@@ -82,15 +82,15 @@ void HEStainFilter<inputPixeComponentT>::denoise(bool showResult)
     if(showResult)
     {
 
-        VTKViewer<inputPixeComponentT>::visualizeRGB(outputImage, "Denoised image");
+        VTKViewer<inputPixelComponentT>::visualizeRGB(outputImage, "Denoised image");
     }
 
 }
 
 
 
-template<typename inputPixeComponentT >
-void HEStainFilter<inputPixeComponentT>::setImage(rgbInputImageP inputImage)
+
+void HEStainFilter::setImage(rgbInputImageP inputImage)
 {
     this->inputImage = inputImage;
 }

@@ -14,33 +14,32 @@
 #include "../util/customprint.h"
 
 
-template<typename inputPixelComponentT  = unsigned int, typename outputPixelComponentT = float>
+
+//template<typename inputPixelComponentT = unsigned int, typename outputPixelComponentT = double>
+template <typename inputImageT, typename outputImageT>
 class ColorConverterFilter
 {
 public:
 
 
     // RGB type  alias
-    using inputPixelT = itk::RGBPixel<inputPixelComponentT>;
-    using inputImageT = itk::Image< inputPixelT, 2 >;
-    using inputImageP =   typename  inputImageT::Pointer;
+    using inputPixelT = typename inputImageT::PixelType;
+    using inputImageP = typename inputImageT::Pointer;
 
     // RGB type  alias
-    using outputPixelT = itk::RGBPixel<outputPixelComponentT>;
-    using outputImageT = itk::Image< outputPixelT, 2 >;
-    using outputImageP =   typename  outputImageT::Pointer;
+    using outputPixelT = typename outputImageT::PixelType;
+    using outputPixelComponentT  = typename outputPixelT::ComponentType;
+    using outputImageP = typename outputImageT::Pointer;
 
 
     //setters
-
     void setInput(inputImageP inputImage);
 
     //getters
-
     outputImageP getOutput();
 
     void rgbToHsv();
-     void rgbToHsl();
+    void rgbToHsl();
 
 
     ColorConverterFilter();
@@ -53,9 +52,7 @@ private:
 
 };
 
-
-
-template  class ColorConverterFilter<unsigned int, float>;
-template  class ColorConverterFilter<unsigned int, double>;
+template  class ColorConverterFilter<itk::Image<itk::RGBPixel<unsigned>, 2>, itk::Image<itk::RGBPixel<double>, 2>>;
+template  class ColorConverterFilter<itk::Image<itk::RGBPixel<unsigned>, 2>, itk::Image<itk::RGBPixel<float>, 2>>;
 
 #endif // COLORCONVERTERFILTER_H

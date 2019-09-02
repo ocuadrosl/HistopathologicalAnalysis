@@ -7,47 +7,47 @@
 #include <itkImageRegionIterator.h>
 #include "rescalergbimagefilter.h"
 
-template<typename pixelType = unsigned int>
+template<typename imageT>
 class OverlayRGBImageFilter
 {
 public:
 
     // RGB type  alias
-    using rgbPixelType = itk::RGBPixel<pixelType>;
-    using rgbImageType = itk::Image< rgbPixelType, 2 >;
-    using rgbImagePointer  =   typename  rgbImageType::Pointer;
+
+    using rgbPixelT     = typename imageT::PixelType;
+    using rgbImageP  = typename  imageT::Pointer;
 
     OverlayRGBImageFilter();
 
     //setters
-    void setBackgroundImage(rgbImagePointer backGroundImage);
-    void setForegroundImage(rgbImagePointer foreGroundImage);
-    void setAlpha(float alpha);
+    void setBackgroundImage(rgbImageP backGroundImage);
+    void setForegroundImage(rgbImageP foreGroundImage);
+    void setAlpha(double alpha);
 
     //process
     void overlay();
     void softLigh();
 
     //getters
-    rgbImagePointer getOutput() const;
+    rgbImageP getOutput() const;
 
 
 
 private:
 
-   rgbImagePointer backgroundImage;
-   rgbImagePointer foregroundImage;
-   rgbImagePointer outputImage;
+   rgbImageP backgroundImage;
+   rgbImageP foregroundImage;
+   rgbImageP outputImage;
 
-   float alpha;
+   double alpha;
 
 
 
 
 };
 
-template class OverlayRGBImageFilter<unsigned int>;
-template class OverlayRGBImageFilter<unsigned char>;
-template class OverlayRGBImageFilter<short>;
+template class OverlayRGBImageFilter< itk::Image< itk::RGBPixel<double>       , 2> >;
+template class OverlayRGBImageFilter< itk::Image< itk::RGBPixel<unsigned int> , 2> >;
+template class OverlayRGBImageFilter< itk::Image< itk::RGBPixel<unsigned char>, 2> >;
 
 #endif // OVERLAYRGBIMAGEFILTER_H

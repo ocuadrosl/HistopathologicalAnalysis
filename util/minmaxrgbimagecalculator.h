@@ -6,25 +6,31 @@
 #include <itkImageRegionConstIterator.h>
 
 
-template<typename pixelType>
+
+/*
+
+
+*/
+template<typename imageT>
 class MinMaxRGBImageCalculator
 {
 public:
 
-    // RGB type global alias
-    using rgbInputPixelType = itk::RGBPixel<pixelType>;
-    using rgbInputImageType = itk::Image< rgbInputPixelType, 2 >;
-    using rgbInputImagePointer = typename  rgbInputImageType::Pointer;
+    //Suffixes: T = type, P = pointer, Comp = Component
+
+    using rgbPixelT  = typename imageT::PixelType;
+    using pixelCompT = typename rgbPixelT::ComponentType;
+    using rgbImageP  = typename imageT::Pointer;
 
     //getters
-    void setInput(const rgbInputImagePointer inputImage);
+    void setInput(const rgbImageP inputImage);
 
     //process
     void calculate();
 
     //setters
-    rgbInputPixelType getMinValue() const;
-    rgbInputPixelType getMaxValue() const;
+    rgbPixelT getMinValue() const;
+    rgbPixelT getMaxValue() const;
 
 
     MinMaxRGBImageCalculator();
@@ -32,15 +38,16 @@ public:
 
 private:
 
-    rgbInputImagePointer inputImage;
-    rgbInputPixelType minOutputValue;
-    rgbInputPixelType maxOutputValue;
+    rgbImageP inputImage;
+    rgbPixelT minOutputValue;
+    rgbPixelT maxOutputValue;
 
 };
 
-template class MinMaxRGBImageCalculator<float>;
-template class MinMaxRGBImageCalculator<unsigned int>;
-template class MinMaxRGBImageCalculator<unsigned char>;
+template class MinMaxRGBImageCalculator< itk::Image< itk::RGBPixel<double>       , 2> >;
+template class MinMaxRGBImageCalculator< itk::Image< itk::RGBPixel<unsigned int> , 2> >;
+template class MinMaxRGBImageCalculator< itk::Image< itk::RGBPixel<unsigned char>, 2> >;
+
 
 
 #endif // MINMAXRGBIMAGECALCULATOR_H

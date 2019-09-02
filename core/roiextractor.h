@@ -28,13 +28,15 @@
 
 /*
 */
-template<typename pixelComponentT = unsigned int>
+
 class ROIExtractor
 {
 public:
 
     //suffix T = Type
     //syffix P = Pointer
+
+    using pixelComponentT = unsigned int;
 
     // RGB type  alias
     using rgbPixelType = itk::RGBPixel<pixelComponentT>;
@@ -87,10 +89,6 @@ private:
     void rgbToGrayImage();
 
 };
-
-template class ROIExtractor<unsigned int>;
-template class ROIExtractor<short>;
-template class ROIExtractor<unsigned char>;
 
 
 #endif // ROIEXTRACTOR_H

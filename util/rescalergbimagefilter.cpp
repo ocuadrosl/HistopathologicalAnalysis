@@ -30,7 +30,7 @@ void RescaleRGBImageFilter<inputPixelType, outputPixelType>::rescaleAuto()
 
     //compute min and max inputImage values
 
-    using minMaxRGBImageCalculatorType = MinMaxRGBImageCalculator<inputPixelType>;
+    using minMaxRGBImageCalculatorType = MinMaxRGBImageCalculator<rgbInputImageType>;
     std::unique_ptr<minMaxRGBImageCalculatorType>  minMaxRGBImageCalculator(new minMaxRGBImageCalculatorType());
     minMaxRGBImageCalculator->setInput(inputImage);
     minMaxRGBImageCalculator->calculate();

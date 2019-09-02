@@ -1,54 +1,54 @@
 #include "overlayrgbimagefilter.h"
-template<typename pixelType>
-OverlayRGBImageFilter<pixelType>::OverlayRGBImageFilter(): alpha(0.5)
+template<typename imageT>
+OverlayRGBImageFilter<imageT>::OverlayRGBImageFilter(): alpha(0.5)
 {
 
 }
 
-template<typename pixelType>
-void OverlayRGBImageFilter<pixelType>::setBackgroundImage(rgbImagePointer backgroundImage)
+template<typename imageT>
+void OverlayRGBImageFilter<imageT>::setBackgroundImage(rgbImageP backgroundImage)
 {
     this->backgroundImage = backgroundImage;
 }
 
 
-template<typename pixelType>
-void OverlayRGBImageFilter<pixelType>::setForegroundImage(rgbImagePointer foregroundImage)
+template<typename imageT>
+void OverlayRGBImageFilter<imageT>::setForegroundImage(rgbImageP foregroundImage)
 {
     this->foregroundImage = foregroundImage;
 }
 
 
-template<typename pixelType>
-typename OverlayRGBImageFilter<pixelType>::rgbImagePointer
-OverlayRGBImageFilter<pixelType>::getOutput() const
+template<typename imageT>
+typename OverlayRGBImageFilter<imageT>::rgbImageP
+OverlayRGBImageFilter<imageT>::getOutput() const
 {
     return outputImage;
 }
-template<typename pixelType>
-void OverlayRGBImageFilter<pixelType>::setAlpha(float alpha)
+template<typename imageT>
+void OverlayRGBImageFilter<imageT>::setAlpha(double alpha)
 {
 
     this->alpha = alpha;
 
 }
 
-template<typename pixelType>
-void OverlayRGBImageFilter<pixelType>::softLigh()
+template<typename imageT>
+void OverlayRGBImageFilter<imageT>::softLigh()
 {
 
     //allocate output image
     if(outputImage.IsNull())
     {
-        outputImage  = rgbImageType::New();
+        outputImage  = imageT::New();
         outputImage->SetRegions(backgroundImage->GetRequestedRegion());
         outputImage->Allocate();
     }
 
     //create iterators
-    itk::ImageRegionConstIterator< rgbImageType > backIt(backgroundImage, backgroundImage->GetRequestedRegion());
-    itk::ImageRegionConstIterator< rgbImageType > foreIt(foregroundImage, foregroundImage->GetRequestedRegion());
-    itk::ImageRegionIterator< rgbImageType >     outputIt(outputImage, outputImage->GetRequestedRegion());
+    itk::ImageRegionConstIterator<imageT> backIt  (backgroundImage, backgroundImage->GetRequestedRegion());
+    itk::ImageRegionConstIterator<imageT> foreIt  (foregroundImage, foregroundImage->GetRequestedRegion());
+    itk::ImageRegionIterator     <imageT> outputIt(outputImage    , outputImage    ->GetRequestedRegion());
 
 
     using rgbPixelFloat = itk::RGBPixel<float>;
@@ -89,7 +89,7 @@ void OverlayRGBImageFilter<pixelType>::softLigh()
         }
 
 
-        outputIt.Set(static_cast<rgbPixelType>(outputPixelFloat*255));
+        outputIt.Set(static_cast<rgbPixelT>(outputPixelFloat*255));
 
         ++backIt;
         ++foreIt;
@@ -101,24 +101,24 @@ void OverlayRGBImageFilter<pixelType>::softLigh()
 
 
 
-template<typename pixelType>
-void OverlayRGBImageFilter<pixelType>:: overlay()
+template<typename imageT>
+void OverlayRGBImageFilter<imageT>:: overlay()
 {
     if(outputImage.IsNull())
     {
-        outputImage  = rgbImageType::New();
+        outputImage  = imageT::New();
         outputImage->SetRegions(backgroundImage->GetRequestedRegion());
         outputImage->Allocate();
     }
 
 
     //create iterators
-    itk::ImageRegionConstIterator< rgbImageType > backIt(backgroundImage, backgroundImage->GetRequestedRegion());
-    itk::ImageRegionConstIterator< rgbImageType > foreIt(foregroundImage, foregroundImage->GetRequestedRegion());
-    itk::ImageRegionIterator< rgbImageType >     outputIt(outputImage, outputImage->GetRequestedRegion());
+    itk::ImageRegionConstIterator< imageT > backIt(backgroundImage, backgroundImage->GetRequestedRegion());
+    itk::ImageRegionConstIterator< imageT > foreIt(foregroundImage, foregroundImage->GetRequestedRegion());
+    itk::ImageRegionIterator< imageT >     outputIt(outputImage, outputImage->GetRequestedRegion());
 
 
-    rgbPixelType outputPixel;
+    rgbPixelT outputPixel;
 
     using rgbPixelFloat = itk::RGBPixel<float>;
     rgbPixelFloat backPixel, forePixel, outputPixelFloat;
@@ -169,7 +169,7 @@ void OverlayRGBImageFilter<pixelType>:: overlay()
         }
 
 
-        outputPixel = static_cast<rgbPixelType>(outputPixelFloat*255);
+        outputPixel = static_cast<rgbPixelT>(outputPixelFloat*255);
 
 
         outputIt.Set(outputPixel);
@@ -179,20 +179,6 @@ void OverlayRGBImageFilter<pixelType>:: overlay()
         ++outputIt;
     }
 
-    /*
-    using rescaleRGBImageFilterType = RescaleRGBImageFilter<pixelType, pixelType>;
-    std::unique_ptr<rescaleRGBImageFilterType> rescaleRGBImageFilter(new rescaleRGBImageFilterType());
-
-    rescaleRGBImageFilter->setInput(outputImage);
-    rescaleRGBImageFilter->setMinInputValue(itk::NumericTraits<rgbPixelType>::Zero);
-    rescaleRGBImageFilter->setMaxInputValue(itk::NumericTraits<rgbPixelType>::Zero+(2*255*255));
-    rescaleRGBImageFilter->setMinOutputValue(itk::NumericTraits<rgbPixelType>::Zero);
-    rescaleRGBImageFilter->setMaxOutputValue(itk::NumericTraits<rgbPixelType>::Zero+255);
-
-    rescaleRGBImageFilter->rescale();
-
-    outputImage = rescaleRGBImageFilter->getOutput();
-    */
 
 
 }

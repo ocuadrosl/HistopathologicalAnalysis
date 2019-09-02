@@ -18,16 +18,23 @@
 */
 
 //Only RGB images supported
-template<typename inputPixelComponentT=unsigned int>
+
 class HEStainFilter
 {
 public:
 
 
+    using inputPixelComponentT=unsigned int;
+
     // RGB type  alias
     using rgbInputPixelT = itk::RGBPixel<inputPixelComponentT>;
     using rgbInputImageT = itk::Image< rgbInputPixelT, 2 >;
     using rgbInputImageP = typename  rgbInputImageT::Pointer;
+
+    using rgbOutputPixelT = itk::RGBPixel<double>;
+    using rgbOutputImageT = itk::Image< rgbOutputPixelT, 2 >;
+    using rgbOutputImageP = typename  rgbOutputImageT::Pointer;
+
 
 
     //gray scale type alias
@@ -62,7 +69,5 @@ private:
 
 
 };
-
-template  class HEStainFilter<unsigned int>;
 
 #endif // HESTAINFILTER_H

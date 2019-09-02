@@ -1,32 +1,32 @@
 #include "minmaxrgbimagecalculator.h"
 
-template<typename pixelType>
-MinMaxRGBImageCalculator<pixelType>::MinMaxRGBImageCalculator()
+template<typename imageT>
+MinMaxRGBImageCalculator<imageT>::MinMaxRGBImageCalculator()
 {
 
 }
 
 
-template<typename pixelType>
-void MinMaxRGBImageCalculator<pixelType>::setInput(const rgbInputImagePointer inputImage)
+template<typename imageT>
+void MinMaxRGBImageCalculator<imageT>::setInput(const rgbImageP inputImage)
 {
     this->inputImage = inputImage;
 
 }
 
 
-template<typename pixelType>
-void MinMaxRGBImageCalculator<pixelType>::calculate()
+template<typename imageT>
+void MinMaxRGBImageCalculator<imageT>::calculate()
 {
 
-    itk::ImageRegionConstIterator< rgbInputImageType > it(inputImage, inputImage->GetRequestedRegion());
+    itk::ImageRegionConstIterator< imageT > it(inputImage, inputImage->GetRequestedRegion());
 
-    rgbInputPixelType value;
+    rgbPixelT value;
 
 
     //assign possible min and max values
     minOutputValue = it.Get();
-    maxOutputValue.Fill(static_cast<pixelType>(0));
+    maxOutputValue.Fill(static_cast<pixelCompT>(0));
 
     while (!it.IsAtEnd() )
     {
@@ -47,15 +47,15 @@ void MinMaxRGBImageCalculator<pixelType>::calculate()
 
 }
 
-template<typename pixelType>
-typename MinMaxRGBImageCalculator<pixelType>::rgbInputPixelType
-MinMaxRGBImageCalculator<pixelType>::getMinValue() const
+template<typename imageT>
+typename MinMaxRGBImageCalculator<imageT>::rgbPixelT
+MinMaxRGBImageCalculator<imageT>::getMinValue() const
 {
     return minOutputValue;
 }
-template<typename pixelType>
-typename MinMaxRGBImageCalculator<pixelType>::rgbInputPixelType
-MinMaxRGBImageCalculator<pixelType>::getMaxValue() const
+template<typename imageT>
+typename MinMaxRGBImageCalculator<imageT>::rgbPixelT
+MinMaxRGBImageCalculator<imageT>::getMaxValue() const
 {
     return maxOutputValue;
 }

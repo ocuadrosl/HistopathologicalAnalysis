@@ -10,6 +10,7 @@
 #include "math.h"
 
 
+//TODO change templates to inputImageT, outputImageT
 /*
 rescale rgb values
 
@@ -68,9 +69,9 @@ private:
 
 template class RescaleRGBImageFilter<unsigned int, unsigned int>;
 template class RescaleRGBImageFilter<unsigned char, unsigned char>;
-template class RescaleRGBImageFilter<float, unsigned int>;
-template class RescaleRGBImageFilter<unsigned int, float>;
-template class RescaleRGBImageFilter<float, float>;
+template class RescaleRGBImageFilter<double, unsigned int>;
+template class RescaleRGBImageFilter<unsigned int, double>;
+template class RescaleRGBImageFilter<double, double>;
 
 
 

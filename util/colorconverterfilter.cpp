@@ -1,14 +1,14 @@
 #include "colorconverterfilter.h"
 
 
-template<typename inputPixelComponentT, typename outputPixelComponentT>
-ColorConverterFilter<inputPixelComponentT, outputPixelComponentT>::ColorConverterFilter()
+template <typename inputImageT, typename outputImageT>
+ColorConverterFilter<inputImageT, outputImageT>::ColorConverterFilter()
 {
 
 }
 
-template<typename inputPixelComponentT, typename outputPixelComponentT>
-void ColorConverterFilter<inputPixelComponentT, outputPixelComponentT>::setInput(inputImageP inputImage)
+template <typename inputImageT, typename outputImageT>
+void ColorConverterFilter<inputImageT, outputImageT>::setInput(inputImageP inputImage)
 {
 
     this->inputImage = inputImage;
@@ -16,16 +16,16 @@ void ColorConverterFilter<inputPixelComponentT, outputPixelComponentT>::setInput
 }
 
 
-template<typename inputPixelComponentT, typename outputPixelComponentT>
-typename ColorConverterFilter<inputPixelComponentT, outputPixelComponentT>::outputImageP
-ColorConverterFilter<inputPixelComponentT, outputPixelComponentT>::getOutput()
+template <typename inputImageT, typename outputImageT>
+typename ColorConverterFilter<inputImageT, outputImageT>::outputImageP
+ColorConverterFilter<inputImageT, outputImageT>::getOutput()
 {
     return outputImage;
 }
 
 
-template<typename inputPixelComponentT, typename outputPixelComponentT>
-void ColorConverterFilter<inputPixelComponentT, outputPixelComponentT>::rgbToHsv()
+template <typename inputImageT, typename outputImageT>
+void ColorConverterFilter<inputImageT, outputImageT>::rgbToHsv()
 {
 
 
@@ -103,8 +103,8 @@ void ColorConverterFilter<inputPixelComponentT, outputPixelComponentT>::rgbToHsv
 
 
 
-template<typename inputPixelComponentT, typename outputPixelComponentT>
-void ColorConverterFilter<inputPixelComponentT, outputPixelComponentT>::rgbToHsl()
+template <typename inputImageT, typename outputImageT>
+void ColorConverterFilter<inputImageT, outputImageT>::rgbToHsl()
 {
 
 

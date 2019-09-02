@@ -9,6 +9,7 @@
 #include "core/roiextractor.h"
 #include "util/vtkviewer.h"
 #include "core/hestainfilter.h"
+#include "util/labelmaptomultipleimagesfilter.h"
 
 int main(/*int argc, char **argv*/)
 {
@@ -38,7 +39,7 @@ int main(/*int argc, char **argv*/)
 
     //H&E color normalization
 
-    std::unique_ptr<HEStainFilter<>> stainFilter(new HEStainFilter<>());
+    std::unique_ptr<HEStainFilter> stainFilter(new HEStainFilter());
     stainFilter->setImage(image);
     stainFilter->denoise(true);
 
@@ -46,7 +47,8 @@ int main(/*int argc, char **argv*/)
    //TODO otsu problem...
 
     //ROI extraction
-    std::unique_ptr<ROIExtractor<>> roiExtractor(new ROIExtractor<>());
+    std::unique_ptr<ROIExtractor> roiExtractor(new ROIExtractor());
+
     roiExtractor->setImage(stainFilter->getOutput());
     roiExtractor->setDensityThreshold(70);
     roiExtractor->computeDensity();
@@ -54,13 +56,16 @@ int main(/*int argc, char **argv*/)
     roiExtractor->blendColorMap();
     roiExtractor->computeConnectedComponents();
 
+
     //writing ROIs
-    std::unique_ptr<LabelMapToMultipleGrayImagesFilter<>> labelMapToImagesFilter(new LabelMapToMultipleGrayImagesFilter<>());
+    using LabelMapToMultipleImagesFilterT = LabelMapToMultipleImagesFilter<ROIExtractor::grayImageType, ROIExtractor::labelMapT>;
+
+    std::unique_ptr<LabelMapToMultipleImagesFilterT> labelMapToImagesFilter(new LabelMapToMultipleImagesFilterT());
     labelMapToImagesFilter->setLabelMap(roiExtractor->getConnectedComponents());
-    labelMapToImagesFilter->setGrayImage(roiExtractor->getGrayImage());
-    labelMapToImagesFilter->extractSubImages();
-    labelMapToImagesFilter->resizeSubImages(2);
-    labelMapToImagesFilter->writeSubImages("/home/oscar/roi", "roi");
+    labelMapToImagesFilter->setImage(roiExtractor->getGrayImage());
+    labelMapToImagesFilter->extractImages();
+    labelMapToImagesFilter->resizeImages(2);
+    labelMapToImagesFilter->writeImages("/home/oscar/roi", "roi");
 
     return 0;
 

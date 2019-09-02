@@ -1,31 +1,30 @@
 #include "roiextractor.h"
 
 
-template<typename pixelComponentT>
-ROIExtractor<pixelComponentT>::ROIExtractor():
+ROIExtractor::ROIExtractor():
     kernelSize(5), densityThreshold(50)
 {
 
 }
 
 
-template<typename pixelComponentT>
-void  ROIExtractor<pixelComponentT>::setKernelSize(short kernelSize)
+
+void  ROIExtractor::setKernelSize(short kernelSize)
 {
     this->kernelSize = kernelSize;
 }
 
 
-template<typename pixelComponentT>
-void ROIExtractor<pixelComponentT>::setImage(rgbImageP inputImage)
+
+void ROIExtractor::setImage(rgbImageP inputImage)
 {
 
     this->inputImage = inputImage;
 }
 
 
-template<typename pixelComponentT>
-void ROIExtractor<pixelComponentT>::computeDensity(bool showResult)
+
+void ROIExtractor::computeDensity(bool showResult)
 {
 
     //IO::printWait("Computing density");
@@ -127,8 +126,8 @@ void ROIExtractor<pixelComponentT>::computeDensity(bool showResult)
 }
 
 
-template<typename pixelComponentT>
-void ROIExtractor<pixelComponentT>::blendColorMap(bool showResult)
+
+void ROIExtractor::blendColorMap(bool showResult)
 {
 
     if(colorMapImage.IsNull())
@@ -138,7 +137,8 @@ void ROIExtractor<pixelComponentT>::blendColorMap(bool showResult)
 
     }
 
-    std::unique_ptr<OverlayRGBImageFilter<pixelComponentT>> overlayImageFilter( new OverlayRGBImageFilter<pixelComponentT>());
+    using OverlayRGBImageFilterT = OverlayRGBImageFilter<  rgbImageType >;
+    std::unique_ptr<OverlayRGBImageFilterT> overlayImageFilter(new OverlayRGBImageFilterT());
     overlayImageFilter->setBackgroundImage(inputImage);
     overlayImageFilter->setForegroundImage(colorMapImage);
     overlayImageFilter->setAlpha(0.8);
@@ -155,8 +155,8 @@ void ROIExtractor<pixelComponentT>::blendColorMap(bool showResult)
 
 }
 
-template<typename pixelComponentT>
-void ROIExtractor<pixelComponentT>::densityToColorMap(bool showResult)
+
+void ROIExtractor::densityToColorMap(bool showResult)
 {
 
     if(densityImage.IsNull())
@@ -216,9 +216,9 @@ void ROIExtractor<pixelComponentT>::densityToColorMap(bool showResult)
 */
 
 
-template<typename pixelComponentT>
-typename ROIExtractor<pixelComponentT>::grayImageP
-ROIExtractor<pixelComponentT>::otsuThreshold()
+
+typename ROIExtractor::grayImageP
+ROIExtractor::otsuThreshold()
 {
 
 
@@ -237,8 +237,8 @@ ROIExtractor<pixelComponentT>::otsuThreshold()
 }
 
 
-template<typename pixelComponentT>
-void ROIExtractor<pixelComponentT>::rgbToGrayImage()
+
+void ROIExtractor::rgbToGrayImage()
 {
     using rgbToLuminanceFilterType = itk::RGBToLuminanceImageFilter< rgbImageType, grayImageType >;
     typename rgbToLuminanceFilterType::Pointer rgbToLuminancefilter = rgbToLuminanceFilterType::New();
@@ -248,21 +248,21 @@ void ROIExtractor<pixelComponentT>::rgbToGrayImage()
 
 }
 
-template<typename pixelComponentT>
-typename ROIExtractor<pixelComponentT>::rgbImageP
-ROIExtractor<pixelComponentT>::getColorMap() const
+
+typename ROIExtractor::rgbImageP
+ROIExtractor::getColorMap() const
 {
      return colorMapImage;
 }
 
-template<typename pixelComponentT>
-void ROIExtractor<pixelComponentT>::setDensityThreshold(pixelComponentT threshold)
+
+void ROIExtractor::setDensityThreshold(pixelComponentT threshold)
 {
     densityThreshold = threshold;
 }
 
-template<typename pixelComponentT>
-void ROIExtractor<pixelComponentT>::computeConnectedComponents(bool showResult)
+
+void ROIExtractor::computeConnectedComponents(bool showResult)
 {
 
     //divide density into high and low density images
@@ -305,8 +305,8 @@ void ROIExtractor<pixelComponentT>::computeConnectedComponents(bool showResult)
 }
 
 
-template<typename pixelComponentT>
-void ROIExtractor<pixelComponentT>::divideDensityIntoHighAndLow(grayImageP &highDensity, grayImageP &lowDensity)
+
+void ROIExtractor::divideDensityIntoHighAndLow(grayImageP &highDensity, grayImageP &lowDensity)
 {
 
     highDensity  = grayImageType::New();
@@ -352,16 +352,16 @@ void ROIExtractor<pixelComponentT>::divideDensityIntoHighAndLow(grayImageP &high
 
 }
 
-template<typename pixelComponentT>
-typename ROIExtractor<pixelComponentT>::labelMapP
-ROIExtractor<pixelComponentT>::getConnectedComponents() const
+
+typename ROIExtractor::labelMapP
+ROIExtractor::getConnectedComponents() const
 {
     return connectedComponents;
 }
 
-template<typename pixelComponentT>
-typename ROIExtractor<pixelComponentT>::grayImageP
-ROIExtractor<pixelComponentT>::getGrayImage() const
+
+typename ROIExtractor::grayImageP
+ROIExtractor::getGrayImage() const
 {
     return grayImage;
 }
