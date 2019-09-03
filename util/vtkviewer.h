@@ -8,30 +8,23 @@
 
 
 
-template<typename pixelType= unsigned int>
+template<typename imageT >
 class VTKViewer
 {
 public:
 
-    using rgbPixelType = itk::RGBPixel<pixelType>;
-    using rgbImageType = itk::Image< rgbPixelType, 2 >;
-    using rgbImagePointer = typename  rgbImageType::Pointer;
+    using pixelT = typename imageT::PixelType;
+    using imageP = typename imageT::Pointer;
 
-    using grayImageType = itk::Image< pixelType, 2 >;
-    using grayImagePointer = typename  grayImageType::Pointer;
 
     VTKViewer();
-
-    static void visualizeRGB(rgbImagePointer image, std::string description="");
-    static void visualizeGray(grayImagePointer image, std::string description="");
+    static void visualize(imageP image, std::string description="");
 
 };
 
 
-template class VTKViewer<unsigned int>;
-template class VTKViewer<unsigned char>;
-template class VTKViewer<float>;
-template class VTKViewer<short>;
+template class VTKViewer< itk::Image<itk::RGBPixel<unsigned>, 2> >;
+template class VTKViewer< itk::Image<unsigned, 2> >;
 
 
 #endif // VTKVIEWER_H

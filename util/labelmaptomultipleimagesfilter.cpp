@@ -1,11 +1,7 @@
 #include "labelmaptomultipleimagesfilter.h"
 
 template<typename imageT, typename labelMapT>
-LabelMapToMultipleImagesFilter<imageT, labelMapT>::LabelMapToMultipleImagesFilter():
-    sizeThreshold(1000)
-{
-
-}
+LabelMapToMultipleImagesFilter<imageT, labelMapT>::LabelMapToMultipleImagesFilter(): sizeThreshold(1000){}
 
 
 template<typename imageT, typename labelMapT>
@@ -13,7 +9,6 @@ void LabelMapToMultipleImagesFilter<imageT, labelMapT>::setLabelMap(labelMapP la
 {
      this->labelMap = labelMap;
 }
-
 
 
 template<typename imageT, typename labelMapT>
@@ -37,7 +32,6 @@ void LabelMapToMultipleImagesFilter<imageT, labelMapT>::extractImages()
         {
             continue;
         }
-
 
         auto image  = imageT::New();
         image->SetRegions(inputImage->GetRequestedRegion());
@@ -71,8 +65,6 @@ void LabelMapToMultipleImagesFilter<imageT, labelMapT>::setImage(imageP inputIma
 }
 
 
-
-
 template<typename imageT, typename labelMapT>
 void LabelMapToMultipleImagesFilter<imageT, labelMapT>::resizeImages(unsigned shrinkFactor)
 {
@@ -81,7 +73,6 @@ void LabelMapToMultipleImagesFilter<imageT, labelMapT>::resizeImages(unsigned sh
 
     for(typename imagesT::iterator it = images.begin();  it != images.end(); ++it)
     {
-
 
         typename shrinkImageFilterT::Pointer shrinkImageFilter = shrinkImageFilterT::New();
         shrinkImageFilter->SetShrinkFactors(shrinkFactor);
@@ -104,52 +95,90 @@ void LabelMapToMultipleImagesFilter<imageT, labelMapT>::writeImages(std::string 
 {
 
 
-    //TODO add support RGB images
-    // std::cout<<typeid(pixelT).name()<<std::endl;
-
-    using imageChar  = itk::Image< unsigned char, 2 >;
-    using WriterType = itk::ImageFileWriter<imageChar>;
-
-    typename WriterType::Pointer writer = WriterType::New();
-
     //add forward slash
     if(*directory.rbegin() != '/')
     {
         directory.push_back('/');
     }
 
-    //TIFF only supports short, float, and char types
-    using castFilterCastType = itk::CastImageFilter< imageT, imageChar >;
-    typename castFilterCastType::Pointer castFilter = castFilterCastType::New();
-
-
     std::string fileName="";
     unsigned imgI = 1; //roi index
-    for(typename imagesT::iterator it = images.begin();  it != images.end(); ++it, ++imgI)
+
+    //TIFF only supports short, float, and char types
+    if constexpr(std::is_scalar<pixelT>::value) // is gray-level
     {
+        using imageChar  = itk::Image< unsigned char, 2 >;
+        using WriterType = itk::ImageFileWriter<imageChar>;
+        using castFilterCastType = itk::CastImageFilter< imageT, imageChar >;
 
-        fileName = prefix+"_"+std::to_string(imgI) + "."+format;
+        typename WriterType::Pointer writer = WriterType::New();
+        typename castFilterCastType::Pointer castFilter = castFilterCastType::New();
 
-        //std::cout<<directory+fileName<<std::endl;
-
-        castFilter->SetInput(*it);
-        castFilter->Update();
-
-       // VTKViewer<unsigned char>::visualizeGray(castFilter->GetOutput(), "High density");
-
-        writer->SetFileName(directory+fileName);
-        writer->SetInput(castFilter->GetOutput());
-
-        try
+        for(typename imagesT::iterator it = images.begin();  it != images.end(); ++it, ++imgI)
         {
-            writer->Update();
-        }
-        catch( itk::ExceptionObject & error )
-        {
-            std::cerr << "Error: " << error << std::endl;
-            return;
+
+            fileName = prefix+"_"+std::to_string(imgI) + "."+format;
+
+            //std::cout<<directory+fileName<<std::endl;
+
+            castFilter->SetInput(*it);
+            castFilter->Update();
+
+            // VTKViewer<unsigned char>::visualizeGray(castFilter->GetOutput(), "High density");
+
+            writer->SetFileName(directory+fileName);
+            writer->SetInput(castFilter->GetOutput());
+
+            try
+            {
+                writer->Update();
+            }
+            catch( itk::ExceptionObject & error )
+            {
+                std::cerr << "Error: " << error << std::endl;
+                return;
+            }
+
+
         }
 
+    }
+    else
+    {
+        using imageChar  = itk::Image<itk::RGBPixel<unsigned char>, 2 >;
+        using WriterType = itk::ImageFileWriter<imageChar>;
+        using castFilterCastType = itk::CastImageFilter< imageT, imageChar >;
+
+        typename WriterType::Pointer writer = WriterType::New();
+        typename castFilterCastType::Pointer castFilter = castFilterCastType::New();
+
+        for(typename imagesT::iterator it = images.begin();  it != images.end(); ++it, ++imgI)
+        {
+
+            fileName = prefix+"_"+std::to_string(imgI) + "."+format;
+
+            //std::cout<<directory+fileName<<std::endl;
+
+            castFilter->SetInput(*it);
+            castFilter->Update();
+
+            // VTKViewer<unsigned char>::visualizeGray(castFilter->GetOutput(), "High density");
+
+            writer->SetFileName(directory+fileName);
+            writer->SetInput(castFilter->GetOutput());
+
+            try
+            {
+                writer->Update();
+            }
+            catch( itk::ExceptionObject & error )
+            {
+                std::cerr << "Error: " << error << std::endl;
+                return;
+            }
+
+
+        }
 
     }
 

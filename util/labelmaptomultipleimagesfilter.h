@@ -36,7 +36,6 @@ public:
     using imagesT = std::vector<imageP>;
 
 
-
     //setters
     void setLabelMap(labelMapP  labelMap);
     void setImage(imageP image);
@@ -62,8 +61,8 @@ private:
 
 };
 
-template class LabelMapToMultipleImagesFilter< itk::Image<unsigned,                2>, itk::LabelMap< itk::LabelObject<unsigned, 2> > >;
-//template class LabelMapToMultipleImagesFilter< itk::Image<itk::RGBPixel<unsigned>, 2>, itk::LabelMap< itk::LabelObject<unsigned, 2> > >;
+template class LabelMapToMultipleImagesFilter< itk::Image<unsigned, 2>, itk::LabelMap< itk::LabelObject<unsigned, 2> > >;
+template class LabelMapToMultipleImagesFilter< itk::Image<itk::RGBPixel<unsigned>, 2>, itk::LabelMap< itk::LabelObject<unsigned, 2> > >;
 
 //template class LabelMapToMultipleImagesFilter< itk::Image<unsigned int, 2u>, itk::LabelMap<itk::LabelObject<unsigned int, 2u> > >;
 

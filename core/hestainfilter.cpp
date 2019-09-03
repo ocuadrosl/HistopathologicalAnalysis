@@ -82,7 +82,7 @@ void HEStainFilter::denoise(bool showResult)
     if(showResult)
     {
 
-        VTKViewer<inputPixelComponentT>::visualizeRGB(outputImage, "Denoised image");
+        VTKViewer<rgbInputImageT>::visualize(outputImage, "Denoised image");
     }
 
 }

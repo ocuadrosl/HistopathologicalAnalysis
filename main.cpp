@@ -58,11 +58,11 @@ int main(/*int argc, char **argv*/)
 
 
     //writing ROIs
-    using LabelMapToMultipleImagesFilterT = LabelMapToMultipleImagesFilter<ROIExtractor::grayImageType, ROIExtractor::labelMapT>;
+    using LabelMapToMultipleImagesFilterT = LabelMapToMultipleImagesFilter<ROIExtractor::rgbImageType, ROIExtractor::labelMapT>;
 
     std::unique_ptr<LabelMapToMultipleImagesFilterT> labelMapToImagesFilter(new LabelMapToMultipleImagesFilterT());
     labelMapToImagesFilter->setLabelMap(roiExtractor->getConnectedComponents());
-    labelMapToImagesFilter->setImage(roiExtractor->getGrayImage());
+    labelMapToImagesFilter->setImage(stainFilter->getOutput());
     labelMapToImagesFilter->extractImages();
     labelMapToImagesFilter->resizeImages(2);
     labelMapToImagesFilter->writeImages("/home/oscar/roi", "roi");

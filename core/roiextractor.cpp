@@ -118,7 +118,7 @@ void ROIExtractor::computeDensity(bool showResult)
     //visualizing
     if(showResult)
     {
-        VTKViewer<pixelComponentT>::visualizeGray(densityImage, "Density");
+        VTKViewer<grayImageType>::visualize(densityImage, "Density");
     }
 
 
@@ -149,7 +149,7 @@ void ROIExtractor::blendColorMap(bool showResult)
     if(showResult)
     {
 
-        VTKViewer<pixelComponentT>::visualizeRGB(overlayImageFilter->getOutput(), "Blended colormap");
+        VTKViewer<rgbImageType>::visualize(overlayImageFilter->getOutput(), "Blended colormap");
     }
 
 
@@ -204,7 +204,7 @@ void ROIExtractor::densityToColorMap(bool showResult)
 
     if(showResult)
     {
-        VTKViewer<pixelComponentT>::visualizeRGB(colorMapImage, "Colormap");
+        VTKViewer<rgbImageType>::visualize(colorMapImage, "Colormap");
     }
 
 
@@ -230,7 +230,7 @@ ROIExtractor::otsuThreshold()
 
     otsuFilter->Update();
 
-    VTKViewer<pixelComponentT>::visualizeGray(otsuFilter->GetOutput(), "Otsu");
+    VTKViewer<grayImageType>::visualize(otsuFilter->GetOutput(), "Otsu");
 
     return otsuFilter->GetOutput();
 
@@ -296,7 +296,7 @@ void ROIExtractor::computeConnectedComponents(bool showResult)
         typename RGBFilterType::Pointer rgbFilter = RGBFilterType::New();
         rgbFilter->SetInput( connectedComponentImageFilter->GetOutput() );
         rgbFilter->Update();
-        VTKViewer<pixelComponentT>::visualizeRGB(rgbFilter->GetOutput(), "Connected components");
+        VTKViewer<rgbImageType>::visualize(rgbFilter->GetOutput(), "Connected components");
     }
 
 

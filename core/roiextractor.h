@@ -19,7 +19,6 @@
 //local includes
 #include "../util/math.h"
 #include "../util/overlayrgbimagefilter.h"
-#include "../util/labelmaptomultiplegrayimagesfilter.h"
 #include "../util/customprint.h"
 
 
