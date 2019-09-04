@@ -12,6 +12,7 @@
 //local includes
 #include "../util/math.h"
 #include "../util/customprint.h"
+#include "../util/illuminant.h"
 
 
 
@@ -20,7 +21,6 @@ template <typename inputImageT, typename outputImageT>
 class ColorConverterFilter
 {
 public:
-
 
     // RGB type  alias
     using inputPixelT = typename inputImageT::PixelType;
@@ -31,28 +31,51 @@ public:
     using outputPixelComponentT  = typename outputPixelT::ComponentType;
     using outputImageP = typename outputImageT::Pointer;
 
+    //double pixel type
+    using pixelDouble = itk::RGBPixel<double>;
 
     //setters
     void setInput(inputImageP inputImage);
+    void setWhite(unsigned illuminantIndex);
 
     //getters
     outputImageP getOutput();
 
     void rgbToHsv();
     void rgbToHsl();
+    void rgbToXyz();
+    void xyzToLab(); //CIE standard
+    void labToXyz();
+    void xyzToRgb();
 
 
     ColorConverterFilter();
-
 
 private:
 
     inputImageP  inputImage;
     outputImageP outputImage;
 
+    pixelDouble white;
+
+    //LAB constants
+    const double e = 0.008856; // epsilon constant CIE standard
+    const double k = 903.3;    //kappa constant CIE standard
+
+    inline outputPixelT sRGBInverseCompanding(const outputPixelT& rgbPixel);
+    inline inputPixelT  sRGBCompanding(const inputPixelT& rgbPixel);
+
+
+
 };
 
-template  class ColorConverterFilter<itk::Image<itk::RGBPixel<unsigned>, 2>, itk::Image<itk::RGBPixel<double>, 2>>;
-template  class ColorConverterFilter<itk::Image<itk::RGBPixel<unsigned>, 2>, itk::Image<itk::RGBPixel<float>, 2>>;
+using imageDouble   = itk::Image<itk::RGBPixel<double  >, 2>;
+using imageUnsigned = itk::Image<itk::RGBPixel<unsigned>, 2>;
+using imageFloat    = itk::Image<itk::RGBPixel<float   >, 2>;
+
+template  class ColorConverterFilter<imageDouble  , imageDouble>;
+template  class ColorConverterFilter<imageUnsigned, imageDouble>;
+template  class ColorConverterFilter<imageDouble  , imageUnsigned>;
+template  class ColorConverterFilter<imageUnsigned, imageFloat >;
 
 #endif // COLORCONVERTERFILTER_H

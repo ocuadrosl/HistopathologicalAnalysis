@@ -48,7 +48,10 @@ public:
 
     rgbInputImageP getOutput() const;
 
-    void denoise(bool showResult = false);
+    void denoiseHSL(bool showResult = false);
+    void denoiseLAB(bool showResult = false);
+
+    void colorCorrection(bool showResult = false);
 
 
     HEStainFilter();
@@ -64,9 +67,6 @@ private:
     double hueThresholdBlue;
     double saturationThreshold;
     double lightnessThreshold;
-
-
-
 
 };
 

@@ -3,10 +3,10 @@
 template< typename  pixelType>
 ImageReader<pixelType>::ImageReader(): rgbImage(nullptr)
 {
-    //std::cout<<typeid(pixelType).name()<<std::endl;
+
 }
 
-template< typename  pixelType>
+template<typename  pixelType>
 void ImageReader<pixelType>::readVSI(std::string inFileName, std::string outFileName,  short outMagnification)
 {
 
@@ -29,7 +29,7 @@ void ImageReader<pixelType>::readVSI(std::string inFileName, std::string outFile
 }
 
 
-template< typename  pixelType>
+template<typename  pixelType>
 void ImageReader<pixelType>::read(std::string fileName)
 {
     typename rgbReaderType::Pointer reader = rgbReaderType::New();
@@ -38,7 +38,7 @@ void ImageReader<pixelType>::read(std::string fileName)
     rgbImage =  reader->GetOutput();
 }
 
-template< typename  pixelType>
+template<typename  pixelType>
 typename ImageReader<pixelType>::rgbImagePointer
 ImageReader<pixelType>::getRGBImage() const
 {
@@ -47,7 +47,7 @@ ImageReader<pixelType>::getRGBImage() const
 }
 
 
-template< typename  pixelType>
+template<typename  pixelType>
 typename ImageReader<pixelType>::grayImagePointer
 ImageReader<pixelType>::getGrayScaleImage() const
 {

@@ -29,8 +29,8 @@ int main(/*int argc, char **argv*/)
 
     std::unique_ptr<ImageReader<>> reader(new ImageReader<>());
 
-    //reader->readVSI(inputNoisyFile, outFileName, 5);
-    reader->read(outFileName);
+    reader->readVSI(inputNoisyFile, outFileName, 5);
+    //reader->read(outFileName);
 
     auto image = reader->getRGBImage();
 
@@ -41,7 +41,8 @@ int main(/*int argc, char **argv*/)
 
     std::unique_ptr<HEStainFilter> stainFilter(new HEStainFilter());
     stainFilter->setImage(image);
-    stainFilter->denoise(true);
+    //stainFilter->denoiseLAB();
+    stainFilter->colorCorrection(true);
 
 
    //TODO otsu problem...
