@@ -30,7 +30,7 @@ double minMax(double inputValue)
 }
 
 /*
- * Template function Object version
+ * Template function-object version
 */
 template<typename inputType = double, typename outputType = double>
 class MinMax
@@ -50,9 +50,6 @@ public:
     inline outputType operator()(inputType inputValue)
     {
         double den = orgMax - orgMin;
-
-       // double rounded = std::round(( ( (newMax - newMin) * ( static_cast<double>(inputValue) - orgMin) ) / den ) + newMin);
-        //std::cout<< rounded <<std::endl;
         return  static_cast<outputType>( ( ( (newMax - newMin) * ( static_cast<double>(inputValue) - orgMin) ) / den ) + newMin  );
     }
 
@@ -123,7 +120,6 @@ inline auto max(vectorT vector)
     }
     return max;
 
-
 }
 
 
@@ -146,18 +142,11 @@ inline auto min(vectorT vector)
 /*
 Octave version
 */
-template <typename type = float>
+template <typename type = double>
 inline type mod(type numer, type denom)
 {
        return numer -  denom * std::floor(numer/denom);
 }
-
-
-
-
-
-
-
 
 
 }

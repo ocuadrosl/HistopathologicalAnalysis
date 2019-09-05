@@ -4,7 +4,7 @@
 template <typename inputImageT, typename outputImageT>
 ColorConverterFilter<inputImageT, outputImageT>::ColorConverterFilter()
 {
-     white = Illuminant::getWhitePoint(Illuminant::index::d50);
+     white = Illuminant::getWhitePoint(Illuminant::index::d65);
 
 }
 
@@ -45,7 +45,7 @@ void ColorConverterFilter<inputImageT, outputImageT>::rgbToHsv()
     //template function alias
     constexpr auto  max = Math::max<outputPixelT>;
     constexpr auto  min = Math::min<outputPixelT>;
-    constexpr auto  mod = Math::mod<outputPixelComponentT>;
+    constexpr auto  mod = Math::mod<outputPixelCompT>;
 
 
     auto hsvPixel = outputIt.Get();
@@ -54,12 +54,12 @@ void ColorConverterFilter<inputImageT, outputImageT>::rgbToHsv()
 
             pixelFloat = static_cast<outputPixelT>(inputIt.Get())/255.f;
 
-            outputPixelComponentT maxAux = max(pixelFloat);
-            outputPixelComponentT delta =  maxAux - min(pixelFloat);
+            outputPixelCompT maxAux = max(pixelFloat);
+            outputPixelCompT delta =  maxAux - min(pixelFloat);
 
             //Hue calculation
 
-            outputPixelComponentT h;
+            outputPixelCompT h;
 
             if(delta == 0)
             {
@@ -105,7 +105,7 @@ template <typename inputImageT, typename outputImageT>
 void ColorConverterFilter<inputImageT, outputImageT>::rgbToHsl()
 {
 
-    if constexpr (std::is_floating_point<outputPixelComponentT>::value)
+    if constexpr (std::is_floating_point<outputPixelCompT>::value)
     {
 
         outputImage = outputImageT::New();
@@ -121,7 +121,7 @@ void ColorConverterFilter<inputImageT, outputImageT>::rgbToHsl()
         //template function alias
         constexpr auto  max = Math::max<outputPixelT>;
         constexpr auto  min = Math::min<outputPixelT>;
-        constexpr auto  mod = Math::mod<outputPixelComponentT>;
+        constexpr auto  mod = Math::mod<outputPixelCompT>;
 
 
         outputPixelT hslPixel = outputIt.Get();
@@ -130,13 +130,13 @@ void ColorConverterFilter<inputImageT, outputImageT>::rgbToHsl()
 
             pixelFloat = static_cast<outputPixelT>(inputIt.Get())/255.0;
 
-            outputPixelComponentT maxAux = max(pixelFloat);
-            outputPixelComponentT minAux = min(pixelFloat);
-            outputPixelComponentT delta =  maxAux - minAux;
+            outputPixelCompT maxAux = max(pixelFloat);
+            outputPixelCompT minAux = min(pixelFloat);
+            outputPixelCompT delta =  maxAux - minAux;
 
             //Hue calculation
 
-            outputPixelComponentT h;
+            outputPixelCompT h;
 
             if(delta == 0)
             {
@@ -192,36 +192,36 @@ void ColorConverterFilter<inputImageT, outputImageT>:: labToXyz()
     itk::ImageRegionConstIterator< inputImageT > inputIt(inputImage,  inputImage->GetRequestedRegion());
     itk::ImageRegionIterator     < outputImageT> outputIt(outputImage, outputImage->GetRequestedRegion());
 
-    outputPixelT xyzPixel;
+    outputPixelT XYZ;
     outputPixelT xyzR; //r vector
     outputPixelT xyzF; //f vector
 
-    inputPixelT labPixel;
+    inputPixelT Lab;
     while (!inputIt.IsAtEnd() )
     {
-        labPixel = inputIt.Get();
+        Lab = inputIt.Get();
 
         //Do not change the order
-        xyzF[1] = (labPixel[0] + 16.0)/116.0;
-        xyzF[0] = (labPixel[1]/500.0) + xyzF[1];
-        xyzF[2] = xyzF[1] - (labPixel[2]/200.0);
+        xyzF[1] = (Lab[0] + 16.0)/116;
+        xyzF[2] = xyzF[1] - (Lab[2] / 200);
+        xyzF[0] = (Lab[1] / 500) + xyzF[1];
+
 
         //to avoid double computation
         double xyzXCube = std::pow(xyzF[0], 3.0);
         double xyzZCube = std::pow(xyzF[2], 3.0);
-        double xyzYCube = std::pow( (labPixel[0]+16.0) / 116.0, 3.0);
-
-        xyzR[0] = (xyzXCube > e)? xyzXCube : (116.0 * xyzF[0] - 16.0) / k;
-        xyzR[1] = (labPixel[0] > k*e)? xyzYCube: labPixel[0] / k;
-        xyzR[2] = ( xyzZCube > e)? xyzZCube : ( 116.0*xyzF[2]-16.0) / k;
 
 
+        xyzR[0] = (xyzXCube > e  )? xyzXCube : (116 * xyzF[0] - 16) / k;
+        xyzR[1] = (Lab[0]   > k*e)? std::pow((Lab[0]+16) / 116, 3.0) : Lab[0] / k;
+        xyzR[2] = (xyzZCube > e  )? xyzZCube : (116 * xyzF[2] - 16) / k;
 
-        xyzPixel[0] = xyzR[0]*white[0];
-        xyzPixel[1] = xyzR[1]*white[1];
-        xyzPixel[2] = xyzR[2]*white[2];
 
-        outputIt.Set(xyzPixel);
+        XYZ[0] = xyzR[0] * white[0];
+        XYZ[1] = xyzR[1] * white[1];
+        XYZ[2] = xyzR[2] * white[2];
+
+        outputIt.Set(XYZ);
 
         ++inputIt;
         ++outputIt;
@@ -240,9 +240,8 @@ void ColorConverterFilter<inputImageT, outputImageT>:: labToXyz()
 /*
 using:
 model: sRGB
-white: D50
+white: D65
 Gamma: sRGB
-Adaptation: Bradford
 
 */
 template <typename inputImageT, typename outputImageT>
@@ -258,33 +257,35 @@ void ColorConverterFilter<inputImageT, outputImageT>::xyzToLab()
 
     outputPixelT xyzR; //r vector
     outputPixelT xyzF; //f vector
-    outputPixelT labPixel;
+    outputPixelT Lab;
 
-    inputPixelT pixelAux;
+    inputPixelT XYZ;
     while (!inputIt.IsAtEnd() )
     {
-        pixelAux = inputIt.Get();
+        XYZ = inputIt.Get();
 
-        xyzR[0] =  pixelAux[0] / white[0];
-        xyzR[1] =  pixelAux[1] / white[1];
-        xyzR[2] =  pixelAux[2] / white[2];
+        xyzR[0] =  XYZ[0] / white[0];
+        xyzR[1] =  XYZ[1] / white[1];
+        xyzR[2] =  XYZ[2] / white[2];
 
-        xyzF[0] = (xyzR[0] > e) ? std::cbrt(xyzR[0]) : (k * xyzR[0] + 16) / 116.0;
-        xyzF[1] = (xyzR[1] > e) ? std::cbrt(xyzR[1]) : (k * xyzR[1] + 16) / 116.0;
-        xyzF[2] = (xyzR[2] > e) ? std::cbrt(xyzR[2]) : (k * xyzR[2] + 16) / 116.0;
 
-        labPixel[0] = 116 *  xyzF[0] - 16;
-        labPixel[1] = 500 * (xyzF[0] - xyzF[1]);
-        labPixel[2] = 200 * (xyzF[1] - xyzF[2]);
+        xyzF[0] = (xyzR[0] > e) ? std::cbrt(xyzR[0]) : (k * xyzR[0] + 16) / 116;
+        xyzF[1] = (xyzR[1] > e) ? std::cbrt(xyzR[1]) : (k * xyzR[1] + 16) / 116;
+        xyzF[2] = (xyzR[2] > e) ? std::cbrt(xyzR[2]) : (k * xyzR[2] + 16) / 116;
 
-        outputIt.Set(labPixel);
+
+        Lab[0] = (116 *  xyzF[1]) - 16;
+        Lab[1] =  500 * (xyzF[0]  - xyzF[1]);
+        Lab[2] =  200 * (xyzF[1]  - xyzF[2]);
+
+        outputIt.Set(Lab);
 
         ++inputIt;
         ++outputIt;
 
     }
 
-    IO::printOK("XYZ to LAB");
+    IO::printOK("XYZ to CIE Lab");
 
 
 }
@@ -293,13 +294,14 @@ void ColorConverterFilter<inputImageT, outputImageT>::xyzToLab()
 /*
 USING:
 sRGB model
-D50  white
+D65  white
 sRGB Gamma
 */
 template <typename inputImageT, typename outputImageT>
 void ColorConverterFilter<inputImageT, outputImageT>:: xyzToRgb()
 {
 
+    //inputPixelT must be a float point type
 
     //TODO bug here -> orange color!!!
     outputImage = outputImageT::New();
@@ -309,29 +311,32 @@ void ColorConverterFilter<inputImageT, outputImageT>:: xyzToRgb()
     itk::ImageRegionConstIterator< inputImageT > inputIt(inputImage  , inputImage ->GetRequestedRegion());
     itk::ImageRegionIterator     < outputImageT> outputIt(outputImage, outputImage->GetRequestedRegion());
 
-    inputPixelT pixelRGB; //rgb in v
-    inputPixelT pixelXYZ;
+    inputPixelT rgb; //rgb in [0 - 1]
+    inputPixelT XYZ;
 
     outputPixelT outputPixel;
 
     while (!inputIt.IsAtEnd() )
     {
 
-        pixelXYZ = inputIt.Get();
-
-        pixelRGB[0] = ( 3.1338561 * pixelXYZ[0]) + (-1.6168667 * pixelXYZ[1]) + (-0.4906146 * pixelXYZ[2]);
-        pixelRGB[1] = (-0.9787684 * pixelXYZ[0]) + ( 1.9161415 * pixelXYZ[1]) + ( 0.0334540 * pixelXYZ[2]);
-        pixelRGB[2] = ( 0.0719453 * pixelXYZ[0]) + (-0.2289914 * pixelXYZ[1]) + ( 1.4052427 * pixelXYZ[2]);
+        XYZ = inputIt.Get();
 
 
-        //std::cout<<pixelXYZ<<" -> "<<sRGBCompanding(pixelRGB)<<std::endl;
+        rgb[0] = ( 3.2404542 * XYZ[0]) + (-1.5371385 * XYZ[1]) + (-0.4985314 * XYZ[2]);
+        rgb[1] = (-0.9692660 * XYZ[0]) + ( 1.8760108 * XYZ[1]) + ( 0.0415560 * XYZ[2]);
+        rgb[2] = ( 0.0556434 * XYZ[0]) + (-0.2040259 * XYZ[1]) + ( 1.0572252 * XYZ[2]);
 
-        pixelRGB = sRGBCompanding(pixelRGB);
-        outputPixel[0] = static_cast<outputPixelComponentT>(std::round(pixelRGB[0]*255.0));
-        outputPixel[1] = static_cast<outputPixelComponentT>(std::round(pixelRGB[1]*255.0));
-        outputPixel[2] = static_cast<outputPixelComponentT>(std::round(pixelRGB[2]*255.0));
 
-        std::cout<<pixelXYZ<<" -> "<<outputPixel<<std::endl;
+
+
+        rgb = sRGBCompanding(rgb);
+
+        //ouput RGB in [0 -255]
+        outputPixel[0] = static_cast<outputPixelCompT>(std::round(rgb[0] * 255));
+        outputPixel[1] = static_cast<outputPixelCompT>(std::round(rgb[1] * 255));
+        outputPixel[2] = static_cast<outputPixelCompT>(std::round(rgb[2] * 255));
+
+
 
         outputIt.Set(outputPixel);
 
@@ -351,35 +356,38 @@ void ColorConverterFilter<inputImageT, outputImageT>:: xyzToRgb()
 /*
 USING:
 sRGB model
-D50  white
-sRGB Gamma
+D65  white
+
 */
 template <typename inputImageT, typename outputImageT>
 void ColorConverterFilter<inputImageT, outputImageT>::rgbToXyz()
 {
 
+    //outputPixelT must be a float point type
+
     outputImage = outputImageT::New();
     outputImage->SetRegions(inputImage->GetRequestedRegion());
     outputImage->Allocate();
 
-    itk::ImageRegionConstIterator< inputImageT > inputIt(inputImage ,  inputImage->GetRequestedRegion());
+    itk::ImageRegionConstIterator< inputImageT > inputIt(inputImage  ,  inputImage->GetRequestedRegion());
     itk::ImageRegionIterator     < outputImageT> outputIt(outputImage, outputImage->GetRequestedRegion());
 
 
-    outputPixelT pixelAux;
-    outputPixelT pixelXYZ;
+    outputPixelT rgb; //in [0-1]
+    outputPixelT XYZ;
 
 
     while (!inputIt.IsAtEnd() )
     {
 
-        pixelAux = sRGBInverseCompanding(static_cast<outputPixelT>(inputIt.Get())/255.0);
+        rgb = sRGBInverseCompanding(static_cast<outputPixelT>(inputIt.Get())/255.0);
 
-        pixelXYZ[0] = (0.4360747 * pixelAux[0]) + (0.3850649 * pixelAux[1]) + (0.1430804 * pixelAux[2]);
-        pixelXYZ[1] = (0.2225045 * pixelAux[0]) + (0.7168786 * pixelAux[1]) + (0.0606169 * pixelAux[2]);
-        pixelXYZ[2] = (0.0139322 * pixelAux[0]) + (0.0971045 * pixelAux[1]) + (0.7141733 * pixelAux[2]);
+        XYZ[0] = (0.4124564 * rgb[0]) + (0.3575761 * rgb[1]) + (0.1804375 * rgb[2]);
+        XYZ[1] = (0.2126729 * rgb[0]) + (0.7151522 * rgb[1]) + (0.0721750 * rgb[2]);
+        XYZ[2] = (0.0193339 * rgb[0]) + (0.1191920 * rgb[1]) + (0.9503041 * rgb[2]);
 
-        outputIt.Set(pixelXYZ);
+
+        outputIt.Set(XYZ);
 
         ++inputIt;
         ++outputIt;
@@ -390,30 +398,44 @@ void ColorConverterFilter<inputImageT, outputImageT>::rgbToXyz()
 
 }
 
-/*
-    rgbPixel must be scaled in the range [0-1]
-    //rgbPixel = 'V' in {R, G,B}
 
-*/
+
 template <typename inputImageT, typename outputImageT>
 inline typename ColorConverterFilter<inputImageT, outputImageT>::outputPixelT
-ColorConverterFilter<inputImageT, outputImageT>::sRGBInverseCompanding(const outputPixelT& rgbPixel)
+ColorConverterFilter<inputImageT, outputImageT>::lInverseCompanding(const outputPixelT& rgbPixel)
 {
-
-    //v in {r, g, b}
-    //V in {R, G,B}
 
     outputPixelT v; //output pixel
     for (unsigned i=0 ; i < 3 ; ++i)
     {
-
-        v[i] = (rgbPixel[i] <= 0.04045)? rgbPixel[i]/12.92 : std::pow((rgbPixel[i] +0.055)/1.055, 2.4);
-
+      v[i] = ( rgbPixel[i] < 0.08) ? 100 * rgbPixel[i] / k : std::cbrt((rgbPixel[i] + 0.16) / 1.16);
     }
 
     return v;
 
 }
+
+
+
+
+template <typename inputImageT, typename outputImageT>
+inline typename ColorConverterFilter<inputImageT, outputImageT>::inputPixelT
+ColorConverterFilter<inputImageT, outputImageT>:: lCompanding   (const inputPixelT& rgbPixel)
+{
+
+    inputPixelT V; //output pixel
+    for (unsigned i=0 ; i < 3 ; ++i)
+    {
+        V[i] = (  rgbPixel[i] <= e) ? (rgbPixel[i]*k)/100 : 1.16 * std::cbrt(rgbPixel[i]) - 0.16;
+    }
+
+    return V;
+
+
+}
+
+
+
 
 template <typename inputImageT, typename outputImageT>
 inline typename ColorConverterFilter<inputImageT, outputImageT>::inputPixelT
@@ -430,6 +452,65 @@ ColorConverterFilter<inputImageT, outputImageT>::sRGBCompanding(const inputPixel
     }
 
     return V;
+
+}
+
+/*
+    rgbPixel must be scaled in the range [0-1]
+    //rgbPixel = 'V' in {R, G,B}
+
+*/
+template <typename inputImageT, typename outputImageT>
+inline typename ColorConverterFilter<inputImageT, outputImageT>::outputPixelT
+ColorConverterFilter<inputImageT, outputImageT>::sRGBInverseCompanding(const outputPixelT& rgbPixel)
+{
+
+    //v in {r, g, b}
+    //V in {R, G,B}
+    outputPixelT v; //output pixel
+    for (unsigned i=0 ; i < 3 ; ++i)
+    {
+
+        v[i] = (rgbPixel[i] <= 0.04045)? rgbPixel[i]/12.92 : std::pow((rgbPixel[i] + 0.055)/1.055, 2.4);
+
+    }
+
+    return v;
+
+}
+
+template <typename inputImageT, typename outputImageT>
+inline typename ColorConverterFilter<inputImageT, outputImageT>::outputPixelT
+ColorConverterFilter<inputImageT, outputImageT>::gammaInverseCompanding(const outputPixelT& rgbPixel)
+{
+
+    outputPixelT v; //output pixel
+    for (unsigned i=0 ; i < 3 ; ++i)
+    {
+        v[i] = std::pow(rgbPixel[i], g);
+    }
+    return v;
+
+}
+
+
+template <typename inputImageT, typename outputImageT>
+inline typename ColorConverterFilter<inputImageT, outputImageT>::inputPixelT
+ColorConverterFilter<inputImageT, outputImageT>:: gammaCompanding(const inputPixelT& rgbPixel)
+{
+
+    //v in {r, g, b} = rgbPixel
+
+    //V in {R, G,B}
+    //inputPixelT must be a float point type
+    inputPixelT V; //output pixel
+    for (unsigned i=0 ; i < 3 ; ++i)
+    {
+        V[i] = std::pow(rgbPixel[i], 1.0/g);
+    }
+
+    return V;
+
 
 }
 

@@ -15,7 +15,7 @@ int main(/*int argc, char **argv*/)
 {
 
     std::string inFileName = "/home/oscar/data/biopsy/Dataset\\ 1/B\\ 2009\\ 8854/B\\ 2009\\ 8854\\ A.vsi";
-    std::string inputNoisyFile = "/home/oscar/data/biopsy/Dataset\\ 1/B\\ 2017\\ 5479/FolderB\\ 2017\\ 5479\\ F/B\\ 2017\\ 5479\\ F.vsi";
+    std::string inputNoisyFile = "//home/oscar/data/Dataset\\ 1/B\\ 2017\\ 5479/FolderB\\ 2017\\ 5479\\ F/B\\ 2017\\ 5479\\ F.vsi";
     //std::string inFileName ="/home/oscar/data/biopsy/B2046-18\\ B20181107/Image01B2046-18\\ B.vsi";
     //std::string inFileName ="/home/oscar/data/biopsy/B2046-18\\ B20181107/Image01B2046-18\\ B.vsi";
     std::string outFileName = "/home/oscar/src/HistopathologicalAnalysis/output/tmpImage.tiff";
@@ -29,8 +29,8 @@ int main(/*int argc, char **argv*/)
 
     std::unique_ptr<ImageReader<>> reader(new ImageReader<>());
 
-    reader->readVSI(inputNoisyFile, outFileName, 5);
-    //reader->read(outFileName);
+    //reader->readVSI(inputNoisyFile, outFileName, 5);
+    reader->read(outFileName);
 
     auto image = reader->getRGBImage();
 
@@ -41,9 +41,11 @@ int main(/*int argc, char **argv*/)
 
     std::unique_ptr<HEStainFilter> stainFilter(new HEStainFilter());
     stainFilter->setImage(image);
-    //stainFilter->denoiseLAB();
-    stainFilter->colorCorrection(true);
+    //stainFilter->colorCorrection(true);
+    stainFilter->denoiseLAB(true);
 
+
+    return 0;
 
    //TODO otsu problem...
 

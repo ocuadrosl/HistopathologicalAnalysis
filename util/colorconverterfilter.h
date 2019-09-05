@@ -28,7 +28,7 @@ public:
 
     // RGB type  alias
     using outputPixelT = typename outputImageT::PixelType;
-    using outputPixelComponentT  = typename outputPixelT::ComponentType;
+    using outputPixelCompT  = typename outputPixelT::ComponentType;
     using outputImageP = typename outputImageT::Pointer;
 
     //double pixel type
@@ -43,6 +43,7 @@ public:
 
     void rgbToHsv();
     void rgbToHsl();
+
     void rgbToXyz();
     void xyzToLab(); //CIE standard
     void labToXyz();
@@ -61,9 +62,15 @@ private:
     //LAB constants
     const double e = 0.008856; // epsilon constant CIE standard
     const double k = 903.3;    //kappa constant CIE standard
+    const double g = 2.2;
 
-    inline outputPixelT sRGBInverseCompanding(const outputPixelT& rgbPixel);
-    inline inputPixelT  sRGBCompanding(const inputPixelT& rgbPixel);
+    inline outputPixelT sRGBInverseCompanding (const outputPixelT& rgbPixel);
+    inline outputPixelT lInverseCompanding    (const outputPixelT& rgbPixel); //L*
+    inline outputPixelT gammaInverseCompanding(const outputPixelT& rgbPixel); //L*
+
+    inline inputPixelT  sRGBCompanding (const inputPixelT& rgbPixel);
+    inline inputPixelT  lCompanding    (const inputPixelT& rgbPixel); //L*
+    inline inputPixelT  gammaCompanding(const inputPixelT& rgbPixel); //L*
 
 
 

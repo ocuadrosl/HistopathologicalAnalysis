@@ -108,7 +108,7 @@ void HEStainFilter::denoiseLAB(bool showResult)
 
     auto labImage = xyzToLabFilter->getOutput();
 
-    //HSV typedefs
+    //Lab typedefs
     using pixelDouble = itk::RGBPixel<double>;
     using imageDouble = itk::Image< pixelDouble, 2 >;
 
@@ -120,7 +120,7 @@ void HEStainFilter::denoiseLAB(bool showResult)
 
 
     itk::ImageRegionConstIterator< rgbInputImageT > inputit(inputImage  , inputImage->GetRequestedRegion());
-    itk::ImageRegionConstIterator< imageDouble > labIt     (labImage    , labImage->GetRequestedRegion());
+    itk::ImageRegionConstIterator< imageDouble    > labIt  (labImage    , labImage->GetRequestedRegion());
     itk::ImageRegionIterator     < rgbInputImageT > outputit(outputImage, outputImage->GetRequestedRegion());
 
 
@@ -133,11 +133,14 @@ void HEStainFilter::denoiseLAB(bool showResult)
         labPixel = labIt.Get();
 
 
-        if(labPixel[1] < 0 ) // not in H&E color space
+
+
+        if(labPixel[1] < 0 ) // not in H&E color space -> Eosinophilic
         {
             outputit.Set(rgbWhite);
+
         }
-        else if(labPixel[2] > 0) // not in H&E color space
+        else if(labPixel[2] > 0) // not in H&E color space -> Basophilic
         {
             outputit.Set(rgbWhite);
 
@@ -153,6 +156,8 @@ void HEStainFilter::denoiseLAB(bool showResult)
         else
         {
             outputit.Set(inputit.Get());
+
+            // std::cout<<labPixel[1]<<std::endl;
         }
 
 
@@ -179,8 +184,9 @@ void HEStainFilter:: colorCorrection(bool showResult)
     if(showResult)
     {
 
-        VTKViewer<rgbInputImageT>::visualize(inputImage, "Denoised image");
+        VTKViewer<rgbInputImageT>::visualize(inputImage, "Input image");
     }
+
     //RGB to XYZ
     using rgbToXyzFilterT = ColorConverterFilter<rgbInputImageT, rgbOutputImageT>;
     std::unique_ptr< rgbToXyzFilterT> rgbToXyzFilter(new rgbToXyzFilterT());
@@ -194,9 +200,22 @@ void HEStainFilter:: colorCorrection(bool showResult)
     xyzToLabFilter->xyzToLab();
 
 
-
-
+    auto labImage = xyzToLabFilter->getOutput();
     //TODO finish this...
+
+    itk::ImageRegionIterator<rgbOutputImageT> labIt  (labImage, labImage->GetRequestedRegion());
+
+    while(!labIt.IsAtEnd())
+    {
+
+        labIt.Get().SetRed(100);
+        ++labIt;
+
+    }
+
+
+
+
 
     using labToXyzFilterT = ColorConverterFilter<rgbOutputImageT, rgbOutputImageT>;
     std::unique_ptr<labToXyzFilterT> labToXyzFilter(new labToXyzFilterT());
@@ -215,7 +234,7 @@ void HEStainFilter:: colorCorrection(bool showResult)
     if(showResult)
     {
 
-        VTKViewer<rgbInputImageT>::visualize(xyzToRgbFilter->getOutput(), "Denoised image");
+        VTKViewer<rgbInputImageT>::visualize(xyzToRgbFilter->getOutput(), "XYZ to RGB");
     }
 
 

@@ -16,6 +16,14 @@ inline void printWait(std::string message, std::string timeMessage = "a while")
 
 }
 
+inline void printInfo(std::string subject, std::string message)
+{
+
+    std::cout << subject + ": "+message<<std::flush;
+    std::cout<<std::endl;
+
+}
+
 
 inline void printOK(std::string message, short size = 40)
 {
