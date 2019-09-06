@@ -41,8 +41,8 @@ int main(/*int argc, char **argv*/)
 
     std::unique_ptr<HEStainFilter> stainFilter(new HEStainFilter());
     stainFilter->setImage(image);
-    //stainFilter->colorCorrection(true);
-    stainFilter->denoiseLAB(true);
+    stainFilter->colorCorrection(true);
+    //stainFilter->denoiseLAB(true);
 
 
     return 0;

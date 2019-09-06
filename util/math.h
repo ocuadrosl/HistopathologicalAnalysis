@@ -22,7 +22,7 @@ double
 
 */
 
-template< unsigned orgMin, unsigned  orgMax, unsigned newMin, unsigned newMax >
+template< int orgMin, int  orgMax, int newMin, int newMax >
 double minMax(double inputValue)
 {
     double den = ( orgMax == orgMin) ?  0.00001 : static_cast<double>(orgMax - orgMin);

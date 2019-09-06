@@ -8,7 +8,7 @@ MinMaxRGBImageCalculator<imageT>::MinMaxRGBImageCalculator()
 
 
 template<typename imageT>
-void MinMaxRGBImageCalculator<imageT>::setInput(const rgbImageP inputImage)
+void MinMaxRGBImageCalculator<imageT>::setImage(const rgbImageP inputImage)
 {
     this->inputImage = inputImage;
 
@@ -16,7 +16,7 @@ void MinMaxRGBImageCalculator<imageT>::setInput(const rgbImageP inputImage)
 
 
 template<typename imageT>
-void MinMaxRGBImageCalculator<imageT>::calculate()
+void MinMaxRGBImageCalculator<imageT>::compute()
 {
 
     itk::ImageRegionConstIterator< imageT > it(inputImage, inputImage->GetRequestedRegion());
@@ -49,13 +49,13 @@ void MinMaxRGBImageCalculator<imageT>::calculate()
 
 template<typename imageT>
 typename MinMaxRGBImageCalculator<imageT>::rgbPixelT
-MinMaxRGBImageCalculator<imageT>::getMinValue() const
+MinMaxRGBImageCalculator<imageT>::getMinValues() const
 {
     return minOutputValue;
 }
 template<typename imageT>
 typename MinMaxRGBImageCalculator<imageT>::rgbPixelT
-MinMaxRGBImageCalculator<imageT>::getMaxValue() const
+MinMaxRGBImageCalculator<imageT>::getMaxValues() const
 {
     return maxOutputValue;
 }

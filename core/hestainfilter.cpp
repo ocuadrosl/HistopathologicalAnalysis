@@ -133,8 +133,6 @@ void HEStainFilter::denoiseLAB(bool showResult)
         labPixel = labIt.Get();
 
 
-
-
         if(labPixel[1] < 0 ) // not in H&E color space -> Eosinophilic
         {
             outputit.Set(rgbWhite);
@@ -200,11 +198,39 @@ void HEStainFilter:: colorCorrection(bool showResult)
     xyzToLabFilter->xyzToLab();
 
 
+    using RGBHistogramFilterT  = RGBHistogramFilter<rgbOutputImageT>;
+    std::unique_ptr<RGBHistogramFilterT> rgbHistogramFilter(new RGBHistogramFilterT());
+    rgbHistogramFilter->setImage(xyzToLabFilter->getOutput());
+    rgbHistogramFilter->setMinPossibleValues(0  , -500, -200);
+    rgbHistogramFilter->setMaxPossibleValues(100,  500,  200);
+    rgbHistogramFilter->computeHistogram();
+    rgbHistogramFilter->computeComulativeDistribution();
+    auto histogram = rgbHistogramFilter->getHistogram();
+    auto cumulativeDistro = rgbHistogramFilter->getCumulativeDistribution();
+
+
+ //todo usar la probabilidad
+
+
+
+
+
+
+
+
+
+
+
+
+    return;
+
+
+
+
+
+    //Lightness
     auto labImage = xyzToLabFilter->getOutput();
-    //TODO finish this...
-
     itk::ImageRegionIterator<rgbOutputImageT> labIt  (labImage, labImage->GetRequestedRegion());
-
     while(!labIt.IsAtEnd())
     {
 

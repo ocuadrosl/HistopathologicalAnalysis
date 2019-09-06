@@ -23,14 +23,14 @@ public:
     using rgbImageP  = typename imageT::Pointer;
 
     //getters
-    void setInput(const rgbImageP inputImage);
+    void setImage(const rgbImageP inputImage);
 
     //process
-    void calculate();
+    void compute();
 
     //setters
-    rgbPixelT getMinValue() const;
-    rgbPixelT getMaxValue() const;
+    rgbPixelT getMinValues() const;
+    rgbPixelT getMaxValues() const;
 
 
     MinMaxRGBImageCalculator();

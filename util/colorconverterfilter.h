@@ -13,6 +13,7 @@
 #include "../util/math.h"
 #include "../util/customprint.h"
 #include "../util/illuminant.h"
+#include "../util/rgbhistogramfilter.h"
 
 
 
