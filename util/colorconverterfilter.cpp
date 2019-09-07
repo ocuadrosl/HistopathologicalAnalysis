@@ -202,7 +202,7 @@ void ColorConverterFilter<inputImageT, outputImageT>:: labToXyz()
         Lab = inputIt.Get();
 
         //Do not change the order
-        xyzF[1] = (Lab[0] + 16.0)/116;
+        xyzF[1] = (Lab[0] + 16)/116;
         xyzF[2] = xyzF[1] - (Lab[2] / 200);
         xyzF[0] = (Lab[1] / 500) + xyzF[1];
 
@@ -213,7 +213,7 @@ void ColorConverterFilter<inputImageT, outputImageT>:: labToXyz()
 
 
         xyzR[0] = (xyzXCube > e  )? xyzXCube : (116 * xyzF[0] - 16) / k;
-        xyzR[1] = (Lab[0]   > k*e)? std::pow((Lab[0]+16) / 116, 3.0) : Lab[0] / k;
+        xyzR[1] = (Lab[0]   > (k*e))? std::pow((Lab[0]+16) / 116, 3.0) : Lab[0] / k;
         xyzR[2] = (xyzZCube > e  )? xyzZCube : (116 * xyzF[2] - 16) / k;
 
 
@@ -225,8 +225,8 @@ void ColorConverterFilter<inputImageT, outputImageT>:: labToXyz()
 
         ++inputIt;
         ++outputIt;
-
-        //std::cout<<inputPixel<<" -> "<<xyzPixel<<std::endl;
+        //TODO error here XYZ must be in [0 - 1]
+        std::cout<<Lab<<" -> "<<XYZ<<std::endl;
     }
 
     IO::printOK("LAB to XYZ");
@@ -331,7 +331,8 @@ void ColorConverterFilter<inputImageT, outputImageT>:: xyzToRgb()
 
         rgb = sRGBCompanding(rgb);
 
-        //ouput RGB in [0 -255]
+        //ouput RGB in [0 - 255]
+        //std::cout<<rgb[0]<<std::endl;
         outputPixel[0] = static_cast<outputPixelCompT>(std::round(rgb[0] * 255));
         outputPixel[1] = static_cast<outputPixelCompT>(std::round(rgb[1] * 255));
         outputPixel[2] = static_cast<outputPixelCompT>(std::round(rgb[2] * 255));
@@ -380,7 +381,7 @@ void ColorConverterFilter<inputImageT, outputImageT>::rgbToXyz()
     while (!inputIt.IsAtEnd() )
     {
 
-        rgb = sRGBInverseCompanding(static_cast<outputPixelT>(inputIt.Get())/255.0);
+        rgb = sRGBInverseCompanding(static_cast<outputPixelT>(inputIt.Get())/255);
 
         XYZ[0] = (0.4124564 * rgb[0]) + (0.3575761 * rgb[1]) + (0.1804375 * rgb[2]);
         XYZ[1] = (0.2126729 * rgb[0]) + (0.7151522 * rgb[1]) + (0.0721750 * rgb[2]);
@@ -471,7 +472,7 @@ ColorConverterFilter<inputImageT, outputImageT>::sRGBInverseCompanding(const out
     for (unsigned i=0 ; i < 3 ; ++i)
     {
 
-        v[i] = (rgbPixel[i] <= 0.04045)? rgbPixel[i]/12.92 : std::pow((rgbPixel[i] + 0.055)/1.055, 2.4);
+        v[i] = (rgbPixel[i] <= 0.04045)? rgbPixel[i] / 12.92 : std::pow( (rgbPixel[i] + 0.055) / 1.055, 2.4);
 
     }
 

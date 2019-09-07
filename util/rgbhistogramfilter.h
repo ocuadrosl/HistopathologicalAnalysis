@@ -21,7 +21,7 @@ public:
     using pixelCompT = typename pixelT   ::ComponentType;
     using imageP     = typename rgbImageT::Pointer;
 
-    using histogramT = std::vector<long unsigned>;
+    using histogramT = std::vector<double>;
     using rgbHistogramT = std::vector<histogramT>;
 
 
@@ -37,8 +37,10 @@ public:
     rgbHistogramT getHistogram();
     rgbHistogramT getCumulativeDistribution();
 
-    void computeHistogram();
+    void computeHistogram(bool normalized = false);
     void computeComulativeDistribution();
+
+    void normalizeHistogram();
 
     RGBHistogramFilter();
 
@@ -56,6 +58,8 @@ private:
 
     pixelT minPossibleValues;
     pixelT maxPossibleValues;
+
+
 
 
 

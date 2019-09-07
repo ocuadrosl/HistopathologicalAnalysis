@@ -88,30 +88,46 @@ void RGBHistogramFilter<rgbImageT>::computeComulativeDistribution()
     //cI = channel iterator
     for (unsigned cI = 0; cI< 3; ++cI)
     {
-        auto hIt  = rgbHistogram[cI].begin()+1;
-        auto cuIt = rgbCumulativeDistribution[cI].begin()+1;
 
-        *(cuIt-1) = *(hIt-1);
+        rgbCumulativeDistribution[cI][0] =  rgbHistogram[cI][0];
 
-        while(hIt != rgbHistogram[cI].end() )
+        for (int i = 1; i< rgbHistogram[cI].size() ; ++i)
         {
-            (*cuIt) = *(cuIt-1) + *(hIt);
-
-            ++hIt;
-            ++cuIt;
-
-            std::cout<<*hIt<<std::endl;
+            rgbCumulativeDistribution[cI][i] = rgbCumulativeDistribution[cI][i-1] +  rgbHistogram[cI][i];
+            //std::cout<<rgbCumulativeDistribution[cI][i]<<std::endl;
         }
+
     }
 
-
-    IO::printOK("Cumulative distribution");
+        IO::printOK("Cumulative distribution");
 
 }
 
 
 template< typename rgbImageT >
-void RGBHistogramFilter<rgbImageT>::computeHistogram()
+void RGBHistogramFilter<rgbImageT>:: normalizeHistogram()
+{
+
+    auto size  = inputImage->GetRequestedRegion().GetSize();
+    unsigned noPixels = size[0]*size[1];
+
+    for (unsigned cI = 0; cI < 3; ++cI)
+    {
+
+        for (unsigned i = 0; i < rgbHistogram[cI].size(); ++i)
+        {
+           rgbHistogram[cI][i] /= noPixels;
+        }
+
+    }
+
+    IO::printOK("Normalizing histogram");
+
+
+}
+
+template< typename rgbImageT >
+void RGBHistogramFilter<rgbImageT>::computeHistogram(bool normalized)
 {
 
     //Number of bins was not set
@@ -148,11 +164,19 @@ void RGBHistogramFilter<rgbImageT>::computeHistogram()
         ++rgbHistogram[0][ std::floor(minMaxR(pixelAux[0])) ];
         ++rgbHistogram[1][ std::floor(minMaxG(pixelAux[1])) ];
         ++rgbHistogram[2][ std::floor(minMaxB(pixelAux[2])) ];
+
         ++it;
 
     }
 
 
     IO::printOK("Computing Histogram");
+
+
+    if(normalized)
+    {
+        normalizeHistogram();
+    }
+
 
 }
