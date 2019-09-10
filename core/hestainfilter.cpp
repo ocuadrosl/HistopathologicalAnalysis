@@ -191,35 +191,42 @@ void HEStainFilter:: colorCorrection(bool showResult)
     rgbToXyzFilter->setInput(inputImage);
     rgbToXyzFilter->rgbToXyz();
 
-    //XYZ to LAB
+
+
+
+
+     //XYZ to LAB
     using xyzToLabFilterT = ColorConverterFilter<rgbOutputImageT, rgbOutputImageT>;
     std::unique_ptr< xyzToLabFilterT> xyzToLabFilter(new xyzToLabFilterT());
     xyzToLabFilter->setInput(rgbToXyzFilter->getOutput());
     xyzToLabFilter->xyzToLab();
 
+
     rgbOutputImageP labImage = xyzToLabFilter->getOutput();
 
-
-
+/*
     //histogram
     using RGBHistogramFilterT  = RGBHistogramFilter<rgbOutputImageT>;
     std::unique_ptr<RGBHistogramFilterT> rgbHistogramFilter(new RGBHistogramFilterT());
-    rgbHistogramFilter->setImage(xyzToLabFilter->getOutput());
+    rgbHistogramFilter->setImage(labImage);
     rgbHistogramFilter->setMinPossibleValues(0  , -500, -200);
     rgbHistogramFilter->setMaxPossibleValues(100,  500,  200);
+
     rgbHistogramFilter->computeHistogram(true); //normalized
+
+
+    return;
+
     rgbHistogramFilter->computeComulativeDistribution();
     auto histogram = rgbHistogramFilter->getHistogram();
     auto cumulativeDistro = rgbHistogramFilter->getCumulativeDistribution();
-
+*/
 
 
     //histogram equalization
 
-    auto imageSize = labImage->GetRequestedRegion().GetSize();
-    unsigned long noPixels = imageSize[0] * imageSize[1];
-
-
+   // auto imageSize = labImage->GetRequestedRegion().GetSize();
+   // unsigned long noPixels = imageSize[0] * imageSize[1];
 
 
     rgbOutputImageP equalizedImage = rgbOutputImageT::New();
@@ -229,9 +236,9 @@ void HEStainFilter:: colorCorrection(bool showResult)
     itk::ImageRegionIterator<rgbOutputImageT> eqIt  (equalizedImage, equalizedImage->GetRequestedRegion());
     itk::ImageRegionConstIterator<rgbOutputImageT> labIt  (labImage, labImage->GetRequestedRegion());
 
-    unsigned indexAux;
-    double cdf;
-    double cdfMinL = cumulativeDistro[0][0] * 100;
+    //unsigned indexAux;
+   // double cdf;
+  //  double cdfMinL = cumulativeDistro[0][0] * 100;
 
     rgbOutputPixelT pixelAux;
 
@@ -240,18 +247,13 @@ void HEStainFilter:: colorCorrection(bool showResult)
 
         pixelAux = labIt.Get();
 
-        pixelAux[0] = 90;
+        pixelAux[0] +=15;
 
         //indexAux = static_cast<unsigned>(pixelAux[0]);
 
-
-
         //cdf = 100 * cumulativeDistro[0][indexAux];
 
-
-
         //pixelAux[0] = std::floor(cdf);
-
 
         eqIt.Set( pixelAux );
 
@@ -291,6 +293,7 @@ void HEStainFilter:: colorCorrection(bool showResult)
     labToXyzFilter->setInput(equalizedImage);
     labToXyzFilter->labToXyz();
 
+
     using xyzToRgbFilterT = ColorConverterFilter<rgbOutputImageT, rgbInputImageT>;
     std::unique_ptr<xyzToRgbFilterT> xyzToRgbFilter(new xyzToRgbFilterT());
     xyzToRgbFilter->setInput(labToXyzFilter->getOutput());
@@ -305,10 +308,6 @@ void HEStainFilter:: colorCorrection(bool showResult)
 
         VTKViewer<rgbInputImageT>::visualize(outputImage, "XYZ to RGB");
     }
-
-
-
-
 
 
 }
