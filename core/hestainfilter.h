@@ -28,13 +28,13 @@ public:
     using inputPixelComponentT=unsigned int;
 
     // RGB type  alias
-    using rgbInputPixelT = itk::RGBPixel<inputPixelComponentT>;
-    using rgbInputImageT = itk::Image< rgbInputPixelT, 2 >;
-    using rgbInputImageP = typename  rgbInputImageT::Pointer;
+    using rgbPixelU = itk::RGBPixel<inputPixelComponentT>;
+    using rgbImageU = itk::Image< rgbPixelU, 2 >;
+    using rgbImageUP = typename  rgbImageU::Pointer;
 
-    using rgbOutputPixelT = itk::RGBPixel<double>;
-    using rgbOutputImageT = itk::Image< rgbOutputPixelT, 2 >;
-    using rgbOutputImageP = typename  rgbOutputImageT::Pointer;
+    using rgbPixelD = itk::RGBPixel<double>;
+    using rgbImageD = itk::Image< rgbPixelD, 2 >;
+    using rgbImageDP = typename  rgbImageD::Pointer;
 
 
 
@@ -43,28 +43,33 @@ public:
     using grayImageP = typename grayImageT::Pointer;
 
     //setters
-    void setImage(rgbInputImageP inputImage);
+    void setImage(rgbImageUP inputImage);
+    void setGamma(double gamma);
 
     //getters
 
-    rgbInputImageP getOutput() const;
+    rgbImageUP getOutput() const;
 
-    void denoiseHSL(bool showResult = false);
+    void denoiseHSV(bool showResult = false);
     void denoiseLAB(bool showResult = false);
 
-    void colorCorrection(bool showResult = false);
+
+
+    void colorEnhancement(bool showResult = false);
 
 
     HEStainFilter();
 
 private:
 
-    rgbInputImageP inputImage;
-    rgbInputImageP outputImage;
+    rgbImageUP inputImage;
+    rgbImageUP outputImage;
     void separateStainChannels();
 
+    double gamma=1; //degree of lightness
 
-    double hueThresholdRed;
+
+    double hueThresholdYellow;
     double hueThresholdBlue;
     double saturationThreshold;
     double lightnessThreshold;

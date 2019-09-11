@@ -3,13 +3,13 @@
 
 
 HEStainFilter::HEStainFilter():
-    hueThresholdRed(60), hueThresholdBlue(180), saturationThreshold(0.7), lightnessThreshold(0.6)
+    hueThresholdYellow(60), hueThresholdBlue(180), saturationThreshold(0.7), lightnessThreshold(0.6)
 {
 
 }
 
 
-typename HEStainFilter::rgbInputImageP
+typename HEStainFilter::rgbImageUP
 HEStainFilter::getOutput() const
 {
 
@@ -18,54 +18,43 @@ HEStainFilter::getOutput() const
 }
 
 
-void HEStainFilter::denoiseHSL(bool showResult)
+void HEStainFilter::denoiseHSV(bool showResult)
 {
 
-    //To HSV
-    using colorConverterFilterT = ColorConverterFilter<rgbInputImageT, rgbOutputImageT>;
+    //To HSL
+    using colorConverterFilterT = ColorConverterFilter<rgbImageU, rgbImageD>;
     std::unique_ptr< colorConverterFilterT> colorConverterFilter(new colorConverterFilterT());
     colorConverterFilter->setInput(inputImage);
-    colorConverterFilter->rgbToHsl();
+    colorConverterFilter->rgbToHsv();
     auto hsvImage = colorConverterFilter->getOutput();
 
-    //HSV typedefs
-    using hsvPixelDouble = itk::RGBPixel<double>;
-    using hsvImageDouble = itk::Image< hsvPixelDouble, 2 >;
 
-
-    outputImage = rgbInputImageT::New();
+    outputImage = rgbImageU::New();
     outputImage->SetRegions(inputImage->GetRequestedRegion());
     outputImage->Allocate();
 
 
+    itk::ImageRegionConstIterator<rgbImageU> inputit(inputImage  , inputImage ->GetRequestedRegion());
+    itk::ImageRegionConstIterator<rgbImageD> hsvIt  (hsvImage    , hsvImage   ->GetRequestedRegion());
+    itk::ImageRegionIterator     <rgbImageU> outputit(outputImage, outputImage->GetRequestedRegion());
 
-    itk::ImageRegionConstIterator< rgbInputImageT > inputit(inputImage  , inputImage->GetRequestedRegion());
-    itk::ImageRegionConstIterator< hsvImageDouble > hslIt   (hsvImage   , hsvImage->GetRequestedRegion());
-    itk::ImageRegionIterator     < rgbInputImageT > outputit(outputImage, outputImage->GetRequestedRegion());
 
-
-    auto white = itk::NumericTraits<rgbInputPixelT>::Zero+255;
+    auto white = itk::NumericTraits<rgbPixelU>::Zero+255;
 
     auto pixel = inputit.Get();
-    auto hslPixel = hslIt.Get();
+    auto hsvPixel = hsvIt.Get();
 
     while(!inputit.IsAtEnd())
     {
 
         pixel = inputit.Get();
-        hslPixel = hslIt.Get();
+        hsvPixel = hsvIt.Get();
 
-        if(hslPixel[0] < hueThresholdBlue ) // not in H&E color space
-        //if(hslPixel[0] > hueThresholdRed &&  hslPixel[0] < hueThresholdBlue ) // not in H&E color space
+        if(hsvPixel[0] > hueThresholdYellow  && hsvPixel[0] < hueThresholdBlue ) // not in H&E color space
         {
             outputit.Set(white);
-            //std::cout<< pixel<<"->"<<hslPixel<<std::endl;
         }
-        else if(hslPixel[2] < lightnessThreshold &&  hslPixel[1] < saturationThreshold)
-        {
-            outputit.Set(white);
 
-        }
         else
         {
             outputit.Set(pixel);
@@ -73,7 +62,7 @@ void HEStainFilter::denoiseHSL(bool showResult)
 
 
         ++inputit;
-        ++hslIt;
+        ++hsvIt;
         ++outputit;
 
     }
@@ -81,7 +70,7 @@ void HEStainFilter::denoiseHSL(bool showResult)
     if(showResult)
     {
 
-        VTKViewer<rgbInputImageT>::visualize(outputImage, "Denoised image");
+        VTKViewer<rgbImageU>::visualize(outputImage, "Denoised image");
     }
 
 }
@@ -91,13 +80,13 @@ void HEStainFilter::denoiseLAB(bool showResult)
 {
 
 
-    using rgbToXyzFilterT = ColorConverterFilter<rgbInputImageT, rgbOutputImageT>;
+    using rgbToXyzFilterT = ColorConverterFilter<rgbImageU, rgbImageD>;
     std::unique_ptr< rgbToXyzFilterT> rgbToXyzFilter(new rgbToXyzFilterT());
     rgbToXyzFilter->setInput(inputImage);
     rgbToXyzFilter->rgbToXyz();
 
 
-    using xyzToLabFilterT = ColorConverterFilter<rgbOutputImageT, rgbOutputImageT>;
+    using xyzToLabFilterT = ColorConverterFilter<rgbImageD, rgbImageD>;
     std::unique_ptr< xyzToLabFilterT> xyzToLabFilter(new xyzToLabFilterT());
     xyzToLabFilter->setInput(rgbToXyzFilter->getOutput());
     xyzToLabFilter->xyzToLab();
@@ -113,18 +102,18 @@ void HEStainFilter::denoiseLAB(bool showResult)
     using imageDouble = itk::Image< pixelDouble, 2 >;
 
 
-    outputImage = rgbInputImageT::New();
+    outputImage = rgbImageU::New();
     outputImage->SetRegions(inputImage->GetRequestedRegion());
     outputImage->Allocate();
 
 
 
-    itk::ImageRegionConstIterator< rgbInputImageT > inputit(inputImage  , inputImage->GetRequestedRegion());
+    itk::ImageRegionConstIterator< rgbImageU > inputit(inputImage  , inputImage->GetRequestedRegion());
     itk::ImageRegionConstIterator< imageDouble    > labIt  (labImage    , labImage->GetRequestedRegion());
-    itk::ImageRegionIterator     < rgbInputImageT > outputit(outputImage, outputImage->GetRequestedRegion());
+    itk::ImageRegionIterator     < rgbImageU > outputit(outputImage, outputImage->GetRequestedRegion());
 
 
-    auto rgbWhite = itk::NumericTraits<rgbInputPixelT>::Zero+255;
+    auto rgbWhite = itk::NumericTraits<rgbPixelU>::Zero+255;
     auto labPixel = labIt.Get();
 
     while(!inputit.IsAtEnd())
@@ -168,152 +157,87 @@ void HEStainFilter::denoiseLAB(bool showResult)
     if(showResult)
     {
 
-        VTKViewer<rgbInputImageT>::visualize(outputImage, "Denoised image");
+        VTKViewer<rgbImageU>::visualize(outputImage, "Denoised image");
     }
 
 }
 
+void HEStainFilter::setGamma(double gamma)
+{
+
+    this->gamma = gamma;
+}
 
 
-void HEStainFilter:: colorCorrection(bool showResult)
+
+void HEStainFilter:: colorEnhancement(bool showResult)
 {
 
 
     if(showResult)
     {
 
-        VTKViewer<rgbInputImageT>::visualize(inputImage, "Input image");
+        VTKViewer<rgbImageU>::visualize(inputImage, "Color Enhancement");
     }
 
-    //RGB to XYZ
-    using rgbToXyzFilterT = ColorConverterFilter<rgbInputImageT, rgbOutputImageT>;
-    std::unique_ptr< rgbToXyzFilterT> rgbToXyzFilter(new rgbToXyzFilterT());
-    rgbToXyzFilter->setInput(inputImage);
-    rgbToXyzFilter->rgbToXyz();
+    using rgbToHsvFilterT = ColorConverterFilter<rgbImageU, rgbImageD>;
+    std::unique_ptr< rgbToHsvFilterT> rgbToHsvFilter(new rgbToHsvFilterT());
+    rgbToHsvFilter->setInput(inputImage);
+    rgbToHsvFilter->rgbToHsv();
+    auto hsvImage = rgbToHsvFilter->getOutput();
+
+    using minMaxRGBImageCalculatorT = MinMaxRGBImageCalculator<rgbImageD>;
+    std::unique_ptr<minMaxRGBImageCalculatorT> minMaxImageCal(new minMaxRGBImageCalculatorT());
+    minMaxImageCal->setImage(hsvImage);
+    minMaxImageCal->compute();
+    const auto minHsv = minMaxImageCal->getMinValues();
+    const auto maxHsv = minMaxImageCal->getMaxValues();
+
+    itk::ImageRegionIterator<rgbImageD> hsvIt  (hsvImage, hsvImage->GetRequestedRegion());
 
 
+    rgbPixelD hsvPixel;
 
+    Math::MinMax<> minMaxS(minHsv[1], maxHsv[1], 0, 1 );
+    Math::MinMax<> minMaxV(minHsv[2], maxHsv[2], 0.5, 1 );
 
-
-     //XYZ to LAB
-    using xyzToLabFilterT = ColorConverterFilter<rgbOutputImageT, rgbOutputImageT>;
-    std::unique_ptr< xyzToLabFilterT> xyzToLabFilter(new xyzToLabFilterT());
-    xyzToLabFilter->setInput(rgbToXyzFilter->getOutput());
-    xyzToLabFilter->xyzToLab();
-
-
-    rgbOutputImageP labImage = xyzToLabFilter->getOutput();
-
-/*
-    //histogram
-    using RGBHistogramFilterT  = RGBHistogramFilter<rgbOutputImageT>;
-    std::unique_ptr<RGBHistogramFilterT> rgbHistogramFilter(new RGBHistogramFilterT());
-    rgbHistogramFilter->setImage(labImage);
-    rgbHistogramFilter->setMinPossibleValues(0  , -500, -200);
-    rgbHistogramFilter->setMaxPossibleValues(100,  500,  200);
-
-    rgbHistogramFilter->computeHistogram(true); //normalized
-
-
-    return;
-
-    rgbHistogramFilter->computeComulativeDistribution();
-    auto histogram = rgbHistogramFilter->getHistogram();
-    auto cumulativeDistro = rgbHistogramFilter->getCumulativeDistribution();
-*/
-
-
-    //histogram equalization
-
-   // auto imageSize = labImage->GetRequestedRegion().GetSize();
-   // unsigned long noPixels = imageSize[0] * imageSize[1];
-
-
-    rgbOutputImageP equalizedImage = rgbOutputImageT::New();
-    equalizedImage->SetRegions(labImage->GetRequestedRegion());
-    equalizedImage->Allocate();
-
-    itk::ImageRegionIterator<rgbOutputImageT> eqIt  (equalizedImage, equalizedImage->GetRequestedRegion());
-    itk::ImageRegionConstIterator<rgbOutputImageT> labIt  (labImage, labImage->GetRequestedRegion());
-
-    //unsigned indexAux;
-   // double cdf;
-  //  double cdfMinL = cumulativeDistro[0][0] * 100;
-
-    rgbOutputPixelT pixelAux;
-
-    while(!labIt.IsAtEnd())
+    while(!hsvIt.IsAtEnd())
     {
 
-        pixelAux = labIt.Get();
+        hsvPixel = hsvIt.Get();
 
-        pixelAux[0] +=15;
+        hsvPixel[1] = minMaxS(hsvPixel[1]);
+        hsvPixel[2] = minMaxV(hsvPixel[2]);
 
-        //indexAux = static_cast<unsigned>(pixelAux[0]);
+        hsvIt.Set( hsvPixel );
 
-        //cdf = 100 * cumulativeDistro[0][indexAux];
-
-        //pixelAux[0] = std::floor(cdf);
-
-        eqIt.Set( pixelAux );
-
-        //pixelAux[0] = std::floor( 100 * cumulativeDistro[0][static_cast<unsigned>(pixelAux[0])]);
-
-        //indexAux =  static_cast<unsigned>(std::floor(pixelAux[1])+500);
-        //pixelAux[1] = std::floor( 500 * cumulativeDistro[1][indexAux]);
-
-        //indexAux =  static_cast<unsigned>(std::floor(pixelAux[2])+200);
-        //pixelAux[2] = std::floor( 200 * cumulativeDistro[2][indexAux]);
-
-        //labIt.Set(pixelAux);
-
-        ++labIt;
-        ++eqIt;
-    }
-
-    /*
-
-    //Lightness
-    auto labImage = xyzToLabFilter->getOutput();
-    itk::ImageRegionIterator<rgbOutputImageT> labIt  (labImage, labImage->GetRequestedRegion());
-    while(!labIt.IsAtEnd())
-    {
-
-        labIt.Get().SetRed(100);
-        ++labIt;
+        ++hsvIt;
 
     }
-*/
 
 
+    using hsvToRgbFilterT = ColorConverterFilter<rgbImageD, rgbImageU>;
+    std::unique_ptr< hsvToRgbFilterT> hsvToRgbFilter(new hsvToRgbFilterT());
+    hsvToRgbFilter->setInput(hsvImage);
+    hsvToRgbFilter->hsvToRgb();
+    outputImage = hsvToRgbFilter->getOutput();
 
 
-    using labToXyzFilterT = ColorConverterFilter<rgbOutputImageT, rgbOutputImageT>;
-    std::unique_ptr<labToXyzFilterT> labToXyzFilter(new labToXyzFilterT());
-    labToXyzFilter->setInput(equalizedImage);
-    labToXyzFilter->labToXyz();
+    IO::printOK("Color Enhancement");
 
-
-    using xyzToRgbFilterT = ColorConverterFilter<rgbOutputImageT, rgbInputImageT>;
-    std::unique_ptr<xyzToRgbFilterT> xyzToRgbFilter(new xyzToRgbFilterT());
-    xyzToRgbFilter->setInput(labToXyzFilter->getOutput());
-    xyzToRgbFilter->xyzToRgb();
-
-
-
-    outputImage = xyzToRgbFilter->getOutput();
 
     if(showResult)
     {
 
-        VTKViewer<rgbInputImageT>::visualize(outputImage, "XYZ to RGB");
+        VTKViewer<rgbImageU>::visualize(outputImage, "Color Enhancement");
     }
+
 
 
 }
 
 
-void HEStainFilter::setImage(rgbInputImageP inputImage)
+void HEStainFilter::setImage(rgbImageUP inputImage)
 {
     this->inputImage = inputImage;
 }

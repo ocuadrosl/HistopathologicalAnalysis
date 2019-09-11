@@ -161,6 +161,8 @@ void RGBHistogramFilter<rgbImageT>::computeHistogram(bool normalized)
     {
         pixelAux = it.Get();
 
+        //std::cout<<minMaxB(pixelAux[2])<<" - > "<< pixelAux[2] <<std::endl;
+
         ++rgbHistogram[0][ std::floor(minMaxR(pixelAux[0])) ];
         ++rgbHistogram[1][ std::floor(minMaxG(pixelAux[1])) ];
         ++rgbHistogram[2][ std::floor(minMaxB(pixelAux[2])) ];

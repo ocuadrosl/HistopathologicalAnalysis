@@ -8,6 +8,12 @@
 namespace IO
 {
 
+
+inline void printLn(const std::string& message)
+{
+    std::cout<<message<<std::endl;
+}
+
 inline void printWait(std::string message, std::string timeMessage = "a while")
 {
 

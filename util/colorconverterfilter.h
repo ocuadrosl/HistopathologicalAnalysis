@@ -44,6 +44,8 @@ public:
 
     void rgbToHsv();
     void rgbToHsl();
+    void hslToRgb();
+    void hsvToRgb();
 
     void rgbToXyz();
     void xyzToLab(); //CIE standard

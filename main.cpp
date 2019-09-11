@@ -41,13 +41,10 @@ int main(/*int argc, char **argv*/)
 
     std::unique_ptr<HEStainFilter> stainFilter(new HEStainFilter());
     stainFilter->setImage(image);
-    stainFilter->colorCorrection(true);
-    //stainFilter->denoiseLAB(true);
+    stainFilter->colorEnhancement(true);
 
-
-    return 0;
-
-   //TODO otsu problem...
+    //stainFilter->setImage(stainFilter->getOutput());
+    //stainFilter->denoiseHSV(true);
 
     //ROI extraction
     std::unique_ptr<ROIExtractor> roiExtractor(new ROIExtractor());

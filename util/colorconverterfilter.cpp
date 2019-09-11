@@ -86,8 +86,7 @@ void ColorConverterFilter<inputImageT, outputImageT>::rgbToHsv()
 
             outputIt.Set(hsvPixel);
 
-
-           // std::cout<<inputIt.Get() << " -> "<<h<<" "<<s<<" "<<v<<std::endl;
+           //std::cout<<hsvPixel<<std::endl;
 
 
         ++inputIt;
@@ -96,6 +95,103 @@ void ColorConverterFilter<inputImageT, outputImageT>::rgbToHsv()
 
 
     IO::printOK("RGB to HSV");
+
+}
+
+
+
+template <typename inputImageT, typename outputImageT>
+void ColorConverterFilter<inputImageT, outputImageT>::hsvToRgb()
+{
+
+    outputImage = outputImageT::New();
+    outputImage->SetRegions(inputImage->GetRequestedRegion());
+    outputImage->Allocate();
+
+
+    itk::ImageRegionConstIterator< inputImageT > inputIt(inputImage,  inputImage->GetRequestedRegion());
+    itk::ImageRegionIterator     < outputImageT> outputIt(outputImage, outputImage->GetRequestedRegion());
+
+    double c; //chroma
+    double h,x,m;
+    inputPixelT hsv;
+    inputPixelT rgb;
+
+    while (!inputIt.IsAtEnd() )
+    {
+
+        hsv = inputIt.Get();
+
+        //std::cout<<hsv<<std::endl;
+
+        c = hsv[2] * hsv[1];
+
+        h = hsv[0]/60;
+
+
+        x = c * (1 - std::abs(Math::mod<>(h, 2.0) - 1));
+
+
+        if(h >=0 && h <= 1)
+        {
+            rgb[0] = c;
+            rgb[1] = x;
+            rgb[2] = 0;
+        }
+        else if (h > 1 && h <= 2)
+        {
+            rgb[0] = x;
+            rgb[1] = c;
+            rgb[2] = 0;
+        }
+        else if (h > 2 && h <= 3)
+        {
+            rgb[0] = 0;
+            rgb[1] = c;
+            rgb[2] = x;
+        }
+        else if (h > 3 && h <= 4)
+        {
+            rgb[0] = 0;
+            rgb[1] = x;
+            rgb[2] = c;
+        }
+        else if (h > 4 && h <= 5)
+        {
+            rgb[0] = x;
+            rgb[1] = 0;
+            rgb[2] = c;
+        }
+        else if (h > 5 && h <= 6)
+        {
+            rgb[0] = c;
+            rgb[1] = 0;
+            rgb[2] = x;
+        }
+        else
+        {
+            rgb[0] = 0;
+            rgb[1] = 0;
+            rgb[2] = 0;
+        }
+
+
+        m = hsv[2]-c;
+
+        rgb[0] += m;
+        rgb[1] += m;
+        rgb[2] += m;
+
+        //std::cout<<rgb<<std::endl;
+        outputIt.Set(rgb*255);
+
+
+
+        ++inputIt;
+        ++outputIt;
+    }
+
+     IO::printOK("HSV to RGB");
 
 }
 
@@ -116,7 +212,7 @@ void ColorConverterFilter<inputImageT, outputImageT>::rgbToHsl()
         itk::ImageRegionConstIterator< inputImageT > inputIt(inputImage,  inputImage->GetRequestedRegion());
         itk::ImageRegionIterator     < outputImageT> outputIt(outputImage, outputImage->GetRequestedRegion());
 
-        outputPixelT pixelFloat;
+        outputPixelT rgb;
 
         //template function alias
         constexpr auto  max = Math::max<outputPixelT>;
@@ -128,10 +224,10 @@ void ColorConverterFilter<inputImageT, outputImageT>::rgbToHsl()
         while (!inputIt.IsAtEnd() )
         {
 
-            pixelFloat = static_cast<outputPixelT>(inputIt.Get())/255.0;
+            rgb = static_cast<outputPixelT>(inputIt.Get())/255.0;
 
-            outputPixelCompT maxAux = max(pixelFloat);
-            outputPixelCompT minAux = min(pixelFloat);
+            outputPixelCompT maxAux = max(rgb);
+            outputPixelCompT minAux = min(rgb);
             outputPixelCompT delta =  maxAux - minAux;
 
             //Hue calculation
@@ -142,17 +238,17 @@ void ColorConverterFilter<inputImageT, outputImageT>::rgbToHsl()
             {
                 hslPixel[0] = 0;
             }
-            else if (maxAux == pixelFloat.GetRed()) //red
+            else if (maxAux == rgb.GetRed()) //red
             {
-                hslPixel[0] = 60 *  mod( (pixelFloat[1] - pixelFloat[2]) / delta, 6);
+                hslPixel[0] = 60 *  mod( (rgb[1] - rgb[2]) / delta, 6);
             }
-            else if (maxAux == pixelFloat.GetGreen()) //green
+            else if (maxAux == rgb.GetGreen()) //green
             {
-                hslPixel[0] = 60 * (((pixelFloat[2] - pixelFloat[0])/delta ) + 2);
+                hslPixel[0] = 60 * (((rgb[2] - rgb[0])/delta ) + 2);
             }
-            else if (maxAux == pixelFloat.GetBlue()) //blue
+            else if (maxAux == rgb.GetBlue()) //blue
             {
-                hslPixel[0] = 60 * (((pixelFloat[0] - pixelFloat[1])/delta) + 4);
+                hslPixel[0] = 60 * (((rgb[0] - rgb[1])/delta) + 4);
             }
 
             //Lightness
@@ -342,16 +438,10 @@ void ColorConverterFilter<inputImageT, outputImageT>:: xyzToRgb()
 
         XYZ = inputIt.Get();
 
-        //TODO esto es solo para verificar que los colores no se salgan hay un paper
-        //https://link.springer.com/article/10.1007/s10043-019-00499-2
-        XYZ[0] = (XYZ[0]>white[0])? white[0]: XYZ[0];
-        XYZ[1] = (XYZ[1]>white[1])? white[1]: XYZ[1];
-        XYZ[2] = (XYZ[2]>white[2])? white[2]: XYZ[2];
 
-
-       rgb[0] = ( 3.2404542 * XYZ[0]) + (-1.5371385 * XYZ[1]) + (-0.4985314 * XYZ[2]);
-       rgb[1] = (-0.9692660 * XYZ[0]) + ( 1.8760108 * XYZ[1]) + ( 0.0415560 * XYZ[2]);
-       rgb[2] = ( 0.0556434 * XYZ[0]) + (-0.2040259 * XYZ[1]) + ( 1.0572252 * XYZ[2]);
+        rgb[0] = ( 3.2404542 * XYZ[0]) + (-1.5371385 * XYZ[1]) + (-0.4985314 * XYZ[2]);
+        rgb[1] = (-0.9692660 * XYZ[0]) + ( 1.8760108 * XYZ[1]) + ( 0.0415560 * XYZ[2]);
+        rgb[2] = ( 0.0556434 * XYZ[0]) + (-0.2040259 * XYZ[1]) + ( 1.0572252 * XYZ[2]);
 
 
         rgb = sRGBCompanding(rgb);
@@ -362,22 +452,14 @@ void ColorConverterFilter<inputImageT, outputImageT>:: xyzToRgb()
         outputPixel[2] = static_cast<outputPixelCompT>(std::floor(rgb[2] * 255));
 
 
-        outputPixel[0] = (outputPixel[0]>255)? 255 : outputPixel[0];
-        outputPixel[1] = (outputPixel[1]>255)? 255 : outputPixel[1];
-        outputPixel[2] = (outputPixel[2]>255)? 255 : outputPixel[2];
-
         outputIt.Set(outputPixel);
 
-        if(outputPixel[0]>255 || outputPixel[1]>255||outputPixel[2]>255 )
-
-            std::cout<<XYZ<<" -> "<<outputPixel<<std::endl;
-
+        //std::cout<<XYZ<<" -> "<<outputPixel<<std::endl;
 
         ++inputIt;
         ++outputIt;
 
     }
-
 
     IO::printOK("XYZ to RGB");
 
