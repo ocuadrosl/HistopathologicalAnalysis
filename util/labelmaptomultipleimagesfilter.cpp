@@ -16,7 +16,7 @@ void LabelMapToMultipleImagesFilter<imageT, labelMapT>::extractImages()
 {
 
     IO::printWait("Extracting images");
-    IO::printInfo("Extracting images", std::to_string(labelMap->GetNumberOfLabelObjects()) +"images will be extracted");
+    IO::printInfo("Extracting images", std::to_string(labelMap->GetNumberOfLabelObjects()) +" images will be extracted");
 
     labelObjT * labelObj;
 

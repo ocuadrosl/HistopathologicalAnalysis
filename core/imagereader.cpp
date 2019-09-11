@@ -11,7 +11,7 @@ void ImageReader<pixelType>::readVSI(std::string inFileName, std::string outFile
 {
 
 
-    IO::printWait("Reading VSI file", "a few minutes");
+    IO::printWait("Reading and resizing the VSI file", "a few minutes");
     std::string pyCommand = "python  /home/oscar/src/HistopathologicalAnalysis/python/vsiReader.py "+
             inFileName+" "+
             outFileName+" "+std::to_string(outMagnification);

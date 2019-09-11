@@ -174,12 +174,6 @@ void HEStainFilter:: colorEnhancement(bool showResult)
 {
 
 
-    if(showResult)
-    {
-
-        VTKViewer<rgbImageU>::visualize(inputImage, "Color Enhancement");
-    }
-
     using rgbToHsvFilterT = ColorConverterFilter<rgbImageU, rgbImageD>;
     std::unique_ptr< rgbToHsvFilterT> rgbToHsvFilter(new rgbToHsvFilterT());
     rgbToHsvFilter->setInput(inputImage);
@@ -198,8 +192,8 @@ void HEStainFilter:: colorEnhancement(bool showResult)
 
     rgbPixelD hsvPixel;
 
-    Math::MinMax<> minMaxS(minHsv[1], maxHsv[1], 0, 1 );
-    Math::MinMax<> minMaxV(minHsv[2], maxHsv[2], 0.5, 1 );
+    Math::MinMax<> minMaxS(minHsv[1], maxHsv[1], 0, 1);
+    Math::MinMax<> minMaxV(minHsv[2], maxHsv[2], 0, 1);
 
     while(!hsvIt.IsAtEnd())
     {
