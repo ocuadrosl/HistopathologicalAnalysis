@@ -36,6 +36,7 @@ void LabelMapToMultipleImagesFilter<imageT, labelMapT>::extractImages()
             continue;
         }
 
+        //TODO use iterators it is faster....
         auto image  = imageT::New();
         image->SetRegions(inputImage->GetRequestedRegion());
         image->Allocate();
@@ -53,13 +54,11 @@ void LabelMapToMultipleImagesFilter<imageT, labelMapT>::extractImages()
 
         images.push_back(image);
 
-        //TODO fix the progress percentage calculation
 
-        IO::printProgress("Extracting images", ((objI+1.0)*100.0)/numberOfObjs);
-
-
+        IO::printProgress("Extracting images", ((objI+1)*100)/(numberOfObjs-2));
 
     }
+
 
     IO::printOK("Extracting images");
 

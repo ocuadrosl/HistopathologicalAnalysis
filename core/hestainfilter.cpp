@@ -192,16 +192,19 @@ void HEStainFilter:: colorEnhancement(bool showResult)
 
     rgbPixelD hsvPixel;
 
-    Math::MinMax<> minMaxS(minHsv[1], maxHsv[1], 0, 1);
-    Math::MinMax<> minMaxV(minHsv[2], maxHsv[2], 0, 1);
+    Math::MinMax<> minMaxS(minHsv[1], maxHsv[1], 0, 1.0);
+    Math::MinMax<> minMaxV(minHsv[2], maxHsv[2], 0, 1.0);
 
     while(!hsvIt.IsAtEnd())
     {
 
         hsvPixel = hsvIt.Get();
 
+        //std::cout<<hsvPixel<<" -> ";
+
         hsvPixel[1] = minMaxS(hsvPixel[1]);
         hsvPixel[2] = minMaxV(hsvPixel[2]);
+        //std::cout<<hsvPixel<<std::endl;
 
         hsvIt.Set( hsvPixel );
 
@@ -222,7 +225,6 @@ void HEStainFilter:: colorEnhancement(bool showResult)
 
     if(showResult)
     {
-
         VTKViewer<rgbImageU>::visualize(outputImage, "Color Enhancement");
     }
 

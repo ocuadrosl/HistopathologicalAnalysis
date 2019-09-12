@@ -8,7 +8,7 @@
 
 
 
-template<typename imageT >
+template<typename imageT = itk::Image<itk::RGBPixel<unsigned>, 2>>
 class VTKViewer
 {
 public:

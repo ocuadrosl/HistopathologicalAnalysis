@@ -9,9 +9,11 @@ namespace IO
 {
 
 
-inline void printProgress(const std::string& message, const float& progress)
+inline void printProgress(const std::string& message, const unsigned& progress,  short size = 40)
 {
-    std::cout<<message<<": "<<progress<<"%"<<std::endl<<std::flush;
+
+    short diff = size - static_cast<short>(message.size()+1);
+    std::cout << message<<": "<< std::setw(diff) << progress <<"%"<<std::flush<<std::endl;
 }
 
 inline void printLn(const std::string& message)
