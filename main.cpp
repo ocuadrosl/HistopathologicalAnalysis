@@ -14,28 +14,24 @@
 int main(/*int argc, char **argv*/)
 {
 
-    std::string inputFileName = "/home/oscar/data/biopsy/Dataset\\ 2/B\\ 2002\\ 381/FolderB\\ 2002\\ 381\\ A/FMRP_B\\ 2002\\ 381\\ A01.vsi";
+    //std::string inputFileName = "/home/oscar/data/biopsy/Dataset\\ 2/B\\ 2002\\ 381/FolderB\\ 2002\\ 381\\ A/FMRP_B\\ 2002\\ 381\\ A01.vsi";
     //std::string inputNoisyFile = "//home/oscar/data/Dataset\\ 1/B\\ 2017\\ 5479/FolderB\\ 2017\\ 5479\\ F/B\\ 2017\\ 5479\\ F.vsi";
-    //std::string inFileName ="/home/oscar/data/biopsy/B2046-18\\ B20181107/Image01B2046-18\\ B.vsi";
+    std::string inputFileName ="/home/oscar/data/biopsy/B526-18\\ \\ B\\ 20181107/Image01B526-18\\ \\ B\\ .vsi";
     //std::string inFileName ="/home/oscar/data/biopsy/B2046-18\\ B20181107/Image01B2046-18\\ B.vsi";
     std::string outFileName = "/home/oscar/src/HistopathologicalAnalysis/output/tmpImage.tiff";
     //short magnification= 5;
-
-
-    //usings
 
 
     //read image
 
     std::unique_ptr<ImageReader<>> reader(new ImageReader<>());
 
-    reader->readVSI(inputFileName, outFileName, 5);
+    reader->readVSI(inputFileName, outFileName, 0.5);
     //reader->read(outFileName);
 
     auto image = reader->getRGBImage();
 
     //VTKViewer<>::visualizeRGB(image, "Input Image RGB");
-
 
     //H&E color normalization
     std::unique_ptr<HEStainFilter> stainFilter(new HEStainFilter());
@@ -52,7 +48,6 @@ int main(/*int argc, char **argv*/)
     roiExtractor->densityToColorMap();
     roiExtractor->blendColorMap();
     roiExtractor->computeConnectedComponents();
-
 
     //writing ROIs
     using LabelMapToMultipleImagesFilterT = LabelMapToMultipleImagesFilter<ROIExtractor::rgbImageType, ROIExtractor::labelMapT>;

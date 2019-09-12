@@ -7,23 +7,25 @@ ImageReader<pixelType>::ImageReader(): rgbImage(nullptr)
 }
 
 template<typename  pixelType>
-void ImageReader<pixelType>::readVSI(std::string inFileName, std::string outFileName,  short outMagnification)
+void ImageReader<pixelType>::readVSI(std::string inputFileName, std::string outputFileName,  float outputMag)
 {
 
 
     IO::printWait("Reading and resizing the VSI file", "a few minutes");
-    std::string pyCommand = "python  /home/oscar/src/HistopathologicalAnalysis/python/vsiReader.py "+
-            inFileName+" "+
-            outFileName+" "+std::to_string(outMagnification);
+    std::string pythonCmd = "python  /home/oscar/src/HistopathologicalAnalysis/python/vsiReader.py "+
+            inputFileName+" "+
+            outputFileName+" "+std::to_string(outputMag);
 
-    std::system(pyCommand.c_str());
+
+    std::system(pythonCmd.c_str());
 
     typename rgbReaderType::Pointer reader = rgbReaderType::New();
-    reader->SetFileName(outFileName);
+    reader->SetFileName(outputFileName);
     reader->Update();
     rgbImage =  reader->GetOutput();
 
     IO::printOK("Reading VSI file");
+
 
 
 }

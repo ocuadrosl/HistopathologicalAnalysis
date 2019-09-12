@@ -24,7 +24,9 @@ void LabelMapToMultipleImagesFilter<imageT, labelMapT>::extractImages()
     //white color
     const auto white = itk::NumericTraits<pixelT>::Zero+255;
 
-    for(unsigned int objI = 0; objI < labelMap->GetNumberOfLabelObjects(); ++objI)
+    const unsigned numberOfObjs = labelMap->GetNumberOfLabelObjects();
+
+    for(unsigned objI = 0; objI < numberOfObjs; ++objI)
     {
 
         labelObj = labelMap->GetNthLabelObject(objI);
@@ -50,6 +52,12 @@ void LabelMapToMultipleImagesFilter<imageT, labelMapT>::extractImages()
 
 
         images.push_back(image);
+
+        //TODO fix the progress percentage calculation
+
+        IO::printProgress("Extracting images", ((objI+1.0)*100.0)/numberOfObjs);
+
+
 
     }
 

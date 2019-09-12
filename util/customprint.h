@@ -9,6 +9,11 @@ namespace IO
 {
 
 
+inline void printProgress(const std::string& message, const float& progress)
+{
+    std::cout<<message<<": "<<progress<<"%"<<std::endl<<std::flush;
+}
+
 inline void printLn(const std::string& message)
 {
     std::cout<<message<<std::endl;

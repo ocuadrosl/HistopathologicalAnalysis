@@ -29,7 +29,7 @@ public:
     ImageReader();
     ~ImageReader(){}
 
-    void readVSI(std::string inFileName, std::string outFileName, short outMagnification);
+    void readVSI(std::string inFileName, std::string outFileName, float outMagnification);
     void read(std::string fileName);
 
     //getters

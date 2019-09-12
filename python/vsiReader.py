@@ -6,7 +6,6 @@ import bioformats
 from bioformats import log4j
 from bioformats.omexml import OMEXML
 import numpy as np
-import math
 import cv2 as cv2
 import matplotlib.pyplot as plt
 
@@ -29,6 +28,7 @@ def computeResolution(physicalX, physicalY, sizeX, sizeY, inputMagnification, ou
     # Physical rescale factor
     phyFactor = inputMagnification / outputMagnification
     
+        
     newPhySizeX = phyFactor * physicalX
     newPhySizeY = phyFactor * physicalY    
     
@@ -117,8 +117,8 @@ def readVSI(inFileName, outMag=5, nTilesX = 20, nTilesY=20):
 
             hMosaic = []
             
-            progress = (tileCounter * 100) / (nTilesX * nTilesY)
-            print("processing", str(progress) + '%')
+            #progress = (tileCounter * 100) / (nTilesX * nTilesY)
+            #print("processing", str(progress) + '%')
 
     finally:
         javabridge.kill_vm()
@@ -126,7 +126,7 @@ def readVSI(inFileName, outMag=5, nTilesX = 20, nTilesY=20):
     #print("Resize microscope magnification OK")
 
 
-    return vMosaicGray
+    return vMosaic
 
 
 
@@ -142,8 +142,9 @@ if __name__ == '__main__':
     # arg1 = input file name
     # arg2 = output file name
     # arg3 = magnification factor
+ 
     try:
-        image = readVSI(sys.argv[1], int(sys.argv[3]))
+        image = readVSI(sys.argv[1], float(sys.argv[3]))
         cv2.imwrite(sys.argv[2], image)
         #plt.imshow(image)
         #plt.show()
