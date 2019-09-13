@@ -19,6 +19,25 @@ def minMax(inputValue, orgMin, orgMax, newMin, newMax):
     return  (((newMax - newMin) * (inputValue - orgMin)) / den) + newMin
 
 
+def computeResizingFactors(inputPhyX, inputPhyY, inputMag, outputMag):
+    '''
+    Compute the scale factors along the [x-y] axis
+    It uses the input physical pixels size and the original nominal magnification 
+    '''
+        
+    # Physical rescale factor
+    phyFactor = inputMag / outputMag
+    
+        
+    newPhySizeX = phyFactor * inputPhyX
+    newPhySizeY = phyFactor * inputPhyY    
+    
+    return (inputPhyX / newPhySizeX, inputPhyY / newPhySizeY)
+
+    
+    
+    
+
 def computeResolution(physicalX, physicalY, sizeX, sizeY, inputMagnification, outputMagnification):
     '''
     Compute the scale factors along the [x-y] axis
@@ -36,7 +55,7 @@ def computeResolution(physicalX, physicalY, sizeX, sizeY, inputMagnification, ou
 
 
 
-def readVSI(inFileName, outMag=5, nTilesX = 20, nTilesY=20):
+def readVSI(inputFileName, outputMag=5, nTilesX=20, nTilesY=20):
 
     '''
     Read a vsi image tile by tile and return a resized RGB TIFF image
@@ -48,7 +67,7 @@ def readVSI(inFileName, outMag=5, nTilesX = 20, nTilesY=20):
     try:
         log4j.basic_config()
 
-        ome = OMEXML(bioformats.get_omexml_metadata(path=inFileName))
+        ome = OMEXML(bioformats.get_omexml_metadata(path=inputFileName))
         sizeX = ome.image().Pixels.get_SizeX()
         sizeY = ome.image().Pixels.get_SizeY()
         
@@ -60,7 +79,7 @@ def readVSI(inFileName, outMag=5, nTilesX = 20, nTilesY=20):
 
         imageReader = bioformats.formatreader.make_image_reader_class()
         reader = imageReader()
-        reader.setId(inFileName)
+        reader.setId(inputFileName)
 
         # Printing some info
         print('Nominal Magnification: ',nominalMag)
@@ -75,6 +94,9 @@ def readVSI(inFileName, outMag=5, nTilesX = 20, nTilesY=20):
 
         hMosaic = []
         vMosaic = []
+        
+        xFac, yFac = computeResizingFactors( physicalX, physicalY,  nominalMag, outputMag);
+
 
         for y in range(0, nTilesY):
 
@@ -93,7 +115,7 @@ def readVSI(inFileName, outMag=5, nTilesX = 20, nTilesY=20):
 
                 tile.shape = (int(height), int(width), 3)
 
-                xFac, yFac = computeResolution(physicalX, physicalY, width, height, nominalMag , outMag)
+                #xFac, yFac = computeResolution(physicalX, physicalY, width, height, nominalMag , outMag)
 
                 # resize tile 
                 tileResized = cv2.resize(tile, None, fx=xFac, fy=yFac, interpolation=cv2.INTER_AREA)
@@ -117,8 +139,8 @@ def readVSI(inFileName, outMag=5, nTilesX = 20, nTilesY=20):
 
             hMosaic = []
             
-            #progress = (tileCounter * 100) / (nTilesX * nTilesY)
-            #print("processing", str(progress) + '%')
+            progress = (tileCounter * 100) / (nTilesX * nTilesY)
+            print("processing", str(progress) + '%')
 
     finally:
         javabridge.kill_vm()

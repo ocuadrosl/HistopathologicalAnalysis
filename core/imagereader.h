@@ -3,49 +3,55 @@
 
 #include <iostream>
 #include <cstdlib>
-#include "itkImage.h"
+#include <itkImage.h>
 #include "itkImageFileReader.h"
 #include "itkRGBToLuminanceImageFilter.h"
 
 //local includes
 #include "../util/customprint.h"
 
-template< typename  pixelType = unsigned int >
+template< typename  rgbImageT>
 class ImageReader
 {
 public:
 
 
     // RGB type  alias
-    using rgbPixelType = itk::RGBPixel<pixelType>;
-    using rgbImageType = itk::Image< rgbPixelType, 2 >;
-    using rgbImagePointer  =   typename  rgbImageType::Pointer;
-    using rgbReaderType = itk::ImageFileReader<rgbImageType>;
+    using rgbPixelT     = typename rgbImageT::PixelType;
+    using rgbPixelCompT = typename rgbPixelT::ComponentType;
+    using rgbImageP     = typename rgbImageT::Pointer;
+
 
     //gray scale type alias
-    using grayImageType = itk::Image< pixelType, 2>;
-    using grayImagePointer = typename grayImageType::Pointer;
+    using grayImageT = itk::Image< rgbPixelCompT, 2>;
+    using grayImageP = typename grayImageT::Pointer;
 
     ImageReader();
     ~ImageReader(){}
 
-    void readVSI(std::string inFileName, std::string outFileName, float outMagnification);
+    void readVSI(std::string inputFileName, std::string outputFileName, float outMagnification);
     void read(std::string fileName);
 
     //getters
-    rgbImagePointer getRGBImage() const;
-    grayImagePointer getGrayScaleImage() const;
+    rgbImageP  getRGBImage() const;
+    grayImageP getGrayScaleImage() const;
 
 
 private:
 
-    rgbImagePointer rgbImage;
+    rgbImageP rgbImage;
 
 
 };
 
 //template explicit instantiation
-template class ImageReader<unsigned int>;
-template class ImageReader<unsigned char>;
-template class ImageReader<short>;
+using rgbUIntPixelT   = itk::RGBPixel<unsigned int>;
+using rgbDoublePixelT = itk::RGBPixel<double>;
+using rgbUCharPixelT  = itk::RGBPixel<unsigned char>;
+
+template class ImageReader<itk::Image<rgbDoublePixelT,2>>;
+template class ImageReader<itk::Image<rgbUIntPixelT  ,2>>;
+template class ImageReader<itk::Image<rgbUCharPixelT ,2>>;
+
+
 #endif // IMAGEREADER_H

@@ -2,9 +2,10 @@
 #define VTKVIEWER_H
 
 
-#include "itkImage.h"
-#include "itkCastImageFilter.h"
-#include "QuickView.h"
+#include <itkImage.h>
+#include <itkCastImageFilter.h>
+#include <QuickView.h>
+#include <itkCovariantVector.h>
 
 
 
@@ -17,8 +18,15 @@ public:
     using imageP = typename imageT::Pointer;
 
 
+
+
     VTKViewer();
     static void visualize(imageP image, std::string description="");
+
+    static void visualizeVectorImage();
+
+
+
 
 };
 
