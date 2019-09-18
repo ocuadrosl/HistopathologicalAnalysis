@@ -15,8 +15,18 @@
 
 
 
-int main(/*int argc, char **argv*/)
+int main(int argc, char **argv)
 {
+
+
+    QApplication app (argc, argv);
+
+    MainWindow window;
+    window.show();
+
+
+     return app.exec();
+
 
     //at work
     //std::string inputFileName = "/home/oscar/data/biopsy/Dataset\\ 1/B\\ 2009\\ 8854/B\\ 2009\\ 8854\\ A.vsi";
@@ -54,7 +64,7 @@ int main(/*int argc, char **argv*/)
 
 
 
-    return 0;
+   // return 0;
 
 
     //ROI extraction
@@ -67,7 +77,7 @@ int main(/*int argc, char **argv*/)
     roiExtractor->blendColorMap();
     roiExtractor->computeConnectedComponents();
 
-
+/*
 
 
 
@@ -84,13 +94,10 @@ int main(/*int argc, char **argv*/)
     labelMapToImagesFilter->writeImages("/home/oscar/src/HistopathologicalAnalysis/output/roi", "roi");
 
     return 0;
+*/
 
 
-    /*
-    QApplication app (argc, argv);
 
-    MainWindow window;
-    window.show();
 
-    return app.exec();*/
+
 }

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1107</width>
-    <height>657</height>
+    <width>437</width>
+    <height>356</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,7 +19,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1107</width>
+     <width>437</width>
      <height>20</height>
     </rect>
    </property>
@@ -27,12 +27,12 @@
     <property name="title">
      <string>File</string>
     </property>
-    <addaction name="actionOpen_Image"/>
+    <addaction name="actionOpenImage"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
-  <action name="actionOpen_Image">
+  <action name="actionOpenImage">
    <property name="text">
     <string>Open Image</string>
    </property>
