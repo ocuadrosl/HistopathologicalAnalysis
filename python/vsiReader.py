@@ -158,7 +158,7 @@ if __name__ == '__main__':
     #inFileName = "/home/oscar/data/biopsy/Dataset 1/B 2009 8854/B 2009 8854 A.vsi"
     #inFileName = "/home/oscar/data/biopsy/B2046-18 B20181107/Image01B2046-18 B.vsi"
     #outFileName = "/home/oscar/image.tiff"
-    #print(sys.argv[1], sys.argv[2], sys.argv[3])
+    #print('py ',sys.argv[1], sys.argv[2], sys.argv[3])
     
 
     # arg1 = input file name

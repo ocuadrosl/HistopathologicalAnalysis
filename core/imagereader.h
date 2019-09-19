@@ -6,6 +6,7 @@
 #include <itkImage.h>
 #include "itkImageFileReader.h"
 #include "itkRGBToLuminanceImageFilter.h"
+#include <regex>
 
 //local includes
 #include "../util/customprint.h"
@@ -40,6 +41,8 @@ public:
 private:
 
     rgbImageP rgbImage;
+
+    std::string regularDirToConsoleDir(std::string dir);
 
 
 };

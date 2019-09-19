@@ -65,3 +65,29 @@ ImageReader<rgbImageT>::getGrayScaleImage() const
     filter->Update();
     return filter->GetOutput();
 }
+
+
+
+template<typename  rgbImageT>
+std::string ImageReader<rgbImageT>::regularDirToConsoleDir(std::string dir)
+{
+
+
+    //todo implement this..
+
+    return dir;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
