@@ -13,10 +13,15 @@
 #include "util/labelmaptomultipleimagesfilter.h"
 #include "core/cellsegmentator.h"
 
+#include <QSurfaceFormat>
+#include <QVTKOpenGLNativeWidget.h>
 
 
 int main(int argc, char **argv)
 {
+
+
+    QSurfaceFormat::setDefaultFormat(QVTKOpenGLNativeWidget::defaultFormat());
 
 
     QApplication app (argc, argv);
