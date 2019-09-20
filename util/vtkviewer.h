@@ -18,13 +18,10 @@ public:
     using imageP = typename imageT::Pointer;
 
 
-
-
     VTKViewer();
     static void visualize(imageP image, std::string description="");
 
-    static void visualizeVectorImage();
-
+    static void visualizeVectorImage(imageP vectorImage);
 
 
 
@@ -33,6 +30,7 @@ public:
 
 template class VTKViewer< itk::Image<itk::RGBPixel<unsigned>, 2> >;
 template class VTKViewer< itk::Image<unsigned, 2> >;
+template class VTKViewer< itk::Image<itk::CovariantVector<float, 2>, 2> >;
 
 
 #endif // VTKVIEWER_H

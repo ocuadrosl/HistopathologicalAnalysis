@@ -34,22 +34,69 @@ void MainWindow::on_actionOpenImage_triggered()
 }
 
 
-void MainWindow::readImage(std::string fileName)
+
+void MainWindow::cellSegmentation()
 {
 
-    //TODO verify images types and null strings...
+
+    //rgb to grayscale
+
+    using rgbToGrayFilterT = itk::RGBToLuminanceImageFilter< rgbImageT, grayImageT >;
+    rgbToGrayFilterT::Pointer rgbToGrayFilter = rgbToGrayFilterT::New();
+    rgbToGrayFilter->SetInput(inputImage);
+
+
+    using cellSegmentatorT = CellSegmentator<grayImageT>;
+    std::unique_ptr<cellSegmentatorT>  cellSegmentator(new cellSegmentatorT());
+    cellSegmentator->setImage(rgbToGrayFilter->GetOutput());
+    cellSegmentator->computeGradients();
+
+    using vectorImageT =  itk::Image<itk::CovariantVector<float, 2>, 2>;
+
+    VTKViewer<vectorImageT>::visualizeVectorImage(cellSegmentator->getGradients());
+
+
+
+
+
+
+}
+
+
+
+void MainWindow::readImage(std::string fileName)
+{
 
     using imageReaderT = ImageReader<rgbImageT>;
     std::unique_ptr<imageReaderT> reader(new imageReaderT());
 
-    //Replace white spaces with shell-style white spaces "\\ "
-    fileName = std::regex_replace(fileName, std::regex("\\s+"), "\\ ");
+    auto it = std::find(fileName.begin(), fileName.end(), '.');
+    std::string fileType("", static_cast<uint>(fileName.end() - it));
+    std::copy(it, fileName.end(), fileType.begin());
 
-    //TODO replace this directory for a local project dir
-    std::string tmpFileName = "/home/oscar/src/HistopathologicalAnalysis/tmp/tmpImage.tiff";
 
-    reader->readVSI(fileName, tmpFileName, 1);
+    if(fileType==".vsi")
+    {
+
+        //Replace white spaces with shell-style white spaces "\\ "
+        fileName = std::regex_replace(fileName, std::regex("\\s+"), "\\ ");
+
+        //TODO replace this directory for a local project dir
+        std::string tmpFileName = "/home/oscar/src/HistopathologicalAnalysis/tmp/tmpImage.tiff";
+
+        reader->readVSI(fileName, tmpFileName, 1);
+
+    }
+    else
+    {
+        reader->read(fileName);
+    }
+
     inputImage = reader->getRGBImage();
+
+    //TODO delete this
+
+    cellSegmentation();
 
 
 }

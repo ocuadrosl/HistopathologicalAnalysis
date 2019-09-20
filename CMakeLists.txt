@@ -33,6 +33,8 @@ add_executable(${PROJECT_NAME}
     "main.cpp"
     "mainwindow.ui"
     "mainwindow.cpp"
+    "mainwindow.h"
+
     ${core}
     ${util}
     )
