@@ -70,7 +70,7 @@ void HEStainFilter::denoiseHSV(bool showResult)
     if(showResult)
     {
 
-        VTKViewer<rgbImageU>::visualize(outputImage, "Denoised image");
+        VTKViewer::visualize<rgbImageU>(outputImage, "Denoised image");
     }
 
 }
@@ -157,7 +157,7 @@ void HEStainFilter::denoiseLAB(bool showResult)
     if(showResult)
     {
 
-        VTKViewer<rgbImageU>::visualize(outputImage, "Denoised image");
+        VTKViewer::visualize<rgbImageU>(outputImage, "Denoised image");
     }
 
 }
@@ -225,7 +225,7 @@ void HEStainFilter:: colorEnhancement(bool showResult)
 
     if(showResult)
     {
-        VTKViewer<rgbImageU>::visualize(outputImage, "Color Enhancement");
+        VTKViewer::visualize<rgbImageU>(outputImage, "Color Enhancement");
     }
 
 
