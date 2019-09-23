@@ -41,15 +41,14 @@ void MainWindow::cellSegmentation()
 
     //rgb to grayscale
 
-    using rgbToGrayFilterT = itk::RGBToLuminanceImageFilter< rgbImageT, grayImageT >;
-    rgbToGrayFilterT::Pointer rgbToGrayFilter = rgbToGrayFilterT::New();
-    rgbToGrayFilter->SetInput(inputImage);
 
 
-    using cellSegmentatorT = CellSegmentator<grayImageT>;
+    using cellSegmentatorT = CellSegmentator<rgbImageT>;
     std::unique_ptr<cellSegmentatorT>  cellSegmentator(new cellSegmentatorT());
-    cellSegmentator->setImage(rgbToGrayFilter->GetOutput());
+    cellSegmentator->setImage(inputImage);
     cellSegmentator->computeGradients();
+
+    cellSegmentator->superPixels();
 
 
     //using vectorImageT =  itk::Image<itk::CovariantVector<float, 2>, 2>;

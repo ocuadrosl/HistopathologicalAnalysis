@@ -4,9 +4,11 @@
 #include <itkImage.h>
 #include <itkGradientImageFilter.h>
 #include <itkCovariantVector.h>
+#include <itkRGBToLuminanceImageFilter.h>
 
 //local includes
 #include "../util/customprint.h"
+#include "../util/superpixels.h"
 
 template<typename imageT>
 class CellSegmentator
@@ -18,7 +20,7 @@ public:
     using pixelCompT = typename imageT::PixelType;
 
 
-    using gradientFilterT = itk::GradientImageFilter<imageT, float>;
+
 
     //Using float because double type is not allowed...
     using vectorImageT = itk::Image<itk::CovariantVector<float, 2>, 2>;
@@ -38,6 +40,9 @@ public:
     void computeGradients();
     void visualize();
 
+    void superPixels();
+
+
 
 
 private:
@@ -45,11 +50,13 @@ private:
     vectorImageP outputImage;
     imageP       inputImage;
 
+
+
+
 };
 
-
-template class CellSegmentator<itk::Image<unsigned, 2>>;
-template class CellSegmentator<itk::Image<double  , 2>>;
+using rgbImageU = itk::Image<itk::RGBPixel<unsigned>, 2>;
+template class CellSegmentator<rgbImageU>;
 
 
 #endif // CELLSEGMENTATOR_H

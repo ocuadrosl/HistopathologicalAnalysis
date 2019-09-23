@@ -7,7 +7,7 @@
 #include <iostream>
 #include <itkImage.h>
 #include <itkRGBPixel.h>
-#include <itkRGBToLuminanceImageFilter.h>
+
 #include <itkCovariantVector.h>
 
 
