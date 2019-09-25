@@ -47,10 +47,19 @@ void SuperPixels<imageT>::create()
 }
 
 template<typename imageT>
-inline bool SuperPixels<imageT>::isEdge(const labelImageT::IndexType& index)
+inline bool SuperPixels<imageT>::changeLabel(unsigned cLabel, unsigned nLabel,  const labPixelT& cPixel, const labPixelT& nPixel)
 {
 
-    //4-connected
+    //get centroids
+    auto cCent = indexMeans[cLabel];
+    auto nCent = indexMeans[nLabel];
+
+    auto cMean = colorMeans[cLabel];
+    auto nMean = colorMeans[nLabel];
+
+    //todo kmeans function here
+
+
 
 
 }
@@ -59,6 +68,45 @@ inline bool SuperPixels<imageT>::isEdge(const labelImageT::IndexType& index)
 template<typename imageT>
 void SuperPixels<imageT>::converge()
 {
+
+
+    using constNeighborhoodIteratorT = itk::ConstNeighborhoodIterator<labImageT>;
+    using neighborhoodIteratorT = itk::NeighborhoodIterator<labelImageT>;
+
+    constNeighborhoodIteratorT::RadiusType radius;
+    radius.Fill(1);
+
+
+    neighborhoodIteratorT  labelIt(radius,labelImage, labelImage->GetRequestedRegion()); //should be const
+    constNeighborhoodIteratorT  labIt(radius,labImage, labImage->GetRequestedRegion());
+
+    //offsets
+    constNeighborhoodIteratorT::OffsetType top = {{0,-1}};
+
+
+
+
+    //center and neighboor pixels
+    unsigned cLabel, nLabel;
+    labPixelT cPixel, nPixel;
+
+
+    for (labIt.GoToBegin(), labelIt.GoToBegin() ;!labIt.IsAtEnd(); ++labIt, ++labelIt)
+    {
+        //4-connected
+        //top
+        cLabel = labelIt.GetCenterPixel();
+        nLabel = labelIt.GetPixel(top);
+
+        cPixel = labIt.GetCenterPixel();
+        nPixel = labIt.GetPixel(top);
+
+
+    }
+
+
+
+
 
 
 
@@ -70,8 +118,8 @@ void SuperPixels<imageT>::updateMeans()
 
 
 
-    means.resize(spNumber, itk::NumericTraits<labPixelT>::Zero);
-    centroids.resize(spNumber, std::vector<double>(2,0));
+    colorMeans.resize(spNumber, itk::NumericTraits<labPixelT>::Zero);
+    indexMeans.resize(spNumber, std::vector<double>(2,0));
     spSizes.resize(spNumber, 0);
 
     itk::ImageRegionConstIterator<labImageT> labIt(labImage, labImage->GetRequestedRegion());
@@ -88,12 +136,12 @@ void SuperPixels<imageT>::updateMeans()
         labelIndex = labelIt.GetIndex();
         labColor   = labIt.Get();
 
-        means[label][0] += labColor[0];
-        means[label][1] += labColor[1];
-        means[label][2] += labColor[2];
+        colorMeans[label][0] += labColor[0];
+        colorMeans[label][1] += labColor[1];
+        colorMeans[label][2] += labColor[2];
 
-        centroids[label][0] += labelIndex[0];
-        centroids[label][1] += labelIndex[1];
+        indexMeans[label][0] += labelIndex[0];
+        indexMeans[label][1] += labelIndex[1];
 
         ++spSizes[label];
     }
@@ -101,12 +149,12 @@ void SuperPixels<imageT>::updateMeans()
 
     for(unsigned i =0 ; i< spNumber ;++i)
     {
-        centroids[i][0] /= spSizes[i];
-        centroids[i][1] /= spSizes[i];
+        indexMeans[i][0] /= spSizes[i];
+        indexMeans[i][1] /= spSizes[i];
 
-        means[i][0] /= spSizes[i];
-        means[i][1] /= spSizes[i];
-        means[i][2] /= spSizes[i];
+        colorMeans[i][0] /= spSizes[i];
+        colorMeans[i][1] /= spSizes[i];
+        colorMeans[i][2] /= spSizes[i];
 
     }
 

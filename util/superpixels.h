@@ -4,7 +4,8 @@
 #include <itkImage.h>
 #include <itkRGBPixel.h>
 #include <itkImageRegionIteratorWithIndex.h>
-
+#include <itkNeighborhoodIterator.h>
+#include <itkConstNeighborhoodIterator.h>
 
 //local includes
 #include "../util/colorconverterfilter.h"
@@ -29,8 +30,8 @@ class SuperPixels
     using labelImageP = typename labelImageT::Pointer;
 
 
-    using spMeansT = std::vector<labPixelT>;
-    using spCentroidsT = std::vector<std::vector<double>>;
+    using spColorMeansT = std::vector<labPixelT>;
+    using spIndexMeansT = std::vector<std::vector<double>>;
     using spSizesT = std::vector<unsigned>;
 
 
@@ -50,8 +51,8 @@ private:
     inputImageP inputImage;
     labelImageP  labelImage;
 
-    spMeansT means;
-    spCentroidsT centroids;
+    spColorMeansT colorMeans;
+    spIndexMeansT indexMeans;
     spSizesT spSizes;
 
     unsigned sideLength = 10;
@@ -68,6 +69,8 @@ private:
     void converge();
 
     inline bool isEdge(const labelImageT::IndexType& index);
+
+    inline bool changeLabel(unsigned cLabel, unsigned nLabel,  const labPixelT& cPixel, const labPixelT& nPixel);
 
 
 };
