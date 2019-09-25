@@ -149,6 +149,37 @@ inline type mod(type numer, type denom)
 }
 
 
+template <typename vectorT, unsigned size=3>
+inline double squaredEuclideanDistance( vectorT vector1, vectorT vector2)
+{
+
+    double sum=0;
+    for(unsigned i=0 ; i < size; ++i)
+    {
+        sum += std::pow(vector1[i] - vector2[i], 2.0);
+    }
+    return sum;
+
+
+}
+
+
+
+template <typename vectorT, unsigned size=3>
+inline double euclideanDistance( vectorT vector1, vectorT vector2)
+{
+    return std::sqrt(squaredEuclideanDistance<vectorT,size>(vector1, vector2));
+}
+
+
+
+
+
+
+
+
+
+
 }
 
 

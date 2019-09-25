@@ -40,14 +40,19 @@ void SuperPixels<imageT>::create()
 {
     rgbToLabImage();
     createLabelImage();
-    updateMeans();
 
-    converge();
+
+    for(unsigned i =0; i< iterations;++i)
+    {
+        updateMeans();
+        converge();
+    }
+    show();
 
 }
 
 template<typename imageT>
-inline bool SuperPixels<imageT>::changeLabel(unsigned cLabel, unsigned nLabel,  const labPixelT& cPixel, const labPixelT& nPixel)
+inline bool SuperPixels<imageT>::changeLabel(unsigned cLabel, unsigned nLabel,  const labPixelT& cPixel, const labIndexT& cIndex)
 {
 
     //get centroids
@@ -57,10 +62,18 @@ inline bool SuperPixels<imageT>::changeLabel(unsigned cLabel, unsigned nLabel,  
     auto cMean = colorMeans[cLabel];
     auto nMean = colorMeans[nLabel];
 
-    //todo kmeans function here
 
 
+    double cost1 = 0;
+    double cost2 = 0;
 
+    const auto sedColor = Math::squaredEuclideanDistance<labPixelT>;
+    const auto sedIndex = Math::squaredEuclideanDistance<labIndexT, 2>;
+
+    cost1 = lambda1 * sedColor(cPixel, cMean) + lambda2*sedIndex( cIndex, cCent);
+    cost2 = lambda1 * sedColor(cPixel, nMean) + lambda2*sedIndex( cIndex, nCent);
+
+    return cost1 > cost2;
 
 }
 
@@ -81,7 +94,10 @@ void SuperPixels<imageT>::converge()
     constNeighborhoodIteratorT  labIt(radius,labImage, labImage->GetRequestedRegion());
 
     //offsets
-    constNeighborhoodIteratorT::OffsetType top = {{0,-1}};
+    constNeighborhoodIteratorT::OffsetType top    = {{ 0,-1}};
+    constNeighborhoodIteratorT::OffsetType bottom = {{ 0, 1}};
+    constNeighborhoodIteratorT::OffsetType left   = {{-1, 0}};
+    constNeighborhoodIteratorT::OffsetType right  = {{ 1, 0}};
 
 
 
@@ -89,17 +105,87 @@ void SuperPixels<imageT>::converge()
     //center and neighboor pixels
     unsigned cLabel, nLabel;
     labPixelT cPixel, nPixel;
-
+    labIndexT cIndex;
 
     for (labIt.GoToBegin(), labelIt.GoToBegin() ;!labIt.IsAtEnd(); ++labIt, ++labelIt)
     {
         //4-connected
-        //top
+
         cLabel = labelIt.GetCenterPixel();
+        cPixel = labIt.GetCenterPixel();
+
+        //TOP
         nLabel = labelIt.GetPixel(top);
 
-        cPixel = labIt.GetCenterPixel();
-        nPixel = labIt.GetPixel(top);
+        if(cLabel != nLabel)
+        {
+
+
+            nPixel = labIt.GetPixel(top);
+
+            cIndex = labelIt.GetIndex();
+
+            //change the label
+            if(changeLabel(cLabel, nLabel, cPixel, cIndex))
+            {
+                labelIt.SetCenterPixel(nLabel);
+            }
+        }
+
+        //bottom
+        nLabel = labelIt.GetPixel(bottom);
+
+        if(cLabel != nLabel)
+        {
+
+            nPixel = labIt.GetPixel(bottom);
+
+            cIndex = labelIt.GetIndex();
+
+            //change the label
+            if(changeLabel(cLabel, nLabel, cPixel, cIndex))
+            {
+                labelIt.SetCenterPixel(nLabel);
+            }
+        }
+
+        //right
+
+        nLabel = labelIt.GetPixel(right);
+
+        if(cLabel != nLabel)
+        {
+
+            nPixel = labIt.GetPixel(right);
+
+            cIndex = labelIt.GetIndex();
+
+            //change the label
+            if(changeLabel(cLabel, nLabel, cPixel, cIndex))
+            {
+                labelIt.SetCenterPixel(nLabel);
+            }
+        }
+
+
+
+        //left
+
+        nLabel = labelIt.GetPixel(left);
+
+        if(cLabel != nLabel)
+        {
+
+            nPixel = labIt.GetPixel(left);
+
+            cIndex = labelIt.GetIndex();
+
+            //change the label
+            if(changeLabel(cLabel, nLabel, cPixel, cIndex))
+            {
+                labelIt.SetCenterPixel(nLabel);
+            }
+        }
 
 
     }
@@ -119,7 +205,9 @@ void SuperPixels<imageT>::updateMeans()
 
 
     colorMeans.resize(spNumber, itk::NumericTraits<labPixelT>::Zero);
-    indexMeans.resize(spNumber, std::vector<double>(2,0));
+    labIndexT index;
+    index.Fill(0.0);
+    indexMeans.resize(spNumber, index);
     spSizes.resize(spNumber, 0);
 
     itk::ImageRegionConstIterator<labImageT> labIt(labImage, labImage->GetRequestedRegion());
@@ -200,7 +288,69 @@ void SuperPixels<imageT>::createLabelImage()
     //updating thge number of super pixels
     spNumber = (spWidth*spHeight+spHeight)+1;
 
-    //VTKViewer::visualize<labelImageT>(labelImage, "Super pixels initial grid");
+}
+
+
+
+template<typename imageT>
+void SuperPixels<imageT>::show()
+{
+
+    inputImageP spImage = imageT::New();
+    spImage->SetRegions(inputImage->GetRequestedRegion());
+    spImage->Allocate();
+
+
+
+    using regionIteratorT = itk::ImageRegionIterator<imageT>;
+    using constNeighborhoodIteratorT = itk::ConstNeighborhoodIterator<labelImageT>;
+
+    typename constNeighborhoodIteratorT::RadiusType radius;
+    radius.Fill(1);
+
+    constNeighborhoodIteratorT  labelIt(radius,labelImage, labelImage->GetRequestedRegion());
+    regionIteratorT  it(inputImage, inputImage->GetRequestedRegion());
+    regionIteratorT  spIt(spImage, spImage->GetRequestedRegion());
+
+
+
+    labelIt.GoToBegin();
+    it.GoToBegin();
+    spIt.GoToBegin();
+
+    typename imageT::PixelType red;
+    red.SetRed(255);
+
+    unsigned cLabel, nLabel;
+    while (!it.IsAtEnd())
+    {
+
+        cLabel = labelIt.GetCenterPixel();
+        nLabel = labelIt.GetPixel({{0,-1}});
+
+        if(cLabel != nLabel)
+        {
+            spIt.Set(red);
+        }
+        else
+        {
+            spIt.Set(it.Get());
+
+        }
+
+
+
+        ++it;
+        ++labelIt;
+        ++spIt;
+
+    }
+
+
+    VTKViewer::visualize<imageT>(spImage, "Super Pixels");
+
+
 
 
 }
+

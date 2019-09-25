@@ -7,6 +7,9 @@
 #include <itkNeighborhoodIterator.h>
 #include <itkConstNeighborhoodIterator.h>
 
+#include <itkLabelImageToLabelMapFilter.h>
+#include <itkLabelToRGBImageFilter.h>
+
 //local includes
 #include "../util/colorconverterfilter.h"
 #include "../util/math.h"
@@ -25,13 +28,16 @@ class SuperPixels
     using labPixelT = itk::RGBPixel<double>;
     using labImageT = itk::Image<labPixelT, 2>;
     using labImageP = typename labImageT::Pointer;
+    using labIndexT = labImageT::IndexType;
+
 
     using labelImageT = itk::Image<unsigned, 2>;
     using labelImageP = typename labelImageT::Pointer;
 
 
+
     using spColorMeansT = std::vector<labPixelT>;
-    using spIndexMeansT = std::vector<std::vector<double>>;
+    using spIndexMeansT = std::vector<labIndexT>;
     using spSizesT = std::vector<unsigned>;
 
 
@@ -43,6 +49,7 @@ public:
 
     void setImage(inputImageP inputImage);
     void create();
+    void show();
 
 
 private:
@@ -56,8 +63,8 @@ private:
     spSizesT spSizes;
 
     unsigned sideLength = 10;
-    double   alpha1     = 1;
-    double   alpha2     = 0.5;
+    double   lambda1    = 1;
+    double   lambda2    = 0.5;
     unsigned iterations = 5;
 
     unsigned long spNumber=0;
@@ -70,7 +77,7 @@ private:
 
     inline bool isEdge(const labelImageT::IndexType& index);
 
-    inline bool changeLabel(unsigned cLabel, unsigned nLabel,  const labPixelT& cPixel, const labPixelT& nPixel);
+    inline bool changeLabel(unsigned cLabel, unsigned nLabel,  const labPixelT& cPixel,  const labIndexT& cIndex);
 
 
 };
