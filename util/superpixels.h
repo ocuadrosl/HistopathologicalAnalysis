@@ -56,7 +56,7 @@ private:
 
     labImageP   labImage;
     inputImageP inputImage;
-    labelImageP  labelImage;
+    labelImageP labelImage;
 
     spColorMeansT colorMeans;
     spIndexMeansT indexMeans;
@@ -75,9 +75,7 @@ private:
     void updateMeans();
     void converge();
 
-    inline bool isEdge(const labelImageT::IndexType& index);
-
-    inline bool changeLabel(unsigned cLabel, unsigned nLabel,  const labPixelT& cPixel,  const labIndexT& cIndex);
+    inline bool costFunction(unsigned cLabel, unsigned nLabel,  const labPixelT& cPixel,  const labIndexT& cIndex);
 
 
 };

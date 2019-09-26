@@ -48,12 +48,12 @@ void MainWindow::cellSegmentation()
     cellSegmentator->setImage(inputImage);
     cellSegmentator->computeGradients();
 
-    cellSegmentator->superPixels();
+    //cellSegmentator->superPixels();
 
 
-    //using vectorImageT =  itk::Image<itk::CovariantVector<float, 2>, 2>;
+    using vectorImageT =  itk::Image<itk::CovariantVector<float, 2>, 2>;
 
-    //VTKViewer::visualizeVectorImage<grayImageT, vectorImageT>(rgbToGrayFilter->GetOutput(), cellSegmentator->getGradients());
+    VTKViewer::visualizeVectorImage<rgbImageT, vectorImageT>(inputImage, cellSegmentator->getGradients());
 
 
 }
