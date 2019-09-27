@@ -15,12 +15,31 @@ template<typename imageT>
 void LoGFilter<imageT>::compute()
 {
 
-    outputImage = imageT::New();
+    outputImage = doubleImageT::New();
     outputImage->SetRegions(inputImage->GetRequestedRegion());
     outputImage->Allocate();
 
 
     createKernel();
+
+    using NeighborhoodIteratorType = itk::ConstNeighborhoodIterator< imageT >;
+    using imageIterator  = itk::ImageRegionIterator< doubleImageT>;
+
+    typename NeighborhoodIteratorType::RadiusType radius;
+    radius.Fill(kernelSize/2);
+
+    NeighborhoodIteratorType it(radius,inputImage, inputImage->GetRequestedRegion() );
+
+    imageIterator out(outputImage, outputImage->GetRequestedRegion());
+
+    itk::NeighborhoodInnerProduct<doubleImageT> innerProduct;
+
+
+    //error input image to double before..
+    for (it.GoToBegin(), out.GoToBegin(); !it.IsAtEnd(); ++it, ++out)
+    {
+        //out.Set( innerProduct( it, kernel ) );
+    }
 
     IO::printOK("LoG filter");
 
@@ -62,10 +81,10 @@ void LoGFilter<imageT>::createKernel()
             //std::cout<<x<<" "<<y<<std::endl;
             logVal = Math::LoG(x, y, sigma);
             kernel->SetPixel(index, logVal);
-            std::cout<<logVal<<" ";
+            //std::cout<<logVal<<" ";
             index[1]+=1;
          }
-        std::cout<<std::endl;
+        //std::cout<<std::endl;
         index[0]+=1;
         index[1] =0;
 
@@ -73,7 +92,7 @@ void LoGFilter<imageT>::createKernel()
 
 
 
-    //VTKViewer::visualize<doubleImageT>(kernel, "Kernel");
+    VTKViewer::visualize<doubleImageT>(kernel, "Kernel");
 
 
 

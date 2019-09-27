@@ -33,7 +33,7 @@ public:
 
 private:
     imageP       inputImage;
-    imageP       outputImage;
+    doubleImageP       outputImage;
     doubleImageP kernel;
 
     unsigned kernelSize = 5;

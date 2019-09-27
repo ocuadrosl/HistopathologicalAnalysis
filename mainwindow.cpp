@@ -46,7 +46,8 @@ void MainWindow::cellSegmentation()
     using cellSegmentatorT = CellSegmentator<rgbImageT>;
     std::unique_ptr<cellSegmentatorT>  cellSegmentator(new cellSegmentatorT());
     cellSegmentator->setImage(inputImage);
-    //cellSegmentator->computeGradients();
+    cellSegmentator->computeGradients();
+
 
     //cellSegmentator->superPixels();
     cellSegmentator->findCellNuclei();
