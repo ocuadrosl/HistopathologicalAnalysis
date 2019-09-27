@@ -9,6 +9,7 @@
 //local includes
 #include "../util/customprint.h"
 #include "../util/superpixels.h"
+#include "../util/logfilter.h"
 
 template<typename imageT>
 class CellSegmentator
@@ -19,8 +20,8 @@ public:
     using imageP     = typename imageT::Pointer;
     using pixelCompT = typename imageT::PixelType;
 
-
-
+    using grayImageT = itk::Image<unsigned,2>;
+    using grayImageP =  grayImageT::Pointer;
 
     //Using float because double type is not allowed...
     using vectorImageT = itk::Image<itk::CovariantVector<float, 2>, 2>;
@@ -38,6 +39,7 @@ public:
 
     //methods
     void computeGradients();
+    void findCellNuclei();
     void visualize();
 
     void superPixels();
@@ -48,7 +50,10 @@ public:
 private:
 
     vectorImageP outputImage;
-    imageP       inputImage;
+    imageP      inputImage;
+    grayImageP  grayImage;
+
+    void createGrayImage();
 
 
 

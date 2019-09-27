@@ -56,7 +56,7 @@ void ROIExtractor::computeDensity(bool showResult)
     densityImage = grayImageType::New();
     densityImage->SetRegions(binaryImage->GetRequestedRegion());
     densityImage->Allocate();
-    densityImage->FillBuffer( itk::NumericTraits<typename grayImageType::PixelType>::Zero );
+    densityImage->FillBuffer(itk::NumericTraits<typename grayImageType::PixelType>::Zero);
 
 
     //iterators

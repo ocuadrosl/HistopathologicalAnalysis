@@ -21,19 +21,15 @@ void CellSegmentator<imageT>::computeGradients()
 {
 
     // Create and setup a gradient filter
-
-
-    using grayImageT = itk::Image<unsigned, 2>;
-
-    using rgbToGrayFilterT = itk::RGBToLuminanceImageFilter< imageT, grayImageT >;
-    typename rgbToGrayFilterT::Pointer rgbToGrayFilter = rgbToGrayFilterT::New();
-    rgbToGrayFilter->SetInput(inputImage);
-    rgbToGrayFilter->Update();
+    if(grayImage.IsNull())
+    {
+        createGrayImage();
+    }
 
 
     using gradientFilterT = itk::GradientImageFilter<grayImageT, float>;
     typename gradientFilterT::Pointer gradientFilter = gradientFilterT::New();
-    gradientFilter->SetInput( rgbToGrayFilter->GetOutput() );
+    gradientFilter->SetInput( grayImage );
     gradientFilter->Update();
     outputImage = gradientFilter->GetOutput();
 
@@ -63,7 +59,45 @@ void CellSegmentator<imageT>::superPixels()
 
      IO::printOK("Creating Super Pixels");
 
+}
 
+template<typename imageT>
+void CellSegmentator<imageT>::findCellNuclei()
+{
+
+    if(grayImage.IsNull())
+    {
+        createGrayImage();
+    }
+
+    using logFilterT = LoGFilter<grayImageT>;
+    std::unique_ptr<logFilterT> logFilter(new logFilterT);
+
+    logFilter->setImage(grayImage);
+    logFilter->compute();
 
 
 }
+
+
+
+template<typename imageT>
+void CellSegmentator<imageT>:: createGrayImage()
+{
+    using rgbToGrayFilterT = itk::RGBToLuminanceImageFilter< imageT, grayImageT >;
+    typename rgbToGrayFilterT::Pointer rgbToGrayFilter = rgbToGrayFilterT::New();
+    rgbToGrayFilter->SetInput(inputImage);
+    rgbToGrayFilter->Update();
+    grayImage = rgbToGrayFilter->GetOutput();
+
+
+}
+
+
+
+
+
+
+
+
+

@@ -35,7 +35,7 @@ template<typename imageT>
 void visualize(typename imageT::Pointer image, std::string description="")
 {
     using pixelT = typename imageT::PixelType;
-    if constexpr(std::is_unsigned<pixelT>::value) // is gray-level
+    if constexpr(std::is_arithmetic<pixelT>::value) // is gray-level
     {
 
 
@@ -50,7 +50,7 @@ void visualize(typename imageT::Pointer image, std::string description="")
         viewer.AddImage(castFilter->GetOutput(), true, description);
         viewer.Visualize();
     }
-    else  if constexpr (std::is_unsigned<typename pixelT::ComponentType>::value)
+    else if constexpr (std::is_unsigned<typename pixelT::ComponentType>::value)
     {
 
         using rgbPixelType = itk::RGBPixel<unsigned char>;

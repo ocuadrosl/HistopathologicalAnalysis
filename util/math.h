@@ -174,8 +174,62 @@ inline double euclideanDistance( vectorT vector1, vectorT vector2)
 
 
 
+template<typename type=double>
+inline double gaussian(type x, double s, double m=0) //s= sigma, m = mean
+{
+
+    const double pi= 3.14159;
+    return (1.0 /(s * std::sqrt(2*pi))) * std::exp(-0.5 * std::pow((x-m)/s, 2));
+
+}
 
 
+
+
+inline double gaussian(double x, double y, double s, double mx=0, double my=0) //s= sigma, m = mean
+{
+
+    const double pi= 3.14159;
+
+    double s2 = s*s;
+
+    double firstTerm = 1.0 / (2*pi*s2);
+
+    double expTerm =  std::exp(-((std::pow(x-mx,2)+std::pow(y-my,2))/(2*s2)));
+
+    return firstTerm*expTerm;
+
+
+}
+
+
+
+inline double LoG(double x, double y, double s) //s = sigma
+{
+    const double pi = 3.14159;
+
+    double s2 = s*s;
+    double x2 = x*x;
+    double y2 = y*y;
+
+    double firstTerm  = -1.0/(pi*std::pow(s,4));
+    double secondTerm = 1.0 - ( (x2+y2)/(2*s2) );
+    double expTerm    = std::exp(- ((x2+y2)/(2*s2)) );
+
+    return firstTerm*secondTerm*expTerm;
+
+
+
+
+
+
+
+
+
+
+
+
+}
 
 
 
