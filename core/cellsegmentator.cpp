@@ -70,11 +70,11 @@ void CellSegmentator<imageT>::findCellNuclei()
         createGrayImage();
     }
 
-    using logFilterT = LoGFilter<grayImageT>;
+    using logFilterT = LoGFilter<grayImageT, grayImageT >;
     std::unique_ptr<logFilterT> logFilter(new logFilterT);
 
     logFilter->setImage(grayImage);
-    logFilter->compute();
+    logFilter->compute(true);
 
 
 }

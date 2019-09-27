@@ -1,45 +1,48 @@
 #include "logfilter.h"
-template<typename imageT>
-LoGFilter<imageT>::LoGFilter()
+template<typename inputImageT, typename outputImageT>
+LoGFilter<inputImageT, outputImageT>::LoGFilter()
 {
 
 }
 
-template<typename imageT>
-void LoGFilter<imageT>::setImage(imageP inputImage)
+template<typename inputImageT, typename outputImageT>
+void LoGFilter<inputImageT, outputImageT>::setImage(inputImageP inputImage)
 {
     this->inputImage = inputImage;
 }
 
-template<typename imageT>
-void LoGFilter<imageT>::compute()
+template<typename inputImageT, typename outputImageT>
+void LoGFilter<inputImageT, outputImageT>::compute(bool show)
 {
-
-    outputImage = doubleImageT::New();
-    outputImage->SetRegions(inputImage->GetRequestedRegion());
-    outputImage->Allocate();
-
 
     createKernel();
 
-    using NeighborhoodIteratorType = itk::ConstNeighborhoodIterator< imageT >;
-    using imageIterator  = itk::ImageRegionIterator< doubleImageT>;
-
-    typename NeighborhoodIteratorType::RadiusType radius;
-    radius.Fill(kernelSize/2);
-
-    NeighborhoodIteratorType it(radius,inputImage, inputImage->GetRequestedRegion() );
-
-    imageIterator out(outputImage, outputImage->GetRequestedRegion());
-
-    itk::NeighborhoodInnerProduct<doubleImageT> innerProduct;
+    using castInputImageT = itk::CastImageFilter<inputImageT, doubleImageT>;
+    typename castInputImageT::Pointer castInputImageFilter = castInputImageT::New();
+    castInputImageFilter->SetInput(inputImage);
 
 
-    //error input image to double before..
-    for (it.GoToBegin(), out.GoToBegin(); !it.IsAtEnd(); ++it, ++out)
+    using convolutionFilterT = itk::ConvolutionImageFilter<doubleImageT>;
+    typename convolutionFilterT::Pointer convolutionFilter = convolutionFilterT::New();
+    convolutionFilter->SetInput(castInputImageFilter->GetOutput());
+    convolutionFilter->SetKernelImage(kernel);
+    convolutionFilter->Update();
+
+    //TODO if constexpr to avoid unnecessary image cast
+
+    using castOutputImageT = itk::CastImageFilter<doubleImageT, outputImageT>;
+    typename castOutputImageT::Pointer castOutputImageFilter = castOutputImageT::New();
+    castOutputImageFilter->SetInput(convolutionFilter->GetOutput());
+
+
+    outputImage = castOutputImageFilter->GetOutput();
+
+    if(show)
     {
-        //out.Set( innerProduct( it, kernel ) );
+        VTKViewer::visualize<outputImageT>(outputImage, "Laplacian of Gaussian");
     }
+
+
 
     IO::printOK("LoG filter");
 
@@ -47,8 +50,8 @@ void LoGFilter<imageT>::compute()
 
 }
 
-template<typename imageT>
-void LoGFilter<imageT>::createKernel()
+template<typename inputImageT, typename outputImageT>
+void LoGFilter<inputImageT, outputImageT>::createKernel(bool show)
 {
 
     using regionT =  doubleImageT::RegionType;
@@ -63,9 +66,6 @@ void LoGFilter<imageT>::createKernel()
     kernel->SetRegions(kernelRegion);
     kernel->Allocate();
     kernel->FillBuffer(0);
-
-
-
 
     index.Fill(0);
 
@@ -91,9 +91,10 @@ void LoGFilter<imageT>::createKernel()
     }
 
 
-
-    VTKViewer::visualize<doubleImageT>(kernel, "Kernel");
-
+    if(show)
+    {
+        VTKViewer::visualize<doubleImageT>(kernel, "Kernel");
+    }
 
 
 }

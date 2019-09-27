@@ -2,22 +2,25 @@
 #define LOGFILTER_H
 
 #include <itkImage.h>
-#include <itkNeighborhoodIterator.h>
-#include <itkConstNeighborhoodIterator.h>
-#include <itkNeighborhoodInnerProduct.h>
-#include <itkNeighborhoodOperator.h>
+
 #include <itkImageRegion.h>
+#include <itkCastImageFilter.h>
+
+#include "itkConvolutionImageFilter.h"
+
 
 #include "../util/customprint.h"
 #include "../util/vtkviewer.h"
 #include "../util/math.h"
 
-template<typename imageT>
+template<typename inputImageT, typename outputImageT>
 class LoGFilter
 {
 
 
-    using imageP = typename imageT::Pointer;
+    using inputImageP  = typename inputImageT ::Pointer;
+    using outputImageP = typename outputImageT::Pointer;
+
 
     using doubleImageT = itk::Image<double, 2>;
     using doubleImageP = doubleImageT::Pointer;
@@ -27,25 +30,27 @@ class LoGFilter
 public:
     LoGFilter();
 
-    void setImage(imageP inputImage);
-    void compute();
+    void setImage(inputImageP inputImage);
+    void compute(bool show=false);
 
 
 private:
-    imageP       inputImage;
-    doubleImageP       outputImage;
+    inputImageP  inputImage;
+    outputImageP outputImage;
     doubleImageP kernel;
 
     unsigned kernelSize = 5;
     double   sigma      = 0.5;
 
-    void createKernel();
+    void createKernel(bool show=false);
 
 
 };
 
 
-template class LoGFilter< itk::Image<unsigned,2>>;
+template class LoGFilter< itk::Image<unsigned,2>,  itk::Image<unsigned,2>>;
+template class LoGFilter< itk::Image<unsigned,2>,  itk::Image<double  ,2>>;
+
 
 
 #endif // LOGFILTER_H
