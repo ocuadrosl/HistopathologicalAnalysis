@@ -46,7 +46,7 @@ void MainWindow::cellSegmentation()
     using cellSegmentatorT = CellSegmentator<rgbImageT>;
     std::unique_ptr<cellSegmentatorT>  cellSegmentator(new cellSegmentatorT());
     cellSegmentator->setImage(inputImage);
-    cellSegmentator->computeGradients();
+    //cellSegmentator->computeGradients();
 
 
     //cellSegmentator->superPixels();
@@ -81,7 +81,9 @@ void MainWindow::readImage(std::string fileName)
         //TODO replace this directory for a local project dir
         std::string tmpFileName = "/home/oscar/src/HistopathologicalAnalysis/tmp/tmpImage.tiff";
 
-        reader->readVSI(fileName, tmpFileName, 1);
+        reader->readVSI(fileName, tmpFileName, 8);
+
+
 
     }
     else
@@ -92,8 +94,10 @@ void MainWindow::readImage(std::string fileName)
     inputImage = reader->getRGBImage();
 
     //TODO delete this
+    VTKViewer::visualize<rgbImageT>(inputImage);
 
-    cellSegmentation();
+
+    //cellSegmentation();
 
 
 }

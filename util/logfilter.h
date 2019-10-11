@@ -26,7 +26,6 @@ class LoGFilter
     using doubleImageP = doubleImageT::Pointer;
 
 
-
 public:
     LoGFilter();
 

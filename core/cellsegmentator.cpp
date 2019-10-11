@@ -70,19 +70,16 @@ void CellSegmentator<imageT>::findCellNuclei()
         createGrayImage();
     }
 
-    using logFilterT = LoGFilter<grayImageT, grayImageT >;
-    std::unique_ptr<logFilterT> logFilter(new logFilterT);
 
-    logFilter->setImage(grayImage);
-    logFilter->compute(true);
 
+    computeLoGNorm();
 
 }
 
 
 
 template<typename imageT>
-void CellSegmentator<imageT>:: createGrayImage()
+void CellSegmentator<imageT>::createGrayImage()
 {
     using rgbToGrayFilterT = itk::RGBToLuminanceImageFilter< imageT, grayImageT >;
     typename rgbToGrayFilterT::Pointer rgbToGrayFilter = rgbToGrayFilterT::New();
@@ -93,6 +90,35 @@ void CellSegmentator<imageT>:: createGrayImage()
 
 }
 
+
+template<typename imageT>
+void CellSegmentator<imageT>::computeLoGNorm()
+{
+
+
+    LoGNorm = image3DT::New();
+
+    image3DT::RegionType region;
+
+    image3DT::SizeType size;
+    size[0] = inputImage->GetRequestedRegion().GetSize()[0];
+    size[1] = inputImage->GetRequestedRegion().GetSize()[1];
+
+    unsigned normSize = 10;
+    size[2] = normSize;
+
+    region.SetSize(size);
+
+    LoGNorm->Allocate();
+
+
+    using logFilterT = LoGFilter<grayImageT, grayImageT >;
+    std::unique_ptr<logFilterT> logFilter(new logFilterT);
+
+    logFilter->setImage(grayImage);
+    logFilter->compute(true);
+
+}
 
 
 

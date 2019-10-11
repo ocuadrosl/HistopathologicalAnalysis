@@ -28,6 +28,11 @@ public:
     using vectorImageT = itk::Image<itk::CovariantVector<float, 2>, 2>;
     using vectorImageP = vectorImageT::Pointer;
 
+    using image3DT =  itk::Image<float, 3>;
+    using image3DP = image3DT::Pointer;
+
+
+
 
     //setters
 
@@ -51,10 +56,15 @@ public:
 private:
 
     vectorImageP outputImage;
-    imageP      inputImage;
-    grayImageP  grayImage;
+    imageP       inputImage;
+    grayImageP   grayImage;
+    image3DP     LoGNorm;
+
+    double sigmaMax = 1;
+    double sigmaMin = 0;
 
     void createGrayImage();
+    void computeLoGNorm();
 
 
 
