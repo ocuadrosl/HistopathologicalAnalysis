@@ -81,7 +81,7 @@ void MainWindow::readImage(std::string fileName)
         //TODO replace this directory for a local project dir
         std::string tmpFileName = "/home/oscar/src/HistopathologicalAnalysis/tmp/tmpImage.tiff";
 
-        reader->readVSI(fileName, tmpFileName, 8);
+        reader->readVSI(fileName, tmpFileName, 1);
 
 
 
@@ -94,10 +94,10 @@ void MainWindow::readImage(std::string fileName)
     inputImage = reader->getRGBImage();
 
     //TODO delete this
-    VTKViewer::visualize<rgbImageT>(inputImage);
+    //VTKViewer::visualize<rgbImageT>(inputImage);
 
 
-    //cellSegmentation();
+    cellSegmentation();
 
 
 }

@@ -5,12 +5,14 @@
 #include <itkGradientImageFilter.h>
 #include <itkCovariantVector.h>
 #include <itkRGBToLuminanceImageFilter.h>
+#include <itkTileImageFilter.h>
 
 
 //local includes
 #include "../util/customprint.h"
 #include "../util/superpixels.h"
 #include "../util/logfilter.h"
+#include "itkViewImage.h"
 
 template<typename imageT>
 class CellSegmentator
@@ -28,7 +30,7 @@ public:
     using vectorImageT = itk::Image<itk::CovariantVector<float, 2>, 2>;
     using vectorImageP = vectorImageT::Pointer;
 
-    using image3DT =  itk::Image<float, 3>;
+    using image3DT =  itk::Image<unsigned, 3>;
     using image3DP = image3DT::Pointer;
 
 

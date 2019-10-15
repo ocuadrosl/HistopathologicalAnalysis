@@ -31,7 +31,7 @@ namespace VTKViewer
     //using imageP = typename imageT::Pointer;
 
 
-template<typename imageT, unsigned imageSize=2>
+template<typename imageT, unsigned imageDim=2>
 void visualize(typename imageT::Pointer image, std::string description="")
 {
     using pixelT = typename imageT::PixelType;
@@ -39,7 +39,7 @@ void visualize(typename imageT::Pointer image, std::string description="")
     {
 
 
-        using imageChar = itk::Image< unsigned char, imageSize >;
+        using imageChar = itk::Image< unsigned char, imageDim >;
         using castFilterCastType = itk::CastImageFilter< imageT, imageChar >;
         typename castFilterCastType::Pointer castFilter = castFilterCastType::New();
         castFilter->SetInput( image );
@@ -54,7 +54,7 @@ void visualize(typename imageT::Pointer image, std::string description="")
     {
 
         using rgbPixelType = itk::RGBPixel<unsigned char>;
-        using rgbImageChar = itk::Image< rgbPixelType, imageSize >;
+        using rgbImageChar = itk::Image< rgbPixelType, imageDim >;
         using castFilterCastType = itk::CastImageFilter< imageT, rgbImageChar >;
         typename castFilterCastType::Pointer castFilter = castFilterCastType::New();
         castFilter->SetInput( image );

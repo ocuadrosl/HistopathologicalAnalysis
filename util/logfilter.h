@@ -31,6 +31,10 @@ public:
 
     void setImage(inputImageP inputImage);
     void compute(bool show=false);
+    void setSigma(double sigma);
+
+    outputImageP getOutput();
+
 
 
 private:

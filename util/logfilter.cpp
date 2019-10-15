@@ -12,6 +12,20 @@ void LoGFilter<inputImageT, outputImageT>::setImage(inputImageP inputImage)
 }
 
 template<typename inputImageT, typename outputImageT>
+void LoGFilter<inputImageT, outputImageT>::setSigma(double sigma)
+{
+
+    this->sigma = sigma;
+}
+
+template<typename inputImageT, typename outputImageT>
+typename LoGFilter<inputImageT, outputImageT>::outputImageP
+LoGFilter<inputImageT, outputImageT>::getOutput()
+{
+    return outputImage;
+}
+
+template<typename inputImageT, typename outputImageT>
 void LoGFilter<inputImageT, outputImageT>::compute(bool show)
 {
 

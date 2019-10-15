@@ -112,11 +112,43 @@ void CellSegmentator<imageT>::computeLoGNorm()
     LoGNorm->Allocate();
 
 
-    using logFilterT = LoGFilter<grayImageT, grayImageT >;
+    using logFilterT = LoGFilter<grayImageT, grayImageT>;
     std::unique_ptr<logFilterT> logFilter(new logFilterT);
-
     logFilter->setImage(grayImage);
-    logFilter->compute(true);
+
+
+    using tileFilterType =  itk::TileImageFilter<grayImageT, image3DT>;
+    tileFilterType::Pointer tileFilter = tileFilterType::New();
+
+    itk::FixedArray<unsigned, 3> layout;
+    layout[0] = 1;
+    layout[1] = 1;
+    layout[2] = 0;
+
+    tileFilter->SetLayout(layout);
+
+    unsigned i = 0;
+    double sigma = 0.1;
+    while(sigma<=1.0)
+    {
+       logFilter->setSigma(sigma);
+       logFilter->compute();
+
+       VTKViewer::visualize<grayImageT>(logFilter->getOutput(), "Laplacian of Gaussian");
+       tileFilter->SetInput(i, logFilter->getOutput());
+
+        ++i;
+        sigma += 0.1;
+    }
+
+    tileFilter->Update();
+
+
+
+    itk::ViewImage<image3DT>::View(tileFilter->GetOutput());
+
+
+
 
 }
 
