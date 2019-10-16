@@ -112,40 +112,49 @@ void CellSegmentator<imageT>::computeLoGNorm()
     LoGNorm->Allocate();
 
 
-    using logFilterT = LoGFilter<grayImageT, grayImageT>;
+    using logFilterT = LoGFilter<grayImageT, grayImageD>;
     std::unique_ptr<logFilterT> logFilter(new logFilterT);
     logFilter->setImage(grayImage);
 
-
-    using tileFilterType =  itk::TileImageFilter<grayImageT, image3DT>;
-    tileFilterType::Pointer tileFilter = tileFilterType::New();
 
     itk::FixedArray<unsigned, 3> layout;
     layout[0] = 1;
     layout[1] = 1;
     layout[2] = 0;
 
-    tileFilter->SetLayout(layout);
 
-    unsigned i = 0;
-    double sigma = 0.1;
-    while(sigma<=1.0)
+    std::vector<grayImageDP> stack;
+
+
+    for(double sigma=0.1; sigma<= 1.0; sigma += 0.1)
     {
+
        logFilter->setSigma(sigma);
        logFilter->compute();
 
-       VTKViewer::visualize<grayImageT>(logFilter->getOutput(), "Laplacian of Gaussian");
-       tileFilter->SetInput(i, logFilter->getOutput());
+       stack.push_back(logFilter->getOutput());
+       (*stack.rbegin())->DisconnectPipeline();
 
-        ++i;
-        sigma += 0.1;
+       itk::ViewImage<grayImageD>::View(*stack.rbegin());
+
     }
 
-    tileFilter->Update();
 
 
 
-    itk::ViewImage<image3DT>::View(tileFilter->GetOutput());
+    //TODO iterators here
+
+    for(auto it = stack.begin(); it != stack.end(); ++it)
+    {
+
+
+
+    }
+
+
+
+
+   // itk::ViewImage<image3DT>::View(LoGNorm);
 
 
 

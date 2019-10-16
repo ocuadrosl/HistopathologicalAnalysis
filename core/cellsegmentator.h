@@ -26,11 +26,14 @@ public:
     using grayImageT = itk::Image<unsigned,2>;
     using grayImageP =  grayImageT::Pointer;
 
+    using grayImageD = itk::Image<double,2>;
+    using grayImageDP =  grayImageD::Pointer;
+
     //Using float because double type is not allowed...
     using vectorImageT = itk::Image<itk::CovariantVector<float, 2>, 2>;
     using vectorImageP = vectorImageT::Pointer;
 
-    using image3DT =  itk::Image<unsigned, 3>;
+    using image3DT =  itk::Image<double, 3>;
     using image3DP = image3DT::Pointer;
 
 

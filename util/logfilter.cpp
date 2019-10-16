@@ -47,6 +47,7 @@ void LoGFilter<inputImageT, outputImageT>::compute(bool show)
     using castOutputImageT = itk::CastImageFilter<doubleImageT, outputImageT>;
     typename castOutputImageT::Pointer castOutputImageFilter = castOutputImageT::New();
     castOutputImageFilter->SetInput(convolutionFilter->GetOutput());
+    castOutputImageFilter->Update();
 
 
     outputImage = castOutputImageFilter->GetOutput();
