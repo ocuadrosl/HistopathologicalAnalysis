@@ -6,13 +6,15 @@
 #include <itkCovariantVector.h>
 #include <itkRGBToLuminanceImageFilter.h>
 #include <itkTileImageFilter.h>
-
+#include <itkMultiplyImageFilter.h>
+#include <itkOtsuThresholdImageFilter.h>
+#include <itkViewImage.h>
 
 //local includes
 #include "../util/customprint.h"
 #include "../util/superpixels.h"
 #include "../util/logfilter.h"
-#include "itkViewImage.h"
+
 
 template<typename imageT>
 class CellSegmentator
@@ -32,9 +34,6 @@ public:
     //Using float because double type is not allowed...
     using vectorImageT = itk::Image<itk::CovariantVector<float, 2>, 2>;
     using vectorImageP = vectorImageT::Pointer;
-
-    using image3DT =  itk::Image<double, 3>;
-    using image3DP = image3DT::Pointer;
 
 
 
@@ -63,13 +62,16 @@ private:
     vectorImageP outputImage;
     imageP       inputImage;
     grayImageP   grayImage;
-    image3DP     LoGNorm;
+    grayImageDP  euclideanMap;
 
-    double sigmaMax = 1;
-    double sigmaMin = 0;
+    std::vector<grayImageDP> LogNorm;
+
+    double sigmaMax = 1.0;
+    double sigmaMin = 0.1;
 
     void createGrayImage();
     void computeLoGNorm();
+    void computeEuclideanMap();
 
 
 

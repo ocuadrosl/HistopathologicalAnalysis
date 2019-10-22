@@ -95,72 +95,57 @@ template<typename imageT>
 void CellSegmentator<imageT>::computeLoGNorm()
 {
 
+    LogNorm.clear();
 
-    LoGNorm = image3DT::New();
-
-    image3DT::RegionType region;
-
-    image3DT::SizeType size;
-    size[0] = inputImage->GetRequestedRegion().GetSize()[0];
-    size[1] = inputImage->GetRequestedRegion().GetSize()[1];
-
-    unsigned normSize = 10;
-    size[2] = normSize;
-
-    region.SetSize(size);
-
-    LoGNorm->Allocate();
-
+    //computing LoG for various sigmas
 
     using logFilterT = LoGFilter<grayImageT, grayImageD>;
     std::unique_ptr<logFilterT> logFilter(new logFilterT);
     logFilter->setImage(grayImage);
 
 
-    itk::FixedArray<unsigned, 3> layout;
-    layout[0] = 1;
-    layout[1] = 1;
-    layout[2] = 0;
+
+    using multiplyFilterT = itk::MultiplyImageFilter<grayImageD, grayImageD, grayImageD>;
+    multiplyFilterT::Pointer multiplyFilter = multiplyFilterT::New();
 
 
-    std::vector<grayImageDP> stack;
 
-
-    for(double sigma=0.1; sigma<= 1.0; sigma += 0.1)
+    for(double sigma=sigmaMin; sigma<= sigmaMax; sigma += 0.1)
     {
 
        logFilter->setSigma(sigma);
        logFilter->compute();
 
-       stack.push_back(logFilter->getOutput());
-       (*stack.rbegin())->DisconnectPipeline();
+       multiplyFilter->SetInput(logFilter->getOutput());
+       multiplyFilter->SetConstant(sigma*sigma);
 
-       itk::ViewImage<grayImageD>::View(*stack.rbegin());
+       LogNorm.push_back(multiplyFilter->GetOutput());
 
-    }
-
-
-
-
-    //TODO iterators here
-
-    for(auto it = stack.begin(); it != stack.end(); ++it)
-    {
-
-
+       //itk::ViewImage<grayImageD>::View(logFilter->getOutput(), "sigma");
+       //itk::ViewImage<grayImageD>::View(multiplyFilter->GetOutput(), "sigma 2");
 
     }
-
-
-
-
-   // itk::ViewImage<image3DT>::View(LoGNorm);
-
-
 
 
 }
 
+
+template<typename imageT>
+void CellSegmentator<imageT>::computeEuclideanMap()
+{
+
+
+    using otsuType = itk::OtsuThresholdImageFilter< grayImageT, grayImageT >;
+    typename otsuType::Pointer otsuFilter = otsuType::New();
+    otsuFilter->SetInput(grayImage);
+    otsuFilter->SetOutsideValue(255);
+    otsuFilter->SetInsideValue(0);
+
+    otsuFilter->Update();
+
+
+
+}
 
 
 
