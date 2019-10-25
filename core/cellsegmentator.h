@@ -11,6 +11,7 @@
 #include <itkViewImage.h>
 #include <itkSignedMaurerDistanceMapImageFilter.h>
 #include <itkImageRegionConstIterator.h>
+#include <itkVectorContainer.h>
 
 //local includes
 #include "../util/customprint.h"
@@ -39,6 +40,7 @@ public:
 
 
     using imageDoubleIt = itk::ImageRegionConstIterator<grayImageD>;
+    using imageDoubleItIndex = itk::ImageRegionConstIteratorWithIndex<grayImageD>;
 
 
     //setters
@@ -66,6 +68,8 @@ private:
     imageP       inputImage;
     grayImageP   grayImage;
     grayImageDP  euclideanMap;
+    grayImageDP  surface;
+
 
     std::vector<grayImageDP> LogNorm;
 

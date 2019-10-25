@@ -70,11 +70,9 @@ void CellSegmentator<imageT>::findCellNuclei()
         createGrayImage();
     }
 
-
-
     computeLoGNorm();
     computeEuclideanMap();
-    //computeSurface();
+    computeSurface();
 
 }
 
@@ -108,18 +106,20 @@ void CellSegmentator<imageT>::computeLoGNorm()
 
 
     using multiplyFilterT = itk::MultiplyImageFilter<grayImageD, grayImageD, grayImageD>;
-    multiplyFilterT::Pointer multiplyFilter = multiplyFilterT::New();
 
 
 
-    for(double sigma=sigmaMin; sigma<= sigmaMax; sigma += 0.1)
+
+    for(double sigma=sigmaMin; sigma <= sigmaMax; sigma += stepSize)
     {
 
        logFilter->setSigma(sigma);
        logFilter->compute();
 
+       multiplyFilterT::Pointer multiplyFilter = multiplyFilterT::New();
        multiplyFilter->SetInput(logFilter->getOutput());
        multiplyFilter->SetConstant(sigma*sigma);
+       multiplyFilter->Update();
 
        LogNorm.push_back(multiplyFilter->GetOutput());
 
@@ -153,7 +153,8 @@ void CellSegmentator<imageT>::computeEuclideanMap()
     distanceMapImageFilter->SetInput(otsuFilter->GetOutput());
 
     distanceMapImageFilter->Update();
-    //itk::ViewImage<grayImageD>::View(distanceMapImageFilter->GetOutput(), "otsu");
+    euclideanMap = distanceMapImageFilter->GetOutput();
+    //itk::ViewImage<grayImageD>::View(euclideanMap, "Euclidean Map");
 
 
 }
@@ -167,26 +168,53 @@ void CellSegmentator<imageT>::computeSurface()
     imageDoubleIt  mapIt(euclideanMap, euclideanMap->GetRequestedRegion());
     itk::ImageRegionConstIterator<grayImageT>  grayIt(grayImage, grayImage->GetRequestedRegion());
 
-    for(mapIt.GoToBegin(); !mapIt.IsAtEnd(); ++mapIt, ++grayIt)
+
+    surface = grayImageD::New();
+    surface->SetRegions(grayImage->GetRequestedRegion());
+    surface->Allocate();
+    surface->FillBuffer(sigmaMin);
+
+    itk::ImageRegionIterator<grayImageD> surfIt(surface, surface->GetRequestedRegion());
+
+
+    std::vector<imageDoubleIt> normIts;
+    for(auto logIt = LogNorm.begin(); logIt != LogNorm.end(); ++logIt)
+    {
+        normIts.push_back(imageDoubleIt(*logIt , (*logIt)->GetRequestedRegion()));
+    }
+
+
+    for(mapIt.GoToBegin(); !mapIt.IsAtEnd(); ++mapIt, ++grayIt, ++surfIt)
     {
 
-        double sigma = sigmaMin;
+        double multTmp  = 0;
+        double maxTmp   = -100000000;//verify this
+        double sigmaTmp = 0;
+        double sigmaMax = computeSigmaMAX(mapIt);
         unsigned i=0;
-        while(sigma <= computeSigmaMAX(mapIt))
+
+        auto vecIt = normIts.begin();
+        for(double sigma = sigmaMin; sigma <= sigmaMax; sigma += stepSize, ++i, ++vecIt)
         {
-            imageDoubleIt  normIt(LogNorm[i], LogNorm[i]->GetRequestedRegion());
 
-            //todo parte final de la funcion
+            multTmp = (*vecIt).Get() * grayIt.Get();
 
-            sigma += stepSize;
-            ++i;
+            if(multTmp > maxTmp)
+            {
+                sigmaTmp = sigma;
+                maxTmp = multTmp;
+            }
 
         }
+
+        surfIt.Set(sigmaTmp);
 
 
     }
 
+    itk::ViewImage<grayImageD>::View(surface, "Surface");
 
+    IO::printOK("Computing Surface");
 
 
 
