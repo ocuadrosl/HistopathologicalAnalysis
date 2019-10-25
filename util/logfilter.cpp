@@ -26,7 +26,7 @@ LoGFilter<inputImageT, outputImageT>::getOutput()
 }
 
 template<typename inputImageT, typename outputImageT>
-void LoGFilter<inputImageT, outputImageT>::compute(bool show)
+void LoGFilter<inputImageT, outputImageT>::compute(bool show, bool echo)
 {
 
     createKernel();
@@ -57,9 +57,10 @@ void LoGFilter<inputImageT, outputImageT>::compute(bool show)
         VTKViewer::visualize<outputImageT>(outputImage, "Laplacian of Gaussian");
     }
 
-
-
-    IO::printOK("LoG filter");
+    if(echo)
+    {
+        IO::printOK("LoG filter");
+    }
 
 
 

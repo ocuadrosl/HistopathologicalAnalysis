@@ -30,7 +30,7 @@ public:
     LoGFilter();
 
     void setImage(inputImageP inputImage);
-    void compute(bool show=false);
+    void compute(bool show=false, bool echo=false);
     void setSigma(double sigma);
 
     outputImageP getOutput();

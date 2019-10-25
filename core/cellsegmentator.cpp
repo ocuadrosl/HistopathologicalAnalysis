@@ -73,6 +73,8 @@ void CellSegmentator<imageT>::findCellNuclei()
 
 
     computeLoGNorm();
+    computeEuclideanMap();
+    //computeSurface();
 
 }
 
@@ -143,9 +145,66 @@ void CellSegmentator<imageT>::computeEuclideanMap()
 
     otsuFilter->Update();
 
+    //itk::ViewImage<grayImageT>::View(otsuFilter->GetOutput(), "otsu");
+
+
+    using signedMaurerDistanceMapImageFilterT =   itk::SignedMaurerDistanceMapImageFilter<grayImageT, grayImageD>;
+    signedMaurerDistanceMapImageFilterT::Pointer distanceMapImageFilter =   signedMaurerDistanceMapImageFilterT::New();
+    distanceMapImageFilter->SetInput(otsuFilter->GetOutput());
+
+    distanceMapImageFilter->Update();
+    //itk::ViewImage<grayImageD>::View(distanceMapImageFilter->GetOutput(), "otsu");
 
 
 }
+
+
+template<typename imageT>
+void CellSegmentator<imageT>::computeSurface()
+{
+
+
+    imageDoubleIt  mapIt(euclideanMap, euclideanMap->GetRequestedRegion());
+    itk::ImageRegionConstIterator<grayImageT>  grayIt(grayImage, grayImage->GetRequestedRegion());
+
+    for(mapIt.GoToBegin(); !mapIt.IsAtEnd(); ++mapIt, ++grayIt)
+    {
+
+        double sigma = sigmaMin;
+        unsigned i=0;
+        while(sigma <= computeSigmaMAX(mapIt))
+        {
+            imageDoubleIt  normIt(LogNorm[i], LogNorm[i]->GetRequestedRegion());
+
+            //todo parte final de la funcion
+
+            sigma += stepSize;
+            ++i;
+
+        }
+
+
+    }
+
+
+
+
+
+
+}
+
+
+template<typename imageT>
+inline double CellSegmentator<imageT>::computeSigmaMAX(imageDoubleIt it)
+{
+
+    return std::max(sigmaMin, std::min(sigmaMax, 2*it.Get()));
+}
+
+
+
+
+
 
 
 

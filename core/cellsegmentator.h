@@ -9,6 +9,8 @@
 #include <itkMultiplyImageFilter.h>
 #include <itkOtsuThresholdImageFilter.h>
 #include <itkViewImage.h>
+#include <itkSignedMaurerDistanceMapImageFilter.h>
+#include <itkImageRegionConstIterator.h>
 
 //local includes
 #include "../util/customprint.h"
@@ -36,6 +38,7 @@ public:
     using vectorImageP = vectorImageT::Pointer;
 
 
+    using imageDoubleIt = itk::ImageRegionConstIterator<grayImageD>;
 
 
     //setters
@@ -68,10 +71,14 @@ private:
 
     double sigmaMax = 1.0;
     double sigmaMin = 0.1;
+    double stepSize = 0.1;
 
     void createGrayImage();
     void computeLoGNorm();
     void computeEuclideanMap();
+    void computeSurface();
+
+    inline double computeSigmaMAX(imageDoubleIt it);
 
 
 

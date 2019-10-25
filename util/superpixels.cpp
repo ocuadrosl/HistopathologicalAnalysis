@@ -194,12 +194,6 @@ void SuperPixels<imageT>::converge()
     }
 
 
-
-
-
-
-
-
 }
 template<typename imageT>
 void SuperPixels<imageT>::updateMeans()
@@ -260,8 +254,6 @@ void SuperPixels<imageT>::updateMeans()
 template<typename imageT>
 void SuperPixels<imageT>::createLabelImage()
 {
-
-
 
     labelImage = labelImageT::New();
     labelImage->SetRegions(inputImage->GetRequestedRegion());
@@ -354,9 +346,6 @@ void SuperPixels<imageT>::show()
         {
             spIt.Set(red);
         }
-
-
-
 
 
         ++it;
