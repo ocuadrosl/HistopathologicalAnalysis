@@ -6,12 +6,17 @@
 #include <itkCovariantVector.h>
 #include <itkRGBToLuminanceImageFilter.h>
 #include <itkTileImageFilter.h>
-#include <itkMultiplyImageFilter.h>
 #include <itkOtsuThresholdImageFilter.h>
 #include <itkViewImage.h>
 #include <itkSignedMaurerDistanceMapImageFilter.h>
 #include <itkImageRegionConstIterator.h>
 #include <itkVectorContainer.h>
+#include <itkRescaleIntensityImageFilter.h>
+#include <itkRescaleIntensityImageFilter.h>
+#include <itkMinimumMaximumImageCalculator.h>
+#include <itkMultiplyImageFilter.h>
+
+
 
 //local includes
 #include "../util/customprint.h"
@@ -31,16 +36,16 @@ public:
     using grayImageT = itk::Image<unsigned,2>;
     using grayImageP =  grayImageT::Pointer;
 
-    using grayImageD = itk::Image<double,2>;
-    using grayImageDP =  grayImageD::Pointer;
+    using grayImageDoubleT = itk::Image<double,2>;
+    using grayImageDP =  grayImageDoubleT::Pointer;
 
     //Using float because double type is not allowed...
     using vectorImageT = itk::Image<itk::CovariantVector<float, 2>, 2>;
     using vectorImageP = vectorImageT::Pointer;
 
 
-    using imageDoubleIt = itk::ImageRegionConstIterator<grayImageD>;
-    using imageDoubleItIndex = itk::ImageRegionConstIteratorWithIndex<grayImageD>;
+    using imageDoubleIt = itk::ImageRegionConstIterator<grayImageDoubleT>;
+    using imageDoubleItIndex = itk::ImageRegionConstIteratorWithIndex<grayImageDoubleT>;
 
 
     //setters

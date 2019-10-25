@@ -99,13 +99,13 @@ void CellSegmentator<imageT>::computeLoGNorm()
 
     //computing LoG for various sigmas
 
-    using logFilterT = LoGFilter<grayImageT, grayImageD>;
+    using logFilterT = LoGFilter<grayImageT, grayImageDoubleT>;
     std::unique_ptr<logFilterT> logFilter(new logFilterT);
     logFilter->setImage(grayImage);
 
 
 
-    using multiplyFilterT = itk::MultiplyImageFilter<grayImageD, grayImageD, grayImageD>;
+    using multiplyFilterT = itk::MultiplyImageFilter<grayImageDoubleT, grayImageDoubleT, grayImageDoubleT>;
 
 
 
@@ -148,13 +148,14 @@ void CellSegmentator<imageT>::computeEuclideanMap()
     //itk::ViewImage<grayImageT>::View(otsuFilter->GetOutput(), "otsu");
 
 
-    using signedMaurerDistanceMapImageFilterT =   itk::SignedMaurerDistanceMapImageFilter<grayImageT, grayImageD>;
+    using signedMaurerDistanceMapImageFilterT =   itk::SignedMaurerDistanceMapImageFilter<grayImageT, grayImageDoubleT>;
     signedMaurerDistanceMapImageFilterT::Pointer distanceMapImageFilter =   signedMaurerDistanceMapImageFilterT::New();
     distanceMapImageFilter->SetInput(otsuFilter->GetOutput());
+    distanceMapImageFilter->InsideIsPositiveOn();
 
     distanceMapImageFilter->Update();
     euclideanMap = distanceMapImageFilter->GetOutput();
-    //itk::ViewImage<grayImageD>::View(euclideanMap, "Euclidean Map");
+    itk::ViewImage<grayImageDoubleT>::View(euclideanMap, "Euclidean Map");
 
 
 }
@@ -169,12 +170,12 @@ void CellSegmentator<imageT>::computeSurface()
     itk::ImageRegionConstIterator<grayImageT>  grayIt(grayImage, grayImage->GetRequestedRegion());
 
 
-    surface = grayImageD::New();
+    surface = grayImageDoubleT::New();
     surface->SetRegions(grayImage->GetRequestedRegion());
     surface->Allocate();
     surface->FillBuffer(sigmaMin);
 
-    itk::ImageRegionIterator<grayImageD> surfIt(surface, surface->GetRequestedRegion());
+    itk::ImageRegionIterator<grayImageDoubleT> surfIt(surface, surface->GetRequestedRegion());
 
 
     std::vector<imageDoubleIt> normIts;
@@ -184,17 +185,21 @@ void CellSegmentator<imageT>::computeSurface()
     }
 
 
+    using ImageCalculatorFilterType = itk::MinimumMaximumImageCalculator<grayImageDoubleT>;
+
+
+
     for(mapIt.GoToBegin(); !mapIt.IsAtEnd(); ++mapIt, ++grayIt, ++surfIt)
     {
 
-        double multTmp  = 0;
-        double maxTmp   = -100000000;//verify this
+        double multTmp=0;
         double sigmaTmp = 0;
         double sigmaMax = computeSigmaMAX(mapIt);
-        unsigned i=0;
 
         auto vecIt = normIts.begin();
-        for(double sigma = sigmaMin; sigma <= sigmaMax; sigma += stepSize, ++i, ++vecIt)
+
+        double maxTmp = (*vecIt).Get()*grayIt.Get();
+        for(double sigma = sigmaMin; sigma <= sigmaMax; sigma += stepSize, ++vecIt)
         {
 
             multTmp = (*vecIt).Get() * grayIt.Get();
@@ -212,7 +217,14 @@ void CellSegmentator<imageT>::computeSurface()
 
     }
 
-    itk::ViewImage<grayImageD>::View(surface, "Surface");
+
+    /*using FilterType = itk::RescaleIntensityImageFilter<grayImageD, grayImageD>;
+    FilterType::Pointer filter = FilterType::New();
+    filter->SetInput(surface);
+    filter->SetOutputMinimum(0);
+    filter->SetOutputMaximum(255);
+*/
+    itk::ViewImage<grayImageDoubleT>::View(surface ,"Surface");
 
     IO::printOK("Computing Surface");
 
