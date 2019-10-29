@@ -110,10 +110,14 @@ void CellSegmentator<imageT>::computeLoGNorm()
 
 
 
+
     for(double sigma=sigmaMin; sigma <= sigmaMax; sigma += stepSize)
     {
 
+       std::cout<<static_cast<unsigned>(sigma*std::sqrt(2))*2+1<<std::endl;
+
        logFilter->setSigma(sigma);
+       logFilter->setKernelSize(static_cast<unsigned>(sigma*std::sqrt(2))*2+1);
        logFilter->compute();
 
        multiplyFilterT::Pointer multiplyFilter = multiplyFilterT::New();
@@ -124,7 +128,7 @@ void CellSegmentator<imageT>::computeLoGNorm()
        LogNorm.push_back(multiplyFilter->GetOutput());
 
        //itk::ViewImage<grayImageD>::View(logFilter->getOutput(), "sigma");
-       //itk::ViewImage<grayImageD>::View(multiplyFilter->GetOutput(), "sigma 2");
+       //itk::ViewImage<grayImageDoubleT>::View(multiplyFilter->GetOutput(), "sigma 2");
 
     }
 
@@ -137,20 +141,56 @@ void CellSegmentator<imageT>::computeEuclideanMap()
 {
 
 
-    using otsuType = itk::OtsuThresholdImageFilter< grayImageT, grayImageT >;
+    using LiFilterType             = itk::LiThresholdImageFilter<grayImageT, grayImageT>;
+    using HuangFilterType          = itk::HuangThresholdImageFilter<grayImageT, grayImageT>;
+    using IntermodesFilterType     = itk::IntermodesThresholdImageFilter<grayImageT, grayImageT>;
+    using IsoDataFilterType        = itk::IsoDataThresholdImageFilter<grayImageT, grayImageT>;
+    using KittlerIllingworthFilterType = itk::KittlerIllingworthThresholdImageFilter<grayImageT, grayImageT>;
+    using LiFilterType             = itk::LiThresholdImageFilter<grayImageT, grayImageT>;
+    using MaximumEntropyFilterType = itk::MaximumEntropyThresholdImageFilter<grayImageT, grayImageT>;
+    using MomentsFilterType        = itk::MomentsThresholdImageFilter<grayImageT, grayImageT>;
+    using OtsuFilterType           = itk::OtsuThresholdImageFilter<grayImageT, grayImageT>;
+    using RenyiEntropyFilterType   = itk::RenyiEntropyThresholdImageFilter<grayImageT, grayImageT>;
+    using ShanbhagFilterType       = itk::ShanbhagThresholdImageFilter<grayImageT, grayImageT>;
+    using TriangleFilterType       = itk::TriangleThresholdImageFilter<grayImageT, grayImageT>;
+    using YenFilterType            = itk::YenThresholdImageFilter<grayImageT, grayImageT>;
+
+    using FilterContainerType =  std::map<std::string, itk::HistogramThresholdImageFilter<grayImageT, grayImageT>::Pointer>;
+    FilterContainerType filterContainer;
+
+    filterContainer["Huang"] = HuangFilterType::New();
+    filterContainer["Intermodes"] = IntermodesFilterType::New();
+    filterContainer["IsoData"] = IsoDataFilterType::New();
+    filterContainer["KittlerIllingworth"] = KittlerIllingworthFilterType::New();
+    filterContainer["Li"] = LiFilterType::New();
+    filterContainer["MaximumEntropy"] = MaximumEntropyFilterType::New();
+    filterContainer["Moments"] = MomentsFilterType::New();
+    filterContainer["Otsu"] = OtsuFilterType::New();
+    filterContainer["RenyiEntropy"] = RenyiEntropyFilterType::New();
+    filterContainer["Shanbhag"] = ShanbhagFilterType::New();
+    filterContainer["Triangle"] = TriangleFilterType::New();
+    filterContainer["Yen"] = YenFilterType::New();
+
+    std::string filterName = "RenyiEntropy";
+    filterContainer[filterName]->SetInsideValue(1);
+    filterContainer[filterName]->SetOutsideValue(0);
+    filterContainer[filterName]->SetInput(grayImage);
+    filterContainer[filterName]->Update();
+
+   /* using otsuType = itk::OtsuThresholdImageFilter< grayImageT, grayImageT >;
     typename otsuType::Pointer otsuFilter = otsuType::New();
     otsuFilter->SetInput(grayImage);
-    otsuFilter->SetOutsideValue(255);
-    otsuFilter->SetInsideValue(0);
+    otsuFilter->SetOutsideValue(0);
+    otsuFilter->SetInsideValue(1);
 
     otsuFilter->Update();
-
-    //itk::ViewImage<grayImageT>::View(otsuFilter->GetOutput(), "otsu");
+*/
+    itk::ViewImage<grayImageT>::View(filterContainer[filterName]->GetOutput(), "Threshold");
 
 
     using signedMaurerDistanceMapImageFilterT =   itk::SignedMaurerDistanceMapImageFilter<grayImageT, grayImageDoubleT>;
     signedMaurerDistanceMapImageFilterT::Pointer distanceMapImageFilter =   signedMaurerDistanceMapImageFilterT::New();
-    distanceMapImageFilter->SetInput(otsuFilter->GetOutput());
+    distanceMapImageFilter->SetInput(filterContainer[filterName]->GetOutput());
     distanceMapImageFilter->InsideIsPositiveOn();
 
     distanceMapImageFilter->Update();
@@ -218,13 +258,31 @@ void CellSegmentator<imageT>::computeSurface()
     }
 
 
-    /*using FilterType = itk::RescaleIntensityImageFilter<grayImageD, grayImageD>;
+    using FilterType = itk::RescaleIntensityImageFilter<grayImageDoubleT, grayImageT>;
     FilterType::Pointer filter = FilterType::New();
     filter->SetInput(surface);
     filter->SetOutputMinimum(0);
     filter->SetOutputMaximum(255);
-*/
-    itk::ViewImage<grayImageDoubleT>::View(surface ,"Surface");
+    filter->Update();
+
+    using RGBPixelType = itk::RGBPixel< unsigned >;
+    using RGBImageType = itk::Image< RGBPixelType, 2 >;
+
+    using RGBFilterType = itk::ScalarToRGBColormapImageFilter< grayImageT, RGBImageType>;
+    RGBFilterType::Pointer rgbfilter = RGBFilterType::New();
+    rgbfilter->SetInput( filter->GetOutput());
+    rgbfilter->SetColormap( RGBFilterType::Jet);
+    rgbfilter->Update();
+
+    using overlayRGBImageFilterT = OverlayRGBImageFilter<RGBImageType>;
+    std::unique_ptr<overlayRGBImageFilterT> overlayRGBImageFilter(new overlayRGBImageFilterT);
+    overlayRGBImageFilter->setBackgroundImage(inputImage);
+    overlayRGBImageFilter->setForegroundImage(rgbfilter->GetOutput());
+    overlayRGBImageFilter->overlay();
+
+
+    VTKViewer::visualize<RGBImageType>(rgbfilter->GetOutput() ,"Surface");
+    VTKViewer::visualize<RGBImageType>(overlayRGBImageFilter->getOutput() ,"Surface");
 
     IO::printOK("Computing Surface");
 

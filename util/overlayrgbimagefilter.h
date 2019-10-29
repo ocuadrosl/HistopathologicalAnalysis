@@ -14,7 +14,7 @@ public:
 
     // RGB type  alias
 
-    using rgbPixelT     = typename imageT::PixelType;
+    using rgbPixelT  = typename imageT::PixelType;
     using rgbImageP  = typename  imageT::Pointer;
 
     OverlayRGBImageFilter();

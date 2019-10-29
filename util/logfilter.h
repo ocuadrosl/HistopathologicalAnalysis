@@ -32,6 +32,7 @@ public:
     void setImage(inputImageP inputImage);
     void compute(bool show=false, bool echo=false);
     void setSigma(double sigma);
+    void setKernelSize(unsigned kernelSize);
 
     outputImageP getOutput();
 

@@ -66,6 +66,15 @@ void LoGFilter<inputImageT, outputImageT>::compute(bool show, bool echo)
 
 }
 
+
+template<typename inputImageT, typename outputImageT>
+void LoGFilter<inputImageT, outputImageT>::setKernelSize(unsigned kernelSize)
+{
+
+    this->kernelSize = kernelSize;
+
+}
+
 template<typename inputImageT, typename outputImageT>
 void LoGFilter<inputImageT, outputImageT>::createKernel(bool show)
 {

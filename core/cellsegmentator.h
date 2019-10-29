@@ -15,6 +15,23 @@
 #include <itkRescaleIntensityImageFilter.h>
 #include <itkMinimumMaximumImageCalculator.h>
 #include <itkMultiplyImageFilter.h>
+#include <itkScalarToRGBColormapImageFilter.h>
+#include <itkRGBPixel.h>
+
+
+#include "itkLiThresholdImageFilter.h"
+#include "itkHuangThresholdImageFilter.h"
+#include "itkIntermodesThresholdImageFilter.h"
+#include "itkIsoDataThresholdImageFilter.h"
+#include "itkKittlerIllingworthThresholdImageFilter.h"
+#include "itkMaximumEntropyThresholdImageFilter.h"
+#include "itkMomentsThresholdImageFilter.h"
+#include "itkOtsuThresholdImageFilter.h"
+#include "itkRenyiEntropyThresholdImageFilter.h"
+#include "itkShanbhagThresholdImageFilter.h"
+#include "itkTriangleThresholdImageFilter.h"
+#include "itkYenThresholdImageFilter.h"
+
 
 
 
@@ -22,6 +39,8 @@
 #include "../util/customprint.h"
 #include "../util/superpixels.h"
 #include "../util/logfilter.h"
+#include "../util/vtkviewer.h"
+#include "../util/overlayrgbimagefilter.h"
 
 
 template<typename imageT>
@@ -78,9 +97,10 @@ private:
 
     std::vector<grayImageDP> LogNorm;
 
-    double sigmaMax = 1.0;
-    double sigmaMin = 0.1;
-    double stepSize = 0.1;
+    double   sigmaMax = 8;
+    double   sigmaMin = 4;
+    double   stepSize = 1;
+
 
     void createGrayImage();
     void computeLoGNorm();
