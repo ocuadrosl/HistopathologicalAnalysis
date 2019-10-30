@@ -141,7 +141,7 @@ void ROIExtractor::blendColorMap(bool showResult)
     std::unique_ptr<OverlayRGBImageFilterT> overlayImageFilter(new OverlayRGBImageFilterT());
     overlayImageFilter->setBackgroundImage(inputImage);
     overlayImageFilter->setForegroundImage(colorMapImage);
-    overlayImageFilter->setAlpha(0.8);
+    overlayImageFilter->setForegroundAlpha(0.8f);
     overlayImageFilter->softLigh();
 
     IO::printOK("Blending colormap");

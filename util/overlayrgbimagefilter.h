@@ -5,6 +5,7 @@
 #include "itkRGBPixel.h"
 #include <itkImageRegionConstIterator.h>
 #include <itkImageRegionIterator.h>
+
 #include "rescalergbimagefilter.h"
 
 template<typename imageT>
@@ -22,11 +23,12 @@ public:
     //setters
     void setBackgroundImage(rgbImageP backGroundImage);
     void setForegroundImage(rgbImageP foreGroundImage);
-    void setAlpha(double alpha);
+    void setForegroundAlpha(float foregroundAlpha);
 
     //process
     void overlay();
     void softLigh();
+    void alphaBlending();
 
     //getters
     rgbImageP getOutput() const;
@@ -39,7 +41,12 @@ private:
    rgbImageP foregroundImage;
    rgbImageP outputImage;
 
-   double alpha;
+   float backgroundAlpha = 1.0f;
+   float foregroundAlpha = 0.5;
+
+
+   inline float blendMode(float background, float foreground,std::string mode);
+
 
 
 

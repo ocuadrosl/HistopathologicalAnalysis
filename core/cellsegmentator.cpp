@@ -114,10 +114,8 @@ void CellSegmentator<imageT>::computeLoGNorm()
     for(double sigma=sigmaMin; sigma <= sigmaMax; sigma += stepSize)
     {
 
-       std::cout<<static_cast<unsigned>(sigma*std::sqrt(2))*2+1<<std::endl;
-
        logFilter->setSigma(sigma);
-       logFilter->setKernelSize(static_cast<unsigned>(sigma*std::sqrt(2))*2+1);
+       logFilter->setKernelSize(kernelSize);
        logFilter->compute();
 
        multiplyFilterT::Pointer multiplyFilter = multiplyFilterT::New();
@@ -171,9 +169,9 @@ void CellSegmentator<imageT>::computeEuclideanMap()
     filterContainer["Triangle"] = TriangleFilterType::New();
     filterContainer["Yen"] = YenFilterType::New();
 
-    std::string filterName = "RenyiEntropy";
-    filterContainer[filterName]->SetInsideValue(1);
-    filterContainer[filterName]->SetOutsideValue(0);
+    std::string filterName = "Otsu";
+    filterContainer[filterName]->SetInsideValue(0);
+    filterContainer[filterName]->SetOutsideValue(1);
     filterContainer[filterName]->SetInput(grayImage);
     filterContainer[filterName]->Update();
 
@@ -195,7 +193,7 @@ void CellSegmentator<imageT>::computeEuclideanMap()
 
     distanceMapImageFilter->Update();
     euclideanMap = distanceMapImageFilter->GetOutput();
-    itk::ViewImage<grayImageDoubleT>::View(euclideanMap, "Euclidean Map");
+    //itk::ViewImage<grayImageDoubleT>::View(euclideanMap, "Euclidean Map");
 
 
 }
@@ -257,32 +255,49 @@ void CellSegmentator<imageT>::computeSurface()
 
     }
 
+    //showing results
 
-    using FilterType = itk::RescaleIntensityImageFilter<grayImageDoubleT, grayImageT>;
-    FilterType::Pointer filter = FilterType::New();
-    filter->SetInput(surface);
-    filter->SetOutputMinimum(0);
-    filter->SetOutputMaximum(255);
-    filter->Update();
+    using rescaleFilterType = itk::RescaleIntensityImageFilter<grayImageDoubleT, grayImageT>;
+    rescaleFilterType::Pointer rescaleFilter = rescaleFilterType::New();
+    rescaleFilter->SetInput(surface);
+    rescaleFilter->SetOutputMinimum(0);
+    rescaleFilter->SetOutputMaximum(255);
+    rescaleFilter->Update();
 
-    using RGBPixelType = itk::RGBPixel< unsigned >;
-    using RGBImageType = itk::Image< RGBPixelType, 2 >;
 
-    using RGBFilterType = itk::ScalarToRGBColormapImageFilter< grayImageT, RGBImageType>;
-    RGBFilterType::Pointer rgbfilter = RGBFilterType::New();
-    rgbfilter->SetInput( filter->GetOutput());
-    rgbfilter->SetColormap( RGBFilterType::Jet);
-    rgbfilter->Update();
+    itk::ImageRegionIterator<grayImageT>  it(rescaleFilter->GetOutput(), rescaleFilter->GetOutput()->GetRequestedRegion());
+    for(it.GoToBegin(); !it.IsAtEnd(); ++it)
+    {
+        //it.Set(255-it.Get());
 
-    using overlayRGBImageFilterT = OverlayRGBImageFilter<RGBImageType>;
+    }
+
+    using rgbPixelChar = itk::RGBPixel< unsigned char >;
+    using rgbImageChar = itk::Image< rgbPixelChar, 2 >;
+
+    using toColormapFilterType = itk::ScalarToRGBColormapImageFilter<grayImageT, rgbImageChar>;
+    toColormapFilterType::Pointer toColormapFilter = toColormapFilterType::New();
+    toColormapFilter->SetInput(rescaleFilter->GetOutput());
+    toColormapFilter->SetColormap(toColormapFilterType::Hot);
+    toColormapFilter->Update();
+
+
+
+    using castFilterType = itk::CastImageFilter<rgbImageChar, imageT>;
+    typename castFilterType::Pointer castfilter = castFilterType::New();
+    castfilter->SetInput(toColormapFilter->GetOutput());
+    castfilter->Update();
+
+    using overlayRGBImageFilterT = OverlayRGBImageFilter<imageT>;
     std::unique_ptr<overlayRGBImageFilterT> overlayRGBImageFilter(new overlayRGBImageFilterT);
     overlayRGBImageFilter->setBackgroundImage(inputImage);
-    overlayRGBImageFilter->setForegroundImage(rgbfilter->GetOutput());
-    overlayRGBImageFilter->overlay();
+    overlayRGBImageFilter->setForegroundImage(castfilter->GetOutput());
+    overlayRGBImageFilter->setForegroundAlpha(0.5f);
+    overlayRGBImageFilter->alphaBlending();
 
 
-    VTKViewer::visualize<RGBImageType>(rgbfilter->GetOutput() ,"Surface");
-    VTKViewer::visualize<RGBImageType>(overlayRGBImageFilter->getOutput() ,"Surface");
+    //VTKViewer::visualize<rgbImageChar>(toColormapFilter->GetOutput() ,"Surface");
+    VTKViewer::visualize<imageT>(overlayRGBImageFilter->getOutput() ,"Surface");
 
     IO::printOK("Computing Surface");
 

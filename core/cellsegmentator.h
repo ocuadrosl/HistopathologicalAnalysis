@@ -12,11 +12,12 @@
 #include <itkImageRegionConstIterator.h>
 #include <itkVectorContainer.h>
 #include <itkRescaleIntensityImageFilter.h>
-#include <itkRescaleIntensityImageFilter.h>
 #include <itkMinimumMaximumImageCalculator.h>
 #include <itkMultiplyImageFilter.h>
 #include <itkScalarToRGBColormapImageFilter.h>
 #include <itkRGBPixel.h>
+#include <itkScalarToRGBColormapImageFilter.h>
+#include <itkCastImageFilter.h>
 
 
 #include "itkLiThresholdImageFilter.h"
@@ -97,9 +98,12 @@ private:
 
     std::vector<grayImageDP> LogNorm;
 
+    double   sigmaMin = 2;
     double   sigmaMax = 8;
-    double   sigmaMin = 4;
     double   stepSize = 1;
+
+    unsigned radius = 5;
+    unsigned kernelSize = 5;
 
 
     void createGrayImage();
