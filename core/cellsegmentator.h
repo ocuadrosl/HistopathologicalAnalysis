@@ -42,16 +42,17 @@
 #include "../util/logfilter.h"
 #include "../util/vtkviewer.h"
 #include "../util/overlayrgbimagefilter.h"
+#include "../util/cellbinarizationfilter.h"
 
 
-template<typename imageT>
+template<typename rgbImageT>
 class CellSegmentator
 {
 public:
     CellSegmentator();
 
-    using imageP     = typename imageT::Pointer;
-    using pixelCompT = typename imageT::PixelType;
+    using imageP     = typename rgbImageT::Pointer;
+    using pixelCompT = typename rgbImageT::PixelType;
 
     using grayImageT = itk::Image<unsigned,2>;
     using grayImageP =  grayImageT::Pointer;

@@ -134,8 +134,8 @@ void CellSegmentator<imageT>::computeLoGNorm()
 }
 
 
-template<typename imageT>
-void CellSegmentator<imageT>::computeEuclideanMap()
+template<typename rgbImageT>
+void CellSegmentator<rgbImageT>::computeEuclideanMap()
 {
 
 
@@ -169,20 +169,20 @@ void CellSegmentator<imageT>::computeEuclideanMap()
     filterContainer["Triangle"] = TriangleFilterType::New();
     filterContainer["Yen"] = YenFilterType::New();
 
-    std::string filterName = "Otsu";
+    std::string filterName = "MaximumEntropy";
     filterContainer[filterName]->SetInsideValue(0);
     filterContainer[filterName]->SetOutsideValue(1);
     filterContainer[filterName]->SetInput(grayImage);
     filterContainer[filterName]->Update();
 
-   /* using otsuType = itk::OtsuThresholdImageFilter< grayImageT, grayImageT >;
-    typename otsuType::Pointer otsuFilter = otsuType::New();
-    otsuFilter->SetInput(grayImage);
-    otsuFilter->SetOutsideValue(0);
-    otsuFilter->SetInsideValue(1);
 
-    otsuFilter->Update();
-*/
+    using cellBinarizationFilterT = CellBinarizationFilter<rgbImageT>;
+    std::unique_ptr<cellBinarizationFilterT> cellBinarizationF(new cellBinarizationFilterT);
+    //cellBinarizationF->setImage(grayImage);
+
+
+
+
     itk::ViewImage<grayImageT>::View(filterContainer[filterName]->GetOutput(), "Threshold");
 
 
@@ -296,7 +296,7 @@ void CellSegmentator<imageT>::computeSurface()
     overlayRGBImageFilter->alphaBlending();
 
 
-    //VTKViewer::visualize<rgbImageChar>(toColormapFilter->GetOutput() ,"Surface");
+    VTKViewer::visualize<rgbImageChar>(toColormapFilter->GetOutput() ,"Surface");
     VTKViewer::visualize<imageT>(overlayRGBImageFilter->getOutput() ,"Surface");
 
     IO::printOK("Computing Surface");
