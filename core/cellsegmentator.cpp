@@ -178,7 +178,8 @@ void CellSegmentator<rgbImageT>::computeEuclideanMap()
 
     using cellBinarizationFilterT = CellBinarizationFilter<rgbImageT>;
     std::unique_ptr<cellBinarizationFilterT> cellBinarizationF(new cellBinarizationFilterT);
-    //cellBinarizationF->setImage(grayImage);
+    cellBinarizationF->setImage(inputImage);
+    cellBinarizationF->compute();
 
 
 
