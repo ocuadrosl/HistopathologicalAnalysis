@@ -5,8 +5,19 @@
 #include <itkRGBPixel.h>
 #include <itkImageToHistogramFilter.h>
 #include <itkRGBToLuminanceImageFilter.h>
+#include <itkSmoothingRecursiveGaussianImageFilter.h>
+#include <itkDiscreteGaussianImageFilter.h>
+#include <itkBinaryThresholdImageFilter.h>
+#include <itkMaskImageFilter.h>
+#include <itkRescaleIntensityImageFilter.h>
+#include <itkAdaptiveHistogramEqualizationImageFilter.h>
+#include <itkMinimumMaximumImageCalculator.h>
+
 #include <numeric>
 #include <algorithm>
+
+#include "../util/vtkviewer.h"
+#include "../util/math.h"
 
 template<typename rgbImageT>
 class CellBinarizationFilter
@@ -31,6 +42,7 @@ public:
     void compute();
 
     void setImage(rgbImageP inpoutImage);
+    grayImageP getOutput();
 
 
 private:
@@ -40,15 +52,29 @@ private:
     derivativeVectorT derivatives;
     uVectorT localMinimum;
 
+    unsigned threshold = 100;
+    float sigma = 5.f;
+
     const unsigned numberOfBins = 255;
 
     rgbImageP  inputImage;
     grayImageP grayImage;
+    grayImageP blurImage;
+    grayImageP eqImage;
+    grayImageP outputImage;
+    grayImageP mask;
+
 
 
     void findLocalMinimum(unsigned number=2);
     void computeDerivatives();
     void computeHistogram();
+
+    void histogramEqualization();
+
+    void masking();
+
+    void gaussianBlur();
 };
 
 

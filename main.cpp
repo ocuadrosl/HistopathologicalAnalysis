@@ -16,7 +16,7 @@
 #include "core/cellsegmentator.h"
 
 #include <QSurfaceFormat>
-#include <QVTKOpenGLNativeWidget.h>
+//#include <QVTKOpenGLNativeWidget.h>
 
 
 int main(int argc, char **argv)

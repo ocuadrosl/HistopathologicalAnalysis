@@ -184,12 +184,12 @@ void CellSegmentator<rgbImageT>::computeEuclideanMap()
 
 
 
-    itk::ViewImage<grayImageT>::View(filterContainer[filterName]->GetOutput(), "Threshold");
+    itk::ViewImage<grayImageT>::View(cellBinarizationF->getOutput(), "Threshold");
 
 
     using signedMaurerDistanceMapImageFilterT =   itk::SignedMaurerDistanceMapImageFilter<grayImageT, grayImageDoubleT>;
     signedMaurerDistanceMapImageFilterT::Pointer distanceMapImageFilter =   signedMaurerDistanceMapImageFilterT::New();
-    distanceMapImageFilter->SetInput(filterContainer[filterName]->GetOutput());
+    distanceMapImageFilter->SetInput(cellBinarizationF->getOutput());
     distanceMapImageFilter->InsideIsPositiveOn();
 
     distanceMapImageFilter->Update();
