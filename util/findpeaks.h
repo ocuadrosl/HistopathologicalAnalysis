@@ -14,6 +14,7 @@ class FindPeaks
 {
 
     using vectorT = std::vector<type>;
+    using vectorU = std::vector<unsigned>;
 
 public:
     FindPeaks();
@@ -23,8 +24,21 @@ public:
 
 
 private:
-    vectorT peaksIndex;
+    vectorU peaksIndices;
     vectorT inputData;
+    vectorT peaks;
+
+    vectorU findIndicesLessThan(vectorT diffs, type threshold=0);
+
+    void singVector(const vectorT& input, std::vector<int>& output) const;
+
+
+
+    template<typename t>
+    std::vector<t> selectElements(const std::vector<t>& input, const vectorU& indices) const;
+
+
+
 
 };
 
