@@ -18,6 +18,7 @@
 
 #include "../util/vtkviewer.h"
 #include "../util/math.h"
+#include "../util/findpeaks.h"
 
 template<typename rgbImageT>
 class CellBinarizationFilter
@@ -72,9 +73,11 @@ private:
 
     void histogramEqualization();
 
-    void masking();
+    void binaryThreholding();
 
     void gaussianBlur();
+
+    void findThreshold();
 };
 
 

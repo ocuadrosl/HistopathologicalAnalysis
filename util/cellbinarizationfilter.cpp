@@ -1,4 +1,5 @@
 #include "cellbinarizationfilter.h"
+
 template<typename rgbImageT>
 CellBinarizationFilter<rgbImageT>::CellBinarizationFilter()
 {
@@ -23,18 +24,6 @@ void CellBinarizationFilter<rgbImageT>::gaussianBlur()
 
     smoothFilter->Update();
     blurImage = smoothFilter->GetOutput();
-
-
-   /*using rescaleFilterType = itk::RescaleIntensityImageFilter<grayImageT, grayImageT>;
-    rescaleFilterType::Pointer rescaleFilter = rescaleFilterType::New();
-    rescaleFilter->SetInput(smoothFilter->GetOutput());
-    rescaleFilter->SetOutputMinimum(0);
-    rescaleFilter->SetOutputMaximum(255);
-    rescaleFilter->Update();
-
-    blurImage =  rescaleFilter->GetOutput();
-*/
-
 
     //VTKViewer::visualize<grayImageT>(blurImage ,"blur");
 
@@ -104,7 +93,7 @@ void CellBinarizationFilter<rgbImageT>::computeHistogram()
 
 
     typename ImageToHistogramFilterType::Pointer imageToHistogramFilter = ImageToHistogramFilterType::New();
-    imageToHistogramFilter->SetInput(blurImage);
+    imageToHistogramFilter->SetInput(eqImage);
     imageToHistogramFilter->SetHistogramBinMinimum(lowerBound);
     imageToHistogramFilter->SetHistogramBinMaximum(upperBound);
     imageToHistogramFilter->SetHistogramSize(size);
@@ -113,19 +102,19 @@ void CellBinarizationFilter<rgbImageT>::computeHistogram()
     typename ImageToHistogramFilterType::HistogramType  *frequency = imageToHistogramFilter->GetOutput();
 
 
-    //std::cout << "f = [ ";
+    std::cout << "f = [ ";
       for (unsigned int i = 0; i < frequency->GetSize()[0]; ++i)
       {
-        //std::cout << frequency->GetFrequency(i);
+        std::cout << frequency->GetFrequency(i);
         histogram.push_back(frequency->GetFrequency(i));
 
         if (i != frequency->GetSize()[0] - 1)
         {
-         // std::cout << ", ";
+          std::cout << ", ";
         }
       }
 
-      //std::cout << " ]" << std::endl;
+      std::cout << " ]" << std::endl;
 
 
 
@@ -164,7 +153,7 @@ void CellBinarizationFilter<rgbImageT>::computeDerivatives()
 
 
 template<typename rgbImageT>
-void CellBinarizationFilter<rgbImageT>::masking()
+void CellBinarizationFilter<rgbImageT>::binaryThreholding()
 {
     using thresholdFilterType = itk::BinaryThresholdImageFilter<grayImageT, grayImageT>;
     thresholdFilterType::Pointer thresholdFilter = thresholdFilterType::New();
@@ -217,11 +206,11 @@ void CellBinarizationFilter<rgbImageT>::compute()
 
     gaussianBlur();
     histogramEqualization();
-    masking();
+    computeHistogram();
+    findThreshold();
+    binaryThreholding();
 
 
-
-    //computeHistogram();
 
 
 
@@ -235,6 +224,17 @@ CellBinarizationFilter<rgbImageT>::getOutput()
     return outputImage;
 }
 
+
+template<typename rgbImageT>
+void CellBinarizationFilter<rgbImageT>::findThreshold()
+{
+
+    FindPeaks<long int> findPeaks;
+    findPeaks.setData(histogram);
+    findPeaks.find();
+
+
+}
 
 
 

@@ -4,9 +4,45 @@
 #include <iostream>
 #include <cmath>
 #include <typeinfo>
+#include <vector>
+#include <algorithm>
 
 namespace Math
 {
+
+template<typename type>
+inline std::vector<type> diff(const std::vector<type>& data)
+{
+
+    std::vector<type> output(data.size()-1);
+
+    for(unsigned i=1; i < data.size(); ++i)
+    {
+        output[i-1] = data[i] - data[i-1];
+
+    }
+
+    return output;
+
+}
+
+
+template<typename type>
+inline std::vector<type> vectorProduct(const std::vector<type>& a, const std::vector<type>& b)
+{
+
+    std::vector<type> output(a.size());
+
+    for(unsigned i=0; i<a.size(); ++i)
+    {
+        output[i] = a[i] * b[i];
+    }
+
+    return output;
+}
+
+
+
 
 template<typename inputType = double, typename outputType = double>
 inline outputType minMax(inputType inputValue, inputType orgMin, inputType orgMax, outputType newMin, outputType newMax)
@@ -217,16 +253,6 @@ inline double LoG(double x, double y, double s) //s = sigma
     double expTerm    = std::exp(- ((x2+y2)/(2*s2)) );
 
     return firstTerm*secondTerm*expTerm;
-
-
-
-
-
-
-
-
-
-
 
 
 }
