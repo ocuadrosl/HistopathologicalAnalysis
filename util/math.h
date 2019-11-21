@@ -11,34 +11,29 @@ namespace Math
 {
 
 template<typename type>
-inline std::vector<type> diff(const std::vector<type>& data)
+inline void diff(const std::vector<type>& data, std::vector<type>& output)
 {
-
-    std::vector<type> output(data.size()-1);
 
     for(unsigned i=1; i < data.size(); ++i)
     {
-        output[i-1] = data[i] - data[i-1];
+        output.push_back(data[i] - data[i-1]);
 
     }
-
-    return output;
 
 }
 
 
 template<typename type>
-inline std::vector<type> vectorProduct(const std::vector<type>& a, const std::vector<type>& b)
+inline void vectorProduct(const std::vector<type>& a, const std::vector<type>& b,  std::vector<type>& output)
 {
 
-    std::vector<type> output(a.size());
+    output = std::vector<type>(a.size());
 
-    for(unsigned i=0; i<a.size(); ++i)
+    for(unsigned i=0; i < a.size(); ++i)
     {
         output[i] = a[i] * b[i];
     }
 
-    return output;
 }
 
 

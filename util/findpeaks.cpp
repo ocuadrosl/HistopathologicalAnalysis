@@ -17,172 +17,174 @@ template<typename type>
 void FindPeaks<type>::find()
 {
 
-    const vectorT &data = inputData;
+    const vectorF data(inputData.begin(), inputData.end());
 
-    int minId = std::distance(data.begin(), std::min_element(data.begin(), data.end()));
-    int maxId = std::distance(data.begin(), std::max_element(data.begin(), data.end()));
 
-    vectorT diffs = Math::diff<type>(data);
+    vectorF dx;
+    Math::diff<float>(data, dx);
 
-    std::replace(diffs.begin(), diffs.end(), 0.0, -EPS);
 
-    vectorT diff_1(diffs.begin()  , diffs.end()-1);
-    vectorT diff_2(diffs.begin()+1, diffs.end()  );
-    vectorT diff_3 = Math::vectorProduct<type>(diff_1, diff_2);
+    std::replace(dx.begin(), dx.end(), 0.0, -EPS);
 
-    vectorU indices =  findIndicesLessThan(diff_3); // Find where the derivative changes sign
+    vectorF dx_1(dx.begin()  , dx.end()-1);
+    vectorF dx_2(dx.begin()+1, dx.end()  );
+    vectorF dx_3;
+    Math::vectorProduct<float>(dx_1, dx_2, dx_3);
+
+
+    vectorU indices;
+    findIndicesLessThan(dx_3, indices); // Find where the derivative changes sign
 
     vectorU indAux(indices.begin(), indices.end());
 
-    vectorT  x =  selectElements<type>(data, indAux);
+    vectorF  x;
+    selectElements<float>(data, indAux, x);
 
-    x.insert(x.begin(), data[0]);
-    x.insert(x.end(), data[data.size()-1]);
+    x.insert(x.begin(), *data.begin());
+    x.insert(x.end(), *data.rbegin());
 
     indices.insert(indices.begin(),0);
-    indices.insert(indices.end(), data.size());
+    indices.insert(indices.end(), data.size()-1);
 
 
-    unsigned minMagIndex = std::distance(x.begin(), std::min_element( x.begin(),x.end()));
-    type minMag = x[minMagIndex];
-    type leftMin = minMag;
+    unsigned minMagIndex = std::distance(x.begin(), std::min_element(x.begin(),x.end()));
+    float minMag  = x[minMagIndex];
+    float leftMin = minMag;
 
 
-    int size = x.size();
-    type tempMag;
+    unsigned size = x.size();
+
+
     if(size > 2)
     {
-        tempMag = minMag;
+        float tempMag = minMag;
 
-    }
-
-
-
-    vectorT subVector( x.begin(), x.begin()+3);
-    vectorT diff = Math::diff<type>(subVector);
+        vectorF subVector(x.begin(), x.begin() + 3);
+        vectorF diff;
+        Math::diff<float>(subVector, diff);
 
 
-    std::vector<int> singDiff;
+        std::vector<int> singDx;
 
-    singVector(diff, singDiff);
+        singVector(diff, singDx);
 
 
-    if(singDiff[0] <=0 )
-    {
-        if( singDiff[0] == singDiff[1])
+        if(singDx[0] <= 0 )
         {
-            x.erase(x.begin()+1);
-            indices.erase(indices.begin()+1);
+            if( singDx[0] == singDx[1])
+            {
+                x.erase(x.begin()+1);
+                indices.erase(indices.begin()+1);
+                --size;
+            }
+        }
+        else if ( singDx[0] == singDx[1] )
+        {
+            x.erase(x.begin());
+            indices.erase(indices.begin());
             --size;
         }
-    }
-    else if ( singDiff[0] == singDiff[1] )
-    {
-             x.erase(x.begin());
-             indices.erase(indices.begin());
-             --size;
 
-    }
+        unsigned maxPeak = static_cast<unsigned>(std::ceil( size / 2.f ));
 
-    type maxPeak = std::ceil( static_cast<type>(size/2.0) );
+        std::vector<unsigned> peakLock(maxPeak, 0);
+        vectorF peakMag(maxPeak, 0.f);
 
-    std::vector<int> peakLock(maxPeak,0);
-    vectorT peakMag( maxPeak, 0);
+        unsigned cIndex = 0;
+        unsigned tempLoc;
+        int ii = ( x[0] >= x[1]) ? -1 : 0;
+        bool foundPeak = false;
+        float sel = (std::max_element(data.begin(), data.end()) - std::min_element(data.begin(), data.end())) / 4.f;
 
-    unsigned cIndex = 1;
-    int tempLoc;
-    int ii = ( x[0] >= x[1]) ? 0 : 1;
-    bool foundPeak = false;
-    type sel = (data[maxId] - data[minId])/4;
-
-    while (ii < size)
-    {
-
-        ++ii;
-        if(foundPeak)
+        while (ii < size)
         {
-            tempMag = minMag;
-            foundPeak = false;
+
+            ++ii;
+
+            if(foundPeak)
+            {
+                tempMag = minMag;
+                foundPeak = false;
+
+            }
+
+            if(x[static_cast<unsigned>(ii)] > tempMag && x[static_cast<unsigned>(ii)] > (leftMin + sel))
+            {
+
+                tempLoc = static_cast<unsigned>(ii);
+                tempMag = x[static_cast<unsigned>(ii)];
+            }
+
+            if(ii == size) break;
+
+            ++ii;
+
+            if (!foundPeak && tempMag > (sel + x[static_cast<unsigned>(ii)]))
+            {
+                foundPeak = true;
+                leftMin = x[static_cast<unsigned>(ii)];
+                peakLock[cIndex] = tempLoc;
+                peakMag[cIndex] = tempMag;
+                ++cIndex;
+
+            }
+            else if ( x[static_cast<unsigned>(ii)] < leftMin )
+            {
+                leftMin = x[static_cast<unsigned>(ii)];
+
+            }
+
 
         }
 
-        if(x[ii-1] > tempMag && x[ii-1] > leftMin + sel)
+
+
+        if( *x.rbegin() > tempMag && *x.rbegin() > (leftMin +sel))
         {
-
-            tempLoc = ii+1;
-            tempMag = x[ii-1];
-        }
-
-        if(ii ==size) break;
-
-        ++ii;
-
-        if ( !foundPeak && tempMag > sel + x[ii-1] )
-        {
-            foundPeak = true;
-            leftMin = x[ii-1];
-            peakLock[cIndex-1] = tempLoc;
-            peakMag[cIndex-1] = tempMag;
+            peakLock[cIndex] = size - 1;
+            peakMag[cIndex]  = *x.rbegin();
             ++cIndex;
 
         }
-        else if (  x[ii-1] < leftMin )
+        else if( !foundPeak && tempMag > minMag)
         {
-            leftMin = x[ii-1];
+            peakLock[cIndex] = tempLoc;
+            peakMag[cIndex] = tempMag;
+            ++cIndex;
 
         }
 
 
-    }
+        if(cIndex > 0)
+        {
+            std::vector<unsigned> peakLocTmp(  peakLock.begin(), peakLock.begin()+cIndex-1);
+            selectElements<unsigned>(indices, peakLocTmp, peaksIndices);
+        }
 
 
 
-    if( *x.rbegin() > tempMag && *x.rbegin() > leftMin +sel)
-    {
-        peakLock[cIndex -1 ] = size-1;
-        peakMag[cIndex-1]  = *x.rbegin();
-        ++cIndex;
+        for(auto it = peaksIndices.begin();it!=peaksIndices.end();++it)
+        {
+            std::cout<< *it <<",";
 
-    }
-    else if( !foundPeak && tempMag > minMag)
-    {
-        peakLock[cIndex-1] = tempLoc;
-        peakMag[cIndex-1] = *x.rbegin();
-        ++cIndex;
-
-    }
+        }
 
 
-    if(cIndex>0)
-    {
-        std::vector<unsigned> peakLocTmp(  peakLock.begin(), peakLock.begin()+cIndex-1);
-        peaksIndices = selectElements<unsigned>(indices, peakLocTmp);
-    }
-
-
-
-    for(auto it = peaksIndices.begin();it!=peaksIndices.end();++it)
-    {
-        std::cout<< *it <<",";
+        std::cout<< "end" <<std::endl;
 
     }
-
-
-    std::cout<<std::endl;
-
-
 
 }
 
 
 template<typename type>
-void FindPeaks<type>::singVector(const vectorT& input, std::vector<int>& output) const
+void FindPeaks<type>::singVector(const vectorF& input, std::vector<int>& output) const
 {
 
 
     for(auto it = input.begin(); it != input.end(); ++it)
     {
-        output.push_back( (*it > 0) ? 1 : (*it < 0) ? -1 : 0 );
+        output.push_back( (*it > 0.f) ? 1 : (*it < 0.f) ? -1 : 0 );
     }
 
 
@@ -190,38 +192,36 @@ void FindPeaks<type>::singVector(const vectorT& input, std::vector<int>& output)
 
 template<typename type>
 template<typename t>
-std::vector<t> FindPeaks<type>::selectElements(const std::vector<t>& input, const vectorU& indices) const
+void FindPeaks<type>::selectElements(const std::vector<t>& input, const vectorU& indices, std::vector<t>& output) const
 {
 
-    std::vector<t> output;
-    for(unsigned i=0;i< indices.size();++i)
+
+    for(unsigned i=0;i< indices.size(); ++i)
     {
         output.push_back(input[indices[i]]);
 
     }
 
-    return output;
+
 
 }
 
 template<typename type>
-typename FindPeaks<type>::vectorU
-FindPeaks<type>::findIndicesLessThan(vectorT diffs, type threshold)
+void FindPeaks<type>::findIndicesLessThan(const vectorF& data,  vectorU& output)
 {
 
-    vectorU output;
 
-    for(unsigned i=0;i< diffs.size(); ++i)
+    for(unsigned i=0;i< data.size(); ++i)
     {
-        if(diffs[i]<threshold)
+        if(data[i] < 0.f)
         {
             output.push_back(i+1);
-           // std::cout<<1+i<<", ";
+            // std::cout<<1+i<<", ";
         }
 
     }
 
-    return output;
+
 }
 
 
