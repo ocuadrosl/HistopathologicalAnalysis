@@ -102,54 +102,26 @@ void CellBinarizationFilter<rgbImageT>::computeHistogram()
     typename ImageToHistogramFilterType::HistogramType  *frequency = imageToHistogramFilter->GetOutput();
 
 
-    std::cout << "f = [ ";
-      for (unsigned int i = 0; i < frequency->GetSize()[0]; ++i)
-      {
-        std::cout << frequency->GetFrequency(i);
+    //std::cout << "f = [ ";
+    for (unsigned int i = 0; i < frequency->GetSize()[0]; ++i)
+    {
+        //std::cout << frequency->GetFrequency(i);
         histogram.push_back(frequency->GetFrequency(i));
 
         if (i != frequency->GetSize()[0] - 1)
         {
-          std::cout << ", ";
+            //  std::cout << ", ";
         }
-      }
-
-      std::cout << " ]" << std::endl;
-
-
-
-
-
-}
-
-
-template<typename rgbImageT>
-void CellBinarizationFilter<rgbImageT>::findLocalMinimum(unsigned number)
-{
-
-    derivativeVectorT derTmp = derivatives;
-
-    std::sort(derTmp.begin(), derTmp.end());
-
-    for(unsigned i=0; i< number;++i)
-    {
-        localMinimum.push_back(derTmp[i].second);
-        std::cout<<*localMinimum.rbegin()<<std::endl;
     }
 
+    //std::cout << " ]" << std::endl;
+
+
+
 
 
 }
 
-template<typename rgbImageT>
-void CellBinarizationFilter<rgbImageT>::computeDerivatives()
-{
-
-    for(unsigned i=1; i < 255; ++i)
-    {
-        derivatives.push_back(std::make_pair(histogram[i] - histogram[i-1], i));
-    }
-}
 
 
 template<typename rgbImageT>
@@ -164,11 +136,11 @@ void CellBinarizationFilter<rgbImageT>::binaryThreholding()
     thresholdFilter->SetInsideValue(0);
     thresholdFilter->Update();
 
-    outputImage  = thresholdFilter->GetOutput();
+    binaryImage  = thresholdFilter->GetOutput();
 
 
 
-    //just testing
+    //blur mask
     thresholdFilterType::Pointer thresholdFilter2 = thresholdFilterType::New();
     thresholdFilter2->SetInput(eqImage);
     thresholdFilter2->SetLowerThreshold(0);
@@ -184,9 +156,10 @@ void CellBinarizationFilter<rgbImageT>::binaryThreholding()
     maskFilter->SetOutsideValue(255);
 
     maskFilter->Update();
+    blurMaskImage = maskFilter->GetOutput();
 
 
-   VTKViewer::visualize<grayImageT>(maskFilter->GetOutput() ,"testing cells");
+    VTKViewer::visualize<grayImageT>(blurMaskImage ,"Blur mask");
 
 
 }
@@ -207,21 +180,19 @@ void CellBinarizationFilter<rgbImageT>::compute()
     gaussianBlur();
     histogramEqualization();
     computeHistogram();
+    interpolateZeros();
     findThreshold();
     binaryThreholding();
-
-
-
 
 
 }
 
 template<typename rgbImageT>
 typename CellBinarizationFilter<rgbImageT>::grayImageP
-CellBinarizationFilter<rgbImageT>::getOutput()
+CellBinarizationFilter<rgbImageT>::getBinaryImage()
 {
 
-    return outputImage;
+    return binaryImage;
 }
 
 
@@ -229,12 +200,90 @@ template<typename rgbImageT>
 void CellBinarizationFilter<rgbImageT>::findThreshold()
 {
 
-    FindPeaks<long int> findPeaks;
-    findPeaks.setData(histogram);
-    findPeaks.find();
+    unsigned max = histogram[0];
+    threshold = 0;
+    for(unsigned i = 0; i <= 85; ++i )
+    {
+        if(max <= histogram[i])
+        {
+            max = histogram[i];
+            threshold = i;
+        }
 
+    }
+
+
+    std::cout<<threshold<<std::endl;
+/*
+    p1d::Persistence1D p;
+    p.RunPersistence(histogram);
+
+    std::vector< p1d::TPairedExtrema > Extrema;
+    p.GetPairedExtrema(Extrema, 0);
+
+    std::vector<unsigned> maxPeaks;
+    for(auto it = Extrema.begin(); it != Extrema.end(); it++)
+    {
+        maxPeaks.push_back(static_cast<unsigned>((*it).MaxIndex));
+
+        std::cout<<(*it).MaxIndex<< ", ";
+
+    }
+
+    std::sort(maxPeaks.begin(), maxPeaks.end());
+
+    threshold = maxIndex1;
+    for(auto it = maxPeaks.begin(); it != maxPeaks.end(); ++it)
+    {
+        if(maxIndex1 < *it &&  *it < maxIndex2)
+        {
+            threshold = *it;
+
+        }
+
+    }
+
+*/
 
 }
+
+
+
+
+
+template<typename rgbImageT>
+void CellBinarizationFilter<rgbImageT>::interpolateZeros()
+{
+
+
+    for(auto it = histogram.begin() + 1; it != histogram.end() - 1; ++it)
+    {
+        if(*it == 0)
+        {
+            *it = (*(it-1) + *(it+1))/2;
+        }
+
+    }
+/*
+    std::cout<<"his"<<std::endl;
+    for(auto it = histogram.begin(); it != histogram.end(); ++it)
+    {
+        std::cout<< *it <<", ";
+
+    }
+    std::cout<<"his"<<std::endl;
+*/
+
+}
+
+
+template<typename rgbImageT>
+typename CellBinarizationFilter<rgbImageT>::grayImageP
+CellBinarizationFilter<rgbImageT>:: getBlurMaskImage()
+{
+    return blurMaskImage;
+}
+
 
 
 

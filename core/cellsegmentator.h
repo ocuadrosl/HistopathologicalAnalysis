@@ -18,6 +18,7 @@
 #include <itkRGBPixel.h>
 #include <itkScalarToRGBColormapImageFilter.h>
 #include <itkCastImageFilter.h>
+#include <itkRegionalMinimaImageFilter.h>
 
 
 #include "itkLiThresholdImageFilter.h"
@@ -32,6 +33,7 @@
 #include "itkShanbhagThresholdImageFilter.h"
 #include "itkTriangleThresholdImageFilter.h"
 #include "itkYenThresholdImageFilter.h"
+
 
 
 
@@ -94,7 +96,8 @@ private:
     imageP       inputImage;
     grayImageP   grayImage;
     grayImageDP  euclideanMap;
-    grayImageDP  surface;
+    grayImageP  surface;
+    grayImageP   blurImage;
 
 
     std::vector<grayImageDP> LogNorm;

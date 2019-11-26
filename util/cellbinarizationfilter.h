@@ -19,6 +19,7 @@
 #include "../util/vtkviewer.h"
 #include "../util/math.h"
 #include "../util/findpeaks.h"
+#include "../util/persistence1d.hpp"
 
 template<typename rgbImageT>
 class CellBinarizationFilter
@@ -27,7 +28,7 @@ class CellBinarizationFilter
     using rgbImageP = typename rgbImageT::Pointer;
 
 
-    using grayImageT = itk::Image<unsigned,2>;
+    using grayImageT = itk::Image<unsigned, 2>;
     using grayImageP =  grayImageT::Pointer;
 
     using longVectorT = std::vector<long int>;
@@ -43,7 +44,8 @@ public:
     void compute();
 
     void setImage(rgbImageP inpoutImage);
-    grayImageP getOutput();
+    grayImageP getBinaryImage();
+    grayImageP getBlurMaskImage();
 
 
 private:
@@ -62,13 +64,13 @@ private:
     grayImageP grayImage;
     grayImageP blurImage;
     grayImageP eqImage;
-    grayImageP outputImage;
-    grayImageP mask;
+    grayImageP binaryImage;
+    grayImageP blurMaskImage;
 
 
 
-    void findLocalMinimum(unsigned number=2);
-    void computeDerivatives();
+
+
     void computeHistogram();
 
     void histogramEqualization();
@@ -78,6 +80,8 @@ private:
     void gaussianBlur();
 
     void findThreshold();
+
+    void interpolateZeros();
 };
 
 

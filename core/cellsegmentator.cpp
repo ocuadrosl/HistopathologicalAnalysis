@@ -176,26 +176,35 @@ void CellSegmentator<rgbImageT>::computeEuclideanMap()
     filterContainer[filterName]->Update();
 
 
+    // my own implementation
     using cellBinarizationFilterT = CellBinarizationFilter<rgbImageT>;
     std::unique_ptr<cellBinarizationFilterT> cellBinarizationF(new cellBinarizationFilterT);
     cellBinarizationF->setImage(inputImage);
     cellBinarizationF->compute();
 
+    blurImage = cellBinarizationF->getBlurMaskImage();
 
 
 
-    itk::ViewImage<grayImageT>::View(cellBinarizationF->getOutput(), "Threshold");
 
 
+
+
+
+
+
+    //itk::ViewImage<grayImageT>::View(cellBinarizationF->getBinaryImage(), "Threshold");
+
+/*
     using signedMaurerDistanceMapImageFilterT =   itk::SignedMaurerDistanceMapImageFilter<grayImageT, grayImageDoubleT>;
     signedMaurerDistanceMapImageFilterT::Pointer distanceMapImageFilter =   signedMaurerDistanceMapImageFilterT::New();
-    distanceMapImageFilter->SetInput(cellBinarizationF->getOutput());
+    distanceMapImageFilter->SetInput(cellBinarizationF->getBinaryImage());
     distanceMapImageFilter->InsideIsPositiveOn();
 
     distanceMapImageFilter->Update();
     euclideanMap = distanceMapImageFilter->GetOutput();
     //itk::ViewImage<grayImageDoubleT>::View(euclideanMap, "Euclidean Map");
-
+*/
 
 }
 
@@ -205,60 +214,33 @@ void CellSegmentator<imageT>::computeSurface()
 {
 
 
-    imageDoubleIt  mapIt(euclideanMap, euclideanMap->GetRequestedRegion());
-    itk::ImageRegionConstIterator<grayImageT>  grayIt(grayImage, grayImage->GetRequestedRegion());
+
+    itk::ImageRegionConstIterator<grayImageT> grayIt(grayImage, grayImage->GetRequestedRegion());
+    itk::ImageRegionConstIterator<grayImageT> blurIt(blurImage, blurImage->GetRequestedRegion());
 
 
-    surface = grayImageDoubleT::New();
+    surface = grayImageT::New();
     surface->SetRegions(grayImage->GetRequestedRegion());
     surface->Allocate();
     surface->FillBuffer(sigmaMin);
 
-    itk::ImageRegionIterator<grayImageDoubleT> surfIt(surface, surface->GetRequestedRegion());
+    itk::ImageRegionIterator<grayImageT> surfIt(surface, surface->GetRequestedRegion());
 
 
-    std::vector<imageDoubleIt> normIts;
-    for(auto logIt = LogNorm.begin(); logIt != LogNorm.end(); ++logIt)
-    {
-        normIts.push_back(imageDoubleIt(*logIt , (*logIt)->GetRequestedRegion()));
-    }
-
-
-    using ImageCalculatorFilterType = itk::MinimumMaximumImageCalculator<grayImageDoubleT>;
-
-
-
-    for(mapIt.GoToBegin(); !mapIt.IsAtEnd(); ++mapIt, ++grayIt, ++surfIt)
+    while(!grayIt.IsAtEnd())
     {
 
-        double multTmp=0;
-        double sigmaTmp = 0;
-        double sigmaMax = computeSigmaMAX(mapIt);
+        surfIt.Set(grayIt.Get()*blurIt.Get());
 
-        auto vecIt = normIts.begin();
-
-        double maxTmp = (*vecIt).Get()*grayIt.Get();
-        for(double sigma = sigmaMin; sigma <= sigmaMax; sigma += stepSize, ++vecIt)
-        {
-
-            multTmp = (*vecIt).Get() * grayIt.Get();
-
-            if(multTmp > maxTmp)
-            {
-                sigmaTmp = sigma;
-                maxTmp = multTmp;
-            }
-
-        }
-
-        surfIt.Set(sigmaTmp);
-
+        ++grayIt;
+        ++blurIt;
+        ++surfIt;
 
     }
 
     //showing results
 
-    using rescaleFilterType = itk::RescaleIntensityImageFilter<grayImageDoubleT, grayImageT>;
+    using rescaleFilterType = itk::RescaleIntensityImageFilter<grayImageT, grayImageT>;
     rescaleFilterType::Pointer rescaleFilter = rescaleFilterType::New();
     rescaleFilter->SetInput(surface);
     rescaleFilter->SetOutputMinimum(0);
@@ -266,20 +248,33 @@ void CellSegmentator<imageT>::computeSurface()
     rescaleFilter->Update();
 
 
-    itk::ImageRegionIterator<grayImageT>  it(rescaleFilter->GetOutput(), rescaleFilter->GetOutput()->GetRequestedRegion());
-    for(it.GoToBegin(); !it.IsAtEnd(); ++it)
-    {
-        //it.Set(255-it.Get());
+    using RegionalMinimaImageFilter = itk::RegionalMinimaImageFilter<grayImageT, grayImageT>;
+    RegionalMinimaImageFilter::Pointer filter = RegionalMinimaImageFilter::New();
+    filter->SetInput(blurImage);
+    filter->SetBackgroundValue(255);
+    filter->SetForegroundValue(0);
 
-    }
+
+    filter->Update();
+    VTKViewer::visualize<grayImageT>(filter->GetOutput() ,"seeds");
+
+
+
+
+
+
+
+
+
+    //visualising
 
     using rgbPixelChar = itk::RGBPixel< unsigned char >;
     using rgbImageChar = itk::Image< rgbPixelChar, 2 >;
 
     using toColormapFilterType = itk::ScalarToRGBColormapImageFilter<grayImageT, rgbImageChar>;
     toColormapFilterType::Pointer toColormapFilter = toColormapFilterType::New();
-    toColormapFilter->SetInput(rescaleFilter->GetOutput());
-    toColormapFilter->SetColormap(toColormapFilterType::Hot);
+    toColormapFilter->SetInput(filter->GetOutput());
+    toColormapFilter->SetColormap(toColormapFilterType::Jet);
     toColormapFilter->Update();
 
 
@@ -297,8 +292,9 @@ void CellSegmentator<imageT>::computeSurface()
     overlayRGBImageFilter->alphaBlending();
 
 
-    VTKViewer::visualize<rgbImageChar>(toColormapFilter->GetOutput() ,"Surface");
-    VTKViewer::visualize<imageT>(overlayRGBImageFilter->getOutput() ,"Surface");
+    VTKViewer::visualize<grayImageT>(rescaleFilter->GetOutput() ,"Surface");
+    VTKViewer::visualize<rgbImageChar>(toColormapFilter->GetOutput() ,"Color map");
+    VTKViewer::visualize<imageT>(overlayRGBImageFilter->getOutput() ,"Overlay");
 
     IO::printOK("Computing Surface");
 
