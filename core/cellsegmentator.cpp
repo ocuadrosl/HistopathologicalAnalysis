@@ -103,12 +103,7 @@ void CellSegmentator<imageT>::computeLoGNorm()
     std::unique_ptr<logFilterT> logFilter(new logFilterT);
     logFilter->setImage(grayImage);
 
-
-
     using multiplyFilterT = itk::MultiplyImageFilter<grayImageDoubleT, grayImageDoubleT, grayImageDoubleT>;
-
-
-
 
 
     for(double sigma=sigmaMin; sigma <= sigmaMax; sigma += stepSize)
@@ -182,18 +177,8 @@ void CellSegmentator<rgbImageT>::computeEuclideanMap()
     cellBinarizationF->setImage(inputImage);
     cellBinarizationF->compute();
 
-    blurImage = cellBinarizationF->getBlurMaskImage();
+    blurMaskImage = cellBinarizationF->getBlurMaskImage();
 
-
-
-
-
-
-
-
-
-
-    //itk::ViewImage<grayImageT>::View(cellBinarizationF->getBinaryImage(), "Threshold");
 
 /*
     using signedMaurerDistanceMapImageFilterT =   itk::SignedMaurerDistanceMapImageFilter<grayImageT, grayImageDoubleT>;
@@ -216,7 +201,7 @@ void CellSegmentator<imageT>::computeSurface()
 
 
     itk::ImageRegionConstIterator<grayImageT> grayIt(grayImage, grayImage->GetRequestedRegion());
-    itk::ImageRegionConstIterator<grayImageT> blurIt(blurImage, blurImage->GetRequestedRegion());
+    itk::ImageRegionConstIterator<grayImageT> blurIt(blurMaskImage, blurMaskImage->GetRequestedRegion());
 
 
     surface = grayImageT::New();
@@ -249,20 +234,70 @@ void CellSegmentator<imageT>::computeSurface()
 
 
     using RegionalMinimaImageFilter = itk::RegionalMinimaImageFilter<grayImageT, grayImageT>;
-    RegionalMinimaImageFilter::Pointer filter = RegionalMinimaImageFilter::New();
-    filter->SetInput(blurImage);
-    filter->SetBackgroundValue(255);
-    filter->SetForegroundValue(0);
+    RegionalMinimaImageFilter::Pointer regionalMinimaFilter = RegionalMinimaImageFilter::New();
+    regionalMinimaFilter->SetInput(blurMaskImage);
+    regionalMinimaFilter->SetBackgroundValue(0);
+    regionalMinimaFilter->SetForegroundValue(255);
+
+    regionalMinimaFilter->Update();
+
+    using ConnectedComponentImageFilterType = itk::ConnectedComponentImageFilter<grayImageT, grayImageT>;
+    ConnectedComponentImageFilterType::Pointer connected = ConnectedComponentImageFilterType::New();
+    connected->SetInput(regionalMinimaFilter->GetOutput());
+    connected->Update();
+
+    std::vector<std::vector<long>> labels(connected->GetObjectCount(), std::vector<long>(3,0));
 
 
-    filter->Update();
-    VTKViewer::visualize<grayImageT>(filter->GetOutput() ,"seeds");
+    //components const iterator
+    itk::ImageRegionConstIteratorWithIndex<grayImageT> compIt(connected->GetOutput(), connected->GetOutput()->GetRequestedRegion());
+
+    for(;!compIt.IsAtEnd(); ++compIt)
+    {
+        const auto & label = compIt.Get();
+        const auto & index = compIt.GetIndex();
+        if(label > 0)
+        {
+            labels[label-1][0] += index[0];
+            labels[label-1][1] += index[1];
+
+            ++labels[label-1][2];
+        }
+
+    }
+
+
+    //computing index centroids
+    for(auto it = labels.begin(); it != labels.end();++it)
+    {
+
+        (*it)[0] /= (*it)[2];
+        (*it)[1] /= (*it)[2];
+
+    }
+
+    cellNuclei = grayImageT::New();
+    cellNuclei->SetRegions(grayImage->GetRequestedRegion());
+    cellNuclei->Allocate();
+    cellNuclei->FillBuffer(0);
+
+    //cell nuclei iterator
+    itk::ImageRegionIteratorWithIndex<grayImageT> cnIt(cellNuclei, cellNuclei->GetRequestedRegion());
+
+
+    for(auto it = labels.begin(); it != labels.end();++it)
+    {
+
+        const grayImageT::IndexType& index = {{ (*it)[0] , (*it)[1]  }};
+
+        cnIt.SetIndex(index);
+        cnIt.Set(255);
+
+    }
 
 
 
-
-
-
+    VTKViewer::visualize<grayImageT>(cellNuclei ,"Seeds");
 
 
 
@@ -273,7 +308,7 @@ void CellSegmentator<imageT>::computeSurface()
 
     using toColormapFilterType = itk::ScalarToRGBColormapImageFilter<grayImageT, rgbImageChar>;
     toColormapFilterType::Pointer toColormapFilter = toColormapFilterType::New();
-    toColormapFilter->SetInput(filter->GetOutput());
+    toColormapFilter->SetInput(cellNuclei);
     toColormapFilter->SetColormap(toColormapFilterType::Jet);
     toColormapFilter->Update();
 

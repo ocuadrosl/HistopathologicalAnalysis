@@ -38,9 +38,14 @@ void SuperPixels<imageT>::rgbToLabImage()
 template<typename imageT>
 void SuperPixels<imageT>::create()
 {
-    rgbToLabImage();
-    createLabelImage();
+    //rgbToLabImage();
+    //initRegularGrid();
 
+    initQuadTreeGrid();
+
+
+
+/*
 
     for(unsigned i =0; i < iterations ;++i)
     {
@@ -48,6 +53,7 @@ void SuperPixels<imageT>::create()
         converge();
     }
     show();
+    */
 
 }
 
@@ -199,8 +205,6 @@ template<typename imageT>
 void SuperPixels<imageT>::updateMeans()
 {
 
-
-
     colorMeans.clear();
     indexMeans.clear();
     spSizes.clear();
@@ -250,9 +254,20 @@ void SuperPixels<imageT>::updateMeans()
 
 }
 
+template<typename imageT>
+void SuperPixels<imageT>::initQuadTreeGrid()
+{
+
+    std::unique_ptr<QuadTree<imageT>> quadTree(new QuadTree<imageT>());
+
+    quadTree->build();
+
+
+}
+
 
 template<typename imageT>
-void SuperPixels<imageT>::createLabelImage()
+void SuperPixels<imageT>::initRegularGrid()
 {
 
     labelImage = labelImageT::New();
@@ -289,7 +304,6 @@ void SuperPixels<imageT>::createLabelImage()
     spNumber = (spWidth*spHeight+spHeight)+1;
 
 }
-
 
 
 template<typename imageT>

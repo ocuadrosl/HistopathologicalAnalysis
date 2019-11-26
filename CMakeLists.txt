@@ -15,8 +15,6 @@ find_package(ITK REQUIRED)
 include(${ITK_USE_FILE})
 
 
-
-
 file(GLOB core
     "core/*.h"
    "core/*.cpp"
@@ -29,7 +27,10 @@ file(GLOB util
 
 )
 
-
+file(GLOB dataStructures
+    "dataStructures/*.h"
+    "dataStructures/*.cpp"
+)
 
 add_executable(${PROJECT_NAME}
     "main.cpp"
@@ -39,6 +40,7 @@ add_executable(${PROJECT_NAME}
 
     ${core}
     ${util}
+    ${dataStructures}
     )
 
 target_link_libraries(${PROJECT_NAME} Qt5::Widgets)

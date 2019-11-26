@@ -25,7 +25,7 @@ void CellBinarizationFilter<rgbImageT>::gaussianBlur()
     smoothFilter->Update();
     blurImage = smoothFilter->GetOutput();
 
-    //VTKViewer::visualize<grayImageT>(blurImage ,"blur");
+   // VTKViewer::visualize<grayImageT>(blurImage ,"blur Image");
 
 
 
@@ -65,7 +65,7 @@ void CellBinarizationFilter<rgbImageT>::histogramEqualization()
     }
 
 
-    //VTKViewer::visualize<grayImageT>(eqImage ,"equalization");
+    VTKViewer::visualize<grayImageT>(eqImage ,"equalization");
 
 
 

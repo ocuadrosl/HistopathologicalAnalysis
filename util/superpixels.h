@@ -15,6 +15,8 @@
 #include "../util/math.h"
 #include "../util/vtkviewer.h"
 
+#include "../dataStructures/quadtree.h"
+
 
 template<typename imageT>
 class SuperPixels
@@ -71,19 +73,20 @@ private:
 
 
     void rgbToLabImage();
-    void createLabelImage();
+    void initRegularGrid();
     void updateMeans();
     void converge();
+    void initQuadTreeGrid();
 
     inline bool costFunction(unsigned cLabel, unsigned nLabel,  const labPixelT& cPixel,  const labIndexT& cIndex);
 
 
 };
 
-using imageDouble   = itk::Image<itk::RGBPixel<double  >, 2>;
+//using imageDouble   = itk::Image<itk::RGBPixel<double  >, 2>;
 using imageUnsigned = itk::Image<itk::RGBPixel<unsigned>, 2>;
 
-template class SuperPixels<imageDouble>;
+//emplate class SuperPixels<imageDouble>;
 template class SuperPixels<imageUnsigned>;
 
 

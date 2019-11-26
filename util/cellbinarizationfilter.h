@@ -71,6 +71,7 @@ private:
 
 
 
+
     void computeHistogram();
 
     void histogramEqualization();
