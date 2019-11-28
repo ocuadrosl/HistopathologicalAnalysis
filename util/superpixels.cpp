@@ -262,9 +262,33 @@ void SuperPixels<imageT>::initQuadTreeGrid()
 
     quadTree->setImage(inputImage);
     quadTree->build();
-    auto quadtree  =  quadTree->getLabelImage();
+    labelImageP quadtree  =  quadTree->getLabelImage();
 
-    VTKViewer::visualize<labelImageT>(quadtree, "Quadtree");
+
+
+    using rgbToGrayFilterT = itk::RGBToLuminanceImageFilter< imageT, labelImageT >;
+    typename rgbToGrayFilterT::Pointer rgbToGrayFilter = rgbToGrayFilterT::New();
+    rgbToGrayFilter->SetInput(inputImage);
+    rgbToGrayFilter->Update();
+    //grayImage = rgbToGrayFilter->GetOutput();
+
+
+
+
+    using LabelOverlayImageFilterType = itk::LabelOverlayImageFilter<labelImageT, labelImageT, itk::Image<itk::RGBPixel<unsigned>, 2>>;
+    typename LabelOverlayImageFilterType::Pointer labelOverlayImageFilter = LabelOverlayImageFilterType::New();
+    labelOverlayImageFilter->SetInput(rgbToGrayFilter->GetOutput());
+    labelOverlayImageFilter->SetLabelImage(quadtree);
+    labelOverlayImageFilter->SetOpacity(.5);
+    labelOverlayImageFilter->Update();
+
+
+
+
+
+
+
+    VTKViewer::visualize<itk::Image<itk::RGBPixel<unsigned>, 2>>(labelOverlayImageFilter->GetOutput(), "Quadtree");
 
 
 

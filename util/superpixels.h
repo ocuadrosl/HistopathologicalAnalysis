@@ -18,6 +18,10 @@
 #include "../dataStructures/quadtree.h"
 
 
+#include <itkLabelOverlayImageFilter.h>
+
+#include <itkRGBToLuminanceImageFilter.h>
+
 template<typename imageT>
 class SuperPixels
 {

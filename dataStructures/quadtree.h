@@ -40,6 +40,8 @@ private:
     void recursiveBuild(std::unique_ptr<quadNodeT>& node);
     void createLabelImage(std::unique_ptr<quadNodeT>& node, unsigned label);
 
+    unsigned labelAux=1;
+
 
 };
 

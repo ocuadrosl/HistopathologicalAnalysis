@@ -22,8 +22,8 @@ QuadNode<imageT>::QuadNode(const indexT& begin, const indexT& end)
     this->begin = begin;
     this->end   = end;
 
-   std::cout<<children.size()<<std::endl;
-   // std::cout<<begin[0]<<", "<<begin[1]<<std::endl;
+    //std::cout<<children.size()<<std::endl;
+   //std::cout<<begin[0]<<", "<<begin[1]<<std::endl;
     //std::cout<<end[0]<<", "<<end[1]<<std::endl;
 }
 
@@ -41,15 +41,24 @@ QuadNode<imageT>::getEnd() const
 {
     return end;
 }
+
 template <typename imageT>
 void QuadNode<imageT>::setChild(unsigned index, quadNodeP&& node)
 {
     children[index] = std::move(node);
 
+    /*std::cout<<index<<std::endl;
+    std::cout<<children[index]->begin[0]<<", "<<children[index]->begin[1]<<std::endl;
+    std::cout<<children[index]->end[0]<<", "<<children[index]->end[1]<<std::endl;
+    std::cout<<std::endl;
+*/
+
+
 }
 
-template <typename imageT>
 
+
+template <typename imageT>
 typename QuadNode<imageT>::quadNodeP& QuadNode<imageT>::getChild(unsigned index)
 {
     return children[index];
