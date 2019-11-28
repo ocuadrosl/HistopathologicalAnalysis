@@ -260,7 +260,12 @@ void SuperPixels<imageT>::initQuadTreeGrid()
 
     std::unique_ptr<QuadTree<imageT>> quadTree(new QuadTree<imageT>());
 
+    quadTree->setImage(inputImage);
     quadTree->build();
+    auto quadtree  =  quadTree->getLabelImage();
+
+    VTKViewer::visualize<labelImageT>(quadtree, "Quadtree");
+
 
 
 }

@@ -3,6 +3,9 @@
 
 #include <itkImage.h>
 #include <itkRGBPixel.h>
+#include <memory>
+#include <itkImageRegionConstIterator.h>
+#include <itkImageRegionIterator.h>
 
 #include "quadnode.h"
 
@@ -10,7 +13,11 @@ template<typename imageT>
 class QuadTree
 {
 
-    using imageP = typename imageT::Pointer;
+    using imageP      = typename imageT::Pointer;
+    using quadNodeT   = QuadNode<imageT>;
+    using grayImageT  = itk::Image<unsigned int,2>;
+    using grayImageP  = typename grayImageT::Pointer;
+
 
 public:
     QuadTree();
@@ -18,12 +25,20 @@ public:
     void build();
     void setImage(const imageP& inputImage);
 
+    grayImageP getLabelImage();
+
 
 private:
 
-    std::unique_ptr<QuadNode<imageT>> root;
+    std::unique_ptr<quadNodeT> root;
 
     imageP inputImage;
+    grayImageP labelImage;
+
+    unsigned minimumSize=100;
+
+    void recursiveBuild(std::unique_ptr<quadNodeT>& node);
+    void createLabelImage(std::unique_ptr<quadNodeT>& node, unsigned label);
 
 
 };

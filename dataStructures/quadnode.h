@@ -4,17 +4,32 @@
 #include <itkImage.h>
 #include <itkRGBPixel.h>
 #include <vector>
+#include <memory>
 
 template <typename imageT>
 class QuadNode
 {
 
     using indexT = typename imageT::IndexType;
-    using childrenT = std::vector< std::unique_ptr<QuadNode<imageT>> >;
+    using quadNodeT = QuadNode<imageT>;
+    using quadNodeP = std::unique_ptr<quadNodeT>;
+    using childrenT = std::vector<std::unique_ptr<quadNodeT>>;
+
 
 
 public:
     QuadNode();
+    QuadNode(const indexT& begin, const indexT& end);
+
+    const indexT& getBegin() const;
+    const indexT& getEnd()   const;
+
+    void setChild(unsigned index, quadNodeP&& node);
+    quadNodeP& getChild(unsigned index);
+
+
+    bool isLeaf(){return children[0] == nullptr;}
+
 
 private:
 
