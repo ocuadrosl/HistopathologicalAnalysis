@@ -9,6 +9,7 @@
 
 #include <itkLabelImageToLabelMapFilter.h>
 #include <itkLabelToRGBImageFilter.h>
+#include <itkMinimumMaximumImageCalculator.h>
 
 //local includes
 #include "../util/colorconverterfilter.h"
@@ -18,9 +19,7 @@
 #include "../dataStructures/quadtree.h"
 
 
-#include <itkLabelOverlayImageFilter.h>
 
-#include <itkRGBToLuminanceImageFilter.h>
 
 template<typename imageT>
 class SuperPixels
@@ -57,6 +56,9 @@ public:
     void create();
     void show();
 
+    void setInitialGrid(labelImageP labelImage);
+    void setSpNumber(unsigned number);
+
 
 private:
 
@@ -70,10 +72,10 @@ private:
 
     unsigned sideLength = 10;
     double   lambda1    = 1;
-    double   lambda2    = 0.5;
-    unsigned iterations = 5;
+    double   lambda2    = 0.25;
+    unsigned iterations = 20;
 
-    unsigned long spNumber=0;
+    unsigned spNumber=0;
 
 
     void rgbToLabImage();
@@ -90,7 +92,6 @@ private:
 //using imageDouble   = itk::Image<itk::RGBPixel<double  >, 2>;
 using imageUnsigned = itk::Image<itk::RGBPixel<unsigned>, 2>;
 
-//emplate class SuperPixels<imageDouble>;
 template class SuperPixels<imageUnsigned>;
 
 

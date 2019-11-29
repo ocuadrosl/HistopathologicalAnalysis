@@ -48,9 +48,9 @@ void MainWindow::cellSegmentation()
     cellSegmentator->setImage(inputImage);
     //cellSegmentator->computeGradients();
 
-
+    cellSegmentator->findCellNuclei();
     cellSegmentator->superPixels();
-    //cellSegmentator->findCellNuclei();
+
 
 
     //using vectorImageT =  itk::Image<itk::CovariantVector<float, 2>, 2>;

@@ -20,7 +20,7 @@
 #include <itkCastImageFilter.h>
 #include <itkRegionalMinimaImageFilter.h>
 #include <itkConnectedComponentImageFilter.h>
-
+#include <itkCastImageFilter.h>
 
 #include "itkLiThresholdImageFilter.h"
 #include "itkHuangThresholdImageFilter.h"
@@ -97,9 +97,11 @@ private:
     imageP       inputImage;
     grayImageP   grayImage;
     grayImageDP  euclideanMap;
-    grayImageP   surface;
+    grayImageP   eqImage;
     grayImageP   blurMaskImage;
     grayImageP   cellNuclei;
+    grayImageP   blurImage;
+
 
 
     std::vector<grayImageDP> LogNorm;
@@ -115,7 +117,7 @@ private:
     void createGrayImage();
     void computeLoGNorm();
     void computeEuclideanMap();
-    void computeSurface();
+    void computeLocalMinimum();
 
     inline double computeSigmaMAX(imageDoubleIt it);
 

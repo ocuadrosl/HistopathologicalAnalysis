@@ -38,22 +38,21 @@ void SuperPixels<imageT>::rgbToLabImage()
 template<typename imageT>
 void SuperPixels<imageT>::create()
 {
-    //rgbToLabImage();
+    rgbToLabImage();
+
     //initRegularGrid();
 
-    initQuadTreeGrid();
+    //initQuadTreeGrid();
 
 
-
-/*
-
-    for(unsigned i =0; i < iterations ;++i)
+    for(unsigned i =1; i <= iterations ;++i)
     {
+        std::cout<<i<<std::endl;
         updateMeans();
         converge();
     }
-    show();
-    */
+   //show();
+
 
 }
 
@@ -205,34 +204,39 @@ template<typename imageT>
 void SuperPixels<imageT>::updateMeans()
 {
 
-    colorMeans.clear();
-    indexMeans.clear();
-    spSizes.clear();
+    //colorMeans.clear();
+    //indexMeans.clear();
+    //spSizes.clear();
 
-    colorMeans.resize(spNumber, itk::NumericTraits<labPixelT>::Zero);
+    colorMeans = spColorMeansT(spNumber, itk::NumericTraits<labPixelT>::Zero);
 
     labIndexT index;
     index.Fill(0.0);
-    indexMeans.resize(spNumber, index);
-    spSizes.resize(spNumber, 0);
+    indexMeans = spIndexMeansT(spNumber, index);
+
+    spSizes = spSizesT(spNumber, 0);
 
     itk::ImageRegionConstIterator<labImageT> labIt(labImage, labImage->GetRequestedRegion());
     itk::ImageRegionConstIteratorWithIndex<labelImageT> labelIt(labelImage, labelImage->GetRequestedRegion());
 
-    unsigned  label;
-    labelImageT::IndexType labelIndex;
-    labPixelT labColor;
+    //std::cout<<labImage->GetRequestedRegion()<<std::endl;
+    //std::cout<<labelImage->GetRequestedRegion()<<std::endl;
 
+
+    labIt.GoToBegin();
+    labelIt.GoToBegin();
     for (;!labIt.IsAtEnd(); ++labIt, ++labelIt)
     {
 
-        label      = labelIt.Get();
-        labelIndex = labelIt.GetIndex();
-        labColor   = labIt.Get();
+        const auto &label      = labelIt.Get();
+        const auto &labelIndex = labelIt.GetIndex();
+        const auto &labColor   = labIt.Get();
 
+        std::cout<<label<<std::endl;
         colorMeans[label][0] += labColor[0];
         colorMeans[label][1] += labColor[1];
         colorMeans[label][2] += labColor[2];
+
 
         indexMeans[label][0] += labelIndex[0];
         indexMeans[label][1] += labelIndex[1];
@@ -255,6 +259,22 @@ void SuperPixels<imageT>::updateMeans()
 }
 
 template<typename imageT>
+void SuperPixels<imageT>:: setSpNumber(unsigned number)
+{
+
+    spNumber = number;
+}
+
+
+template<typename imageT>
+void SuperPixels<imageT>::setInitialGrid(labelImageP labelImage)
+{
+
+    this->labelImage = labelImage;
+
+}
+
+template<typename imageT>
 void SuperPixels<imageT>::initQuadTreeGrid()
 {
 
@@ -262,35 +282,7 @@ void SuperPixels<imageT>::initQuadTreeGrid()
 
     quadTree->setImage(inputImage);
     quadTree->build();
-    labelImageP quadtree  =  quadTree->getLabelImage();
-
-
-
-    using rgbToGrayFilterT = itk::RGBToLuminanceImageFilter< imageT, labelImageT >;
-    typename rgbToGrayFilterT::Pointer rgbToGrayFilter = rgbToGrayFilterT::New();
-    rgbToGrayFilter->SetInput(inputImage);
-    rgbToGrayFilter->Update();
-    //grayImage = rgbToGrayFilter->GetOutput();
-
-
-
-
-    using LabelOverlayImageFilterType = itk::LabelOverlayImageFilter<labelImageT, labelImageT, itk::Image<itk::RGBPixel<unsigned>, 2>>;
-    typename LabelOverlayImageFilterType::Pointer labelOverlayImageFilter = LabelOverlayImageFilterType::New();
-    labelOverlayImageFilter->SetInput(rgbToGrayFilter->GetOutput());
-    labelOverlayImageFilter->SetLabelImage(quadtree);
-    labelOverlayImageFilter->SetOpacity(.5);
-    labelOverlayImageFilter->Update();
-
-
-
-
-
-
-
-    VTKViewer::visualize<itk::Image<itk::RGBPixel<unsigned>, 2>>(labelOverlayImageFilter->GetOutput(), "Quadtree");
-
-
+    labelImageP labelImage  =  quadTree->getLabelImage();
 
 }
 

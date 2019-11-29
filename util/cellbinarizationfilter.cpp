@@ -285,5 +285,20 @@ CellBinarizationFilter<rgbImageT>:: getBlurMaskImage()
 }
 
 
+template<typename rgbImageT>
+typename CellBinarizationFilter<rgbImageT>::grayImageP
+CellBinarizationFilter<rgbImageT>:: getBlurImage()
+{
+    return blurImage;
+}
+
+template<typename rgbImageT>
+typename CellBinarizationFilter<rgbImageT>::grayImageP
+CellBinarizationFilter<rgbImageT>:: getEqualizedImage()
+{
+    return eqImage;
+}
+
+
 
 

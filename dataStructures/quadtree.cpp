@@ -86,7 +86,7 @@ void QuadTree<imageT>::recursiveBuild(std::unique_ptr<quadNodeT>& node)
             beginAux[1] = begin[1];
 
             endAux[0] = end[0]-1;
-            endAux[1] = (begin[1] + end[1]) / 2 ;
+            endAux[1] = (begin[1] + end[1])/2 ;
 
 
 
@@ -98,7 +98,7 @@ void QuadTree<imageT>::recursiveBuild(std::unique_ptr<quadNodeT>& node)
             beginAux[1] = (begin[1] + end[1])/2;
 
             endAux[0] = (begin[0] + end[0])/2;
-            endAux[1] = end[1] - 1;
+            endAux[1] = end[1];
 
 
 
@@ -110,7 +110,7 @@ void QuadTree<imageT>::recursiveBuild(std::unique_ptr<quadNodeT>& node)
             beginAux[1] = (begin[1] + end[1])/2;
 
             endAux[0] = end[0];
-            endAux[1] = end[1] ;
+            endAux[1] = end[1];
 
             auto bottomRight = std::make_unique<quadNodeT>(beginAux, endAux);
             node->setChild(3, std::move(bottomRight));
@@ -138,14 +138,53 @@ typename QuadTree<imageT>::grayImageP QuadTree<imageT>::getLabelImage()
     labelImage->SetRegions(inputImage->GetRequestedRegion());
     labelImage->Allocate();
 
-     createLabelImage(root, 100);
+    createLabelImage(root, 100);
+
+    using pixelT = typename imageT::PixelType;
+
+    grayImageP grayImage;
+
+    if constexpr(std::is_arithmetic<pixelT>::value) // is gray-level
+    {
+        grayImage = inputImage;
+
+    }
+    else if constexpr (std::is_unsigned<typename pixelT::ComponentType>::value)
+    {
+        using rgbToGrayFilterT = itk::RGBToLuminanceImageFilter< imageT, grayImageT >;
+        typename rgbToGrayFilterT::Pointer rgbToGrayFilter = rgbToGrayFilterT::New();
+        rgbToGrayFilter->SetInput(inputImage);
+        rgbToGrayFilter->Update();
+        grayImage = rgbToGrayFilter->GetOutput();
+
+    }
+
+
+
+    using LabelOverlayImageFilterType = itk::LabelOverlayImageFilter<grayImageT, grayImageT, itk::Image<itk::RGBPixel<unsigned>, 2>>;
+    typename LabelOverlayImageFilterType::Pointer labelOverlayImageFilter = LabelOverlayImageFilterType::New();
+    labelOverlayImageFilter->SetInput(grayImage);
+    labelOverlayImageFilter->SetLabelImage(labelImage);
+    labelOverlayImageFilter->SetOpacity(.5);
+    labelOverlayImageFilter->Update();
+
+
+    VTKViewer::visualize<itk::Image<itk::RGBPixel<unsigned>, 2>>(labelOverlayImageFilter->GetOutput(), "Quadtree");
+
+
+    std::cout<<labelAux<<" leaves"<<std::endl;
+
 
     return labelImage;
 
 
 }
 
-
+template<typename imageT>
+unsigned  QuadTree<imageT>:: getLeavesNumber() const
+{
+   return labelAux;
+}
 
 template<typename imageT>
 void  QuadTree<imageT>::createLabelImage(std::unique_ptr<quadNodeT>& node, unsigned label)
@@ -162,12 +201,15 @@ void  QuadTree<imageT>::createLabelImage(std::unique_ptr<quadNodeT>& node, unsig
 
         itk::ImageRegionIterator<grayImageT> it(labelImage, region);
 
-        for (; !it.IsAtEnd(); ++it)
+        for (it.GoToBegin(); !it.IsAtEnd(); ++it)
         {
             it.Set(labelAux);
+            //std::cout<<it.Get()<<std::endl;
         }
 
         ++labelAux;
+
+
 
     }
 
@@ -175,6 +217,9 @@ void  QuadTree<imageT>::createLabelImage(std::unique_ptr<quadNodeT>& node, unsig
     createLabelImage(node->getChild(1), label);
     createLabelImage(node->getChild(2), label);
     createLabelImage(node->getChild(3), label);
+
+
+
 
 
 

@@ -45,34 +45,63 @@ CellSegmentator<imageT>::getGradients() const
 }
 
 
-template<typename imageT>
-void CellSegmentator<imageT>::superPixels()
+template<typename rgbImageT>
+void CellSegmentator<rgbImageT>::superPixels()
 {
 
 
-    using superPixelsT =  SuperPixels<imageT>;
+    using superPixelsT =  SuperPixels<rgbImageT>;
 
     std::unique_ptr<superPixelsT> superPixels(new superPixelsT());
 
-    superPixels->setImage(inputImage);
+
+    using FilterType = itk::CastImageFilter<grayImageT, rgbImageT>;
+    typename FilterType::Pointer filter = FilterType::New();
+    filter->SetInput(eqImage);
+    filter->Update();
+
+    superPixels->setImage(filter->GetOutput());
+
+
+    std::unique_ptr<QuadTree<grayImageT>> quadTree(new QuadTree<grayImageT>());
+
+    quadTree->setImage(cellNuclei);
+    quadTree->build();
+
+    superPixels->setInitialGrid(quadTree->getLabelImage());
+    superPixels->setSpNumber(quadTree->getLeavesNumber());
+
+
+
     superPixels->create();
+    superPixels->show();
 
      IO::printOK("Creating Super Pixels");
 
 }
 
-template<typename imageT>
-void CellSegmentator<imageT>::findCellNuclei()
+template<typename rgbImageT>
+void CellSegmentator<rgbImageT>::findCellNuclei()
 {
 
-    if(grayImage.IsNull())
-    {
-        createGrayImage();
-    }
+    using rgbToGrayFilterT = itk::RGBToLuminanceImageFilter< rgbImageT, grayImageT >;
+    typename rgbToGrayFilterT::Pointer rgbToGrayFilter = rgbToGrayFilterT::New();
+    rgbToGrayFilter->SetInput(inputImage);
+    rgbToGrayFilter->Update();
+    grayImage = rgbToGrayFilter->GetOutput();
 
-    computeLoGNorm();
-    computeEuclideanMap();
-    computeSurface();
+    // my own implementation
+    using cellBinarizationFilterT = CellBinarizationFilter<rgbImageT>;
+    std::unique_ptr<cellBinarizationFilterT> cellBinarizationF(new cellBinarizationFilterT);
+    cellBinarizationF->setImage(inputImage);
+    cellBinarizationF->compute();
+
+    blurMaskImage = cellBinarizationF->getBlurMaskImage();
+    blurImage = cellBinarizationF->getBlurImage();
+    eqImage = cellBinarizationF->getEqualizedImage();
+    computeLocalMinimum();
+
+
 
 }
 
@@ -195,11 +224,11 @@ void CellSegmentator<rgbImageT>::computeEuclideanMap()
 
 
 template<typename imageT>
-void CellSegmentator<imageT>::computeSurface()
+void CellSegmentator<imageT>::computeLocalMinimum()
 {
 
 
-
+/*
     itk::ImageRegionConstIterator<grayImageT> grayIt(grayImage, grayImage->GetRequestedRegion());
     itk::ImageRegionConstIterator<grayImageT> blurIt(blurMaskImage, blurMaskImage->GetRequestedRegion());
 
@@ -222,12 +251,12 @@ void CellSegmentator<imageT>::computeSurface()
         ++surfIt;
 
     }
-
+*/
     //showing results
 
     using rescaleFilterType = itk::RescaleIntensityImageFilter<grayImageT, grayImageT>;
     rescaleFilterType::Pointer rescaleFilter = rescaleFilterType::New();
-    rescaleFilter->SetInput(surface);
+    rescaleFilter->SetInput(eqImage);
     rescaleFilter->SetOutputMinimum(0);
     rescaleFilter->SetOutputMaximum(255);
     rescaleFilter->Update();
@@ -299,7 +328,7 @@ void CellSegmentator<imageT>::computeSurface()
 
     VTKViewer::visualize<grayImageT>(cellNuclei ,"Seeds");
 
-
+/*
 
     //visualising
 
@@ -330,8 +359,8 @@ void CellSegmentator<imageT>::computeSurface()
     VTKViewer::visualize<grayImageT>(rescaleFilter->GetOutput() ,"Surface");
     VTKViewer::visualize<rgbImageChar>(toColormapFilter->GetOutput() ,"Color map");
     VTKViewer::visualize<imageT>(overlayRGBImageFilter->getOutput() ,"Overlay");
-
-    IO::printOK("Computing Surface");
+*/
+    IO::printOK("Computing Cell Nuclei");
 
 
 

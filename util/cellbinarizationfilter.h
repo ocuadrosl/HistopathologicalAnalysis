@@ -46,6 +46,8 @@ public:
     void setImage(rgbImageP inpoutImage);
     grayImageP getBinaryImage();
     grayImageP getBlurMaskImage();
+    grayImageP getBlurImage();
+    grayImageP getEqualizedImage();
 
 
 private:
@@ -66,10 +68,6 @@ private:
     grayImageP eqImage;
     grayImageP binaryImage;
     grayImageP blurMaskImage;
-
-
-
-
 
 
     void computeHistogram();
