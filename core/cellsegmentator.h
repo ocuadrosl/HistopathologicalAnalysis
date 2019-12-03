@@ -46,6 +46,7 @@
 #include "../util/vtkviewer.h"
 #include "../util/overlayrgbimagefilter.h"
 #include "../util/cellbinarizationfilter.h"
+#include "../util/math.h"
 
 
 template<typename rgbImageT>
@@ -96,6 +97,7 @@ private:
     vectorImageP outputImage;
     imageP       inputImage;
     grayImageP   grayImage;
+    grayImageP   multiplyImage;
     grayImageDP  euclideanMap;
     grayImageP   eqImage;
     grayImageP   blurMaskImage;

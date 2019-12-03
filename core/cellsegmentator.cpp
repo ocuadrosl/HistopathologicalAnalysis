@@ -57,10 +57,11 @@ void CellSegmentator<rgbImageT>::superPixels()
 
     using FilterType = itk::CastImageFilter<grayImageT, rgbImageT>;
     typename FilterType::Pointer filter = FilterType::New();
-    filter->SetInput(eqImage);
+    filter->SetInput(multiplyImage);
     filter->Update();
 
     superPixels->setImage(filter->GetOutput());
+
 
 
     std::unique_ptr<QuadTree<grayImageT>> quadTree(new QuadTree<grayImageT>());
@@ -228,30 +229,41 @@ void CellSegmentator<imageT>::computeLocalMinimum()
 {
 
 
-/*
+
     itk::ImageRegionConstIterator<grayImageT> grayIt(grayImage, grayImage->GetRequestedRegion());
-    itk::ImageRegionConstIterator<grayImageT> blurIt(blurMaskImage, blurMaskImage->GetRequestedRegion());
+    itk::ImageRegionConstIterator<grayImageT> blurIt(blurImage, blurImage->GetRequestedRegion());
 
 
-    surface = grayImageT::New();
-    surface->SetRegions(grayImage->GetRequestedRegion());
-    surface->Allocate();
-    surface->FillBuffer(sigmaMin);
+    multiplyImage = grayImageT::New();
+    multiplyImage->SetRegions(grayImage->GetRequestedRegion());
+    multiplyImage->Allocate();
+    multiplyImage->FillBuffer(sigmaMin);
 
-    itk::ImageRegionIterator<grayImageT> surfIt(surface, surface->GetRequestedRegion());
+    itk::ImageRegionIterator<grayImageT> surfIt(multiplyImage, multiplyImage->GetRequestedRegion());
 
 
     while(!grayIt.IsAtEnd())
     {
 
-        surfIt.Set(grayIt.Get()*blurIt.Get());
+        //std::cout<<grayIt.Get()<<" * "<<blurIt.Get()<<": "<<grayIt.Get()*blurIt.Get()<<std::endl;
+        surfIt.Set(static_cast<unsigned>((static_cast<double>(grayIt.Get())/255 * static_cast<double>(blurIt.Get())/255)*255));
 
         ++grayIt;
         ++blurIt;
         ++surfIt;
 
     }
+
+  /*  using rescaleFilterType = itk::RescaleIntensityImageFilter<grayImageDoubleT, grayImageT>;
+    rescaleFilterType::Pointer rescaleFilter2 = rescaleFilterType::New();
+    rescaleFilter2->SetInput(surface);
+    rescaleFilter2->SetOutputMinimum(0);
+    rescaleFilter2->SetOutputMaximum(255);
+    rescaleFilter2->Update();
 */
+    VTKViewer::visualize<grayImageT>(multiplyImage ,"multiply");
+
+
     //showing results
 
     using rescaleFilterType = itk::RescaleIntensityImageFilter<grayImageT, grayImageT>;

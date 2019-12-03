@@ -33,7 +33,18 @@ void SuperPixels<imageT>::rgbToLabImage()
 
     labImage = xyzToLabFilter->getOutput();
 
+/*
 
+    //testing.....
+    using castFilterType = itk::CastImageFilter<imageT, labImageT>;
+    typename castFilterType::Pointer castfilter = castFilterType::New();
+    castfilter->SetInput(inputImage);
+    castfilter->Update();
+    labImage = castfilter->GetOutput();
+
+    //labImage = inputImage;
+
+*/
 }
 template<typename imageT>
 void SuperPixels<imageT>::create()
@@ -47,7 +58,7 @@ void SuperPixels<imageT>::create()
 
     for(unsigned i =1; i <= iterations ;++i)
     {
-        std::cout<<i<<std::endl;
+        //std::cout<<i<<std::endl;
         updateMeans();
         converge();
     }
@@ -232,7 +243,7 @@ void SuperPixels<imageT>::updateMeans()
         const auto &labelIndex = labelIt.GetIndex();
         const auto &labColor   = labIt.Get();
 
-        std::cout<<label<<std::endl;
+        //std::cout<<label<<std::endl;
         colorMeans[label][0] += labColor[0];
         colorMeans[label][1] += labColor[1];
         colorMeans[label][2] += labColor[2];

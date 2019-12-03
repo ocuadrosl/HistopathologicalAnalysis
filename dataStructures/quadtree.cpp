@@ -73,8 +73,8 @@ void QuadTree<imageT>::recursiveBuild(std::unique_ptr<quadNodeT>& node)
             //std::cout<<refPixel<<" -> " <<it.Get()<<std::endl;
 
             //child 0 top-left
-            endAux[0] = (begin[0] + end[0])/2 ;
-            endAux[1] = (begin[1] + end[1])/2 ;
+            endAux[0] = (begin[0] + end[0])/2-1;
+            endAux[1] = (begin[1] + end[1])/2-1;
 
 
 
@@ -82,11 +82,11 @@ void QuadTree<imageT>::recursiveBuild(std::unique_ptr<quadNodeT>& node)
             node->setChild(0, std::move(topLeft));
 
             //child 1 top-right
-            beginAux[0] = (begin[0] + end[0])/2;
+            beginAux[0] = (begin[0] + end[0])/2-1;
             beginAux[1] = begin[1];
 
-            endAux[0] = end[0]-1;
-            endAux[1] = (begin[1] + end[1])/2 ;
+            endAux[0] = end[0];
+            endAux[1] = (begin[1] + end[1])/2-1;
 
 
 
@@ -97,7 +97,7 @@ void QuadTree<imageT>::recursiveBuild(std::unique_ptr<quadNodeT>& node)
             beginAux[0] = begin[0];
             beginAux[1] = (begin[1] + end[1])/2;
 
-            endAux[0] = (begin[0] + end[0])/2;
+            endAux[0] = (begin[0] + end[0])/2-1;
             endAux[1] = end[1];
 
 
