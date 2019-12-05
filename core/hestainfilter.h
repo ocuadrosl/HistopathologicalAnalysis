@@ -6,6 +6,8 @@
 #include <itkImageRegionConstIterator.h>
 #include <itkImageRegionIterator.h>
 
+#include <itkAdaptiveHistogramEqualizationImageFilter.h>
+
 
 //for testing
 #include "../util/vtkviewer.h"

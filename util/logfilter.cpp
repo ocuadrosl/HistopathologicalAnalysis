@@ -12,7 +12,7 @@ void LoGFilter<inputImageT, outputImageT>::setImage(inputImageP inputImage)
 }
 
 template<typename inputImageT, typename outputImageT>
-void LoGFilter<inputImageT, outputImageT>::setSigma(double sigma)
+void LoGFilter<inputImageT, outputImageT>::setSigma(float sigma)
 {
 
     this->sigma = sigma;
@@ -31,12 +31,13 @@ void LoGFilter<inputImageT, outputImageT>::compute(bool show, bool echo)
 
     createKernel();
 
-    using castInputImageT = itk::CastImageFilter<inputImageT, doubleImageT>;
+    using castInputImageT = itk::CastImageFilter<inputImageT, imageFloatT>;
     typename castInputImageT::Pointer castInputImageFilter = castInputImageT::New();
     castInputImageFilter->SetInput(inputImage);
+    castInputImageFilter->Update();
 
 
-    using convolutionFilterT = itk::ConvolutionImageFilter<doubleImageT>;
+    using convolutionFilterT = itk::ConvolutionImageFilter<imageFloatT>;
     typename convolutionFilterT::Pointer convolutionFilter = convolutionFilterT::New();
     convolutionFilter->SetInput(castInputImageFilter->GetOutput());
     convolutionFilter->SetKernelImage(kernel);
@@ -44,7 +45,7 @@ void LoGFilter<inputImageT, outputImageT>::compute(bool show, bool echo)
 
     //TODO if constexpr to avoid unnecessary image cast
 
-    using castOutputImageT = itk::CastImageFilter<doubleImageT, outputImageT>;
+    using castOutputImageT = itk::CastImageFilter<imageFloatT, outputImageT>;
     typename castOutputImageT::Pointer castOutputImageFilter = castOutputImageT::New();
     castOutputImageFilter->SetInput(convolutionFilter->GetOutput());
     castOutputImageFilter->Update();
@@ -79,7 +80,7 @@ template<typename inputImageT, typename outputImageT>
 void LoGFilter<inputImageT, outputImageT>::createKernel(bool show)
 {
 
-    using regionT =  doubleImageT::RegionType;
+    using regionT =  imageFloatT::RegionType;
     regionT::SizeType size;
     size.Fill(kernelSize);
     regionT::IndexType index;
@@ -87,24 +88,24 @@ void LoGFilter<inputImageT, outputImageT>::createKernel(bool show)
     regionT kernelRegion(index, size);
 
 
-    kernel = doubleImageT::New();
+    kernel = imageFloatT::New();
     kernel->SetRegions(kernelRegion);
     kernel->Allocate();
     kernel->FillBuffer(0);
 
     index.Fill(0);
 
-    double logVal;
-    double nLimit = -static_cast<double>(kernelSize/2);
-    double pLimit =  static_cast<double>(kernelSize/2);
+    float logVal;
+    float nLimit = -static_cast<float>(kernelSize/2);
+    float pLimit =  static_cast<float>(kernelSize/2);
 
-    for(double x = nLimit ; x <= pLimit; ++x)
+    for(float x = nLimit ; x <= pLimit; ++x)
     {
 
-        for(double y = nLimit ; y <= pLimit; ++y)
+        for(float y = nLimit ; y <= pLimit; ++y)
         {
             //std::cout<<x<<" "<<y<<std::endl;
-            logVal = Math::LoG(x, y, sigma);
+            logVal = Math::LoG<float>(x, y, sigma);
             kernel->SetPixel(index, logVal);
             //std::cout<<logVal<<" ";
             index[1]+=1;
@@ -118,7 +119,7 @@ void LoGFilter<inputImageT, outputImageT>::createKernel(bool show)
 
     if(show)
     {
-        VTKViewer::visualize<doubleImageT>(kernel, "Kernel");
+        VTKViewer::visualize<imageFloatT>(kernel, "Kernel");
     }
 
 

@@ -12,6 +12,7 @@
 #include <itkRescaleIntensityImageFilter.h>
 #include <itkAdaptiveHistogramEqualizationImageFilter.h>
 #include <itkMinimumMaximumImageCalculator.h>
+#include <itkLaplacianRecursiveGaussianImageFilter.h>
 
 #include <numeric>
 #include <algorithm>
@@ -20,6 +21,7 @@
 #include "../util/math.h"
 #include "../util/findpeaks.h"
 #include "../util/persistence1d.hpp"
+#include "../util/logfilter.h"
 
 template<typename rgbImageT>
 class CellBinarizationFilter

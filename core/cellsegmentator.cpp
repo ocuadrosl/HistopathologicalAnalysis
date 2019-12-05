@@ -60,7 +60,7 @@ void CellSegmentator<rgbImageT>::superPixels()
     filter->SetInput(multiplyImage);
     filter->Update();
 
-    superPixels->setImage(filter->GetOutput());
+    superPixels->setImage(inputImage);
 
 
 
@@ -85,11 +85,15 @@ template<typename rgbImageT>
 void CellSegmentator<rgbImageT>::findCellNuclei()
 {
 
-    using rgbToGrayFilterT = itk::RGBToLuminanceImageFilter< rgbImageT, grayImageT >;
+    //delete it
+    using rgbToGrayFilterT = itk::RGBToLuminanceImageFilter<rgbImageT, grayImageT >;
     typename rgbToGrayFilterT::Pointer rgbToGrayFilter = rgbToGrayFilterT::New();
     rgbToGrayFilter->SetInput(inputImage);
     rgbToGrayFilter->Update();
     grayImage = rgbToGrayFilter->GetOutput();
+
+
+
 
     // my own implementation
     using cellBinarizationFilterT = CellBinarizationFilter<rgbImageT>;
@@ -231,13 +235,13 @@ void CellSegmentator<imageT>::computeLocalMinimum()
 
 
     itk::ImageRegionConstIterator<grayImageT> grayIt(grayImage, grayImage->GetRequestedRegion());
-    itk::ImageRegionConstIterator<grayImageT> blurIt(blurImage, blurImage->GetRequestedRegion());
+    itk::ImageRegionConstIterator<grayImageT> blurIt(eqImage, eqImage->GetRequestedRegion());
 
 
     multiplyImage = grayImageT::New();
     multiplyImage->SetRegions(grayImage->GetRequestedRegion());
     multiplyImage->Allocate();
-    multiplyImage->FillBuffer(sigmaMin);
+   // multiplyImage->FillBuffer(sigmaMin);
 
     itk::ImageRegionIterator<grayImageT> surfIt(multiplyImage, multiplyImage->GetRequestedRegion());
 

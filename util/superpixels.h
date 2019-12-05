@@ -73,7 +73,7 @@ private:
     unsigned sideLength = 10;
     double   lambda1    = 1;
     double   lambda2    = 0.25;
-    unsigned iterations = 10;
+    unsigned iterations = 25;
 
     unsigned spNumber=0;
 

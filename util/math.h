@@ -234,18 +234,18 @@ inline double gaussian(double x, double y, double s, double mx=0, double my=0) /
 }
 
 
-
-inline double LoG(double x, double y, double s) //s = sigma
+template<typename type=float>
+inline type LoG(type x, type y, type s) //s = sigma
 {
-    const double pi = 3.14159;
+    const float pi = 3.14159f;
 
-    double s2 = s*s;
-    double x2 = x*x;
-    double y2 = y*y;
+    type s2 = s*s;
+    type x2 = x*x;
+    type y2 = y*y;
 
-    double firstTerm  = -1.0/(pi*std::pow(s,4));
-    double secondTerm = 1.0 - ( (x2+y2)/(2*s2) );
-    double expTerm    = std::exp(- ((x2+y2)/(2*s2)) );
+    type firstTerm  = static_cast<type>(-1.0/(pi*std::pow(s,4)));
+    type secondTerm = static_cast<type>(1.0 - ( (x2+y2)/(2*s2)));
+    type expTerm    = static_cast<type>(std::exp(- ((x2+y2)/(2*s2))));
 
     return firstTerm*secondTerm*expTerm;
 

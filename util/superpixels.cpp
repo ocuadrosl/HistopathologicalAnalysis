@@ -33,18 +33,18 @@ void SuperPixels<imageT>::rgbToLabImage()
 
     labImage = xyzToLabFilter->getOutput();
 
-/*
 
+/*
     //testing.....
     using castFilterType = itk::CastImageFilter<imageT, labImageT>;
     typename castFilterType::Pointer castfilter = castFilterType::New();
     castfilter->SetInput(inputImage);
     castfilter->Update();
     labImage = castfilter->GetOutput();
-
+*/
     //labImage = inputImage;
 
-*/
+
 }
 template<typename imageT>
 void SuperPixels<imageT>::create()

@@ -22,8 +22,8 @@ class LoGFilter
     using outputImageP = typename outputImageT::Pointer;
 
 
-    using doubleImageT = itk::Image<double, 2>;
-    using doubleImageP = doubleImageT::Pointer;
+    using imageFloatT = itk::Image<float, 2>;
+    using imageFloatP = imageFloatT::Pointer;
 
 
 public:
@@ -31,7 +31,7 @@ public:
 
     void setImage(inputImageP inputImage);
     void compute(bool show=false, bool echo=false);
-    void setSigma(double sigma);
+    void setSigma(float sigma);
     void setKernelSize(unsigned kernelSize);
 
     outputImageP getOutput();
@@ -41,10 +41,10 @@ public:
 private:
     inputImageP  inputImage;
     outputImageP outputImage;
-    doubleImageP kernel;
+    imageFloatP kernel;
 
     unsigned kernelSize = 5;
-    double   sigma      = 0.5;
+    float   sigma      = 0.5;
 
     void createKernel(bool show=false);
 
@@ -54,6 +54,8 @@ private:
 
 template class LoGFilter< itk::Image<unsigned,2>,  itk::Image<unsigned,2>>;
 template class LoGFilter< itk::Image<unsigned,2>,  itk::Image<double  ,2>>;
+template class LoGFilter< itk::Image<unsigned,2>,  itk::Image<float  ,2>>;
+template class LoGFilter< itk::Image<float,2>,  itk::Image<float  ,2>>;
 
 
 
