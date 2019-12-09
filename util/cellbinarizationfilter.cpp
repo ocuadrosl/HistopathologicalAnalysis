@@ -9,13 +9,24 @@ template<typename rgbImageT>
 void CellBinarizationFilter<rgbImageT>::setImage(rgbImageP inputImage)
 {
     this->inputImage = inputImage;
+
+    //rgb to gray-scale
+    using rgbToGrayFilterT = itk::RGBToLuminanceImageFilter<rgbImageT, grayImageT>;
+    typename rgbToGrayFilterT::Pointer rgbToGrayFilter = rgbToGrayFilterT::New();
+    rgbToGrayFilter->SetInput(inputImage);
+    rgbToGrayFilter->Update();
+
+
+
+
+
 }
 
 template<typename rgbImageT>
 void CellBinarizationFilter<rgbImageT>::gaussianBlur()
 {
-/*
-    using FilterType = itk::DiscreteGaussianImageFilter<grayImageT, grayImageT>;
+
+    using FilterType = itk::DiscreteGaussianImageFilter<grayImageT, floatImageT>;
     FilterType::Pointer smoothFilter = FilterType::New();
 
     smoothFilter->SetVariance(sigma);
@@ -23,42 +34,55 @@ void CellBinarizationFilter<rgbImageT>::gaussianBlur()
     smoothFilter->SetInput(grayImage);
 
     smoothFilter->Update();
-    blurImage = smoothFilter->GetOutput();
+
+    //float to unsigned
+    using rescaleFilterType2= itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
+    rescaleFilterType2::Pointer rescaleFilter2 = rescaleFilterType2::New();
+    rescaleFilter2->SetInput(smoothFilter->GetOutput());
+    rescaleFilter2->SetOutputMinimum(0);
+    rescaleFilter2->SetOutputMaximum(255);
+
+
+    logImage = rescaleFilter2->GetOutput();
+
+
+    VTKViewer::visualize<grayImageT>(logImage ,"blur Image");
+
+
+/*
+    //Laplacian of Gaussian
+    using floatImageT = itk::Image<float,2>;
+
+    //unsigned to float
+    using rescaleFilterType = itk::RescaleIntensityImageFilter<grayImageT, floatImageT>;
+    rescaleFilterType::Pointer rescaleFilter = rescaleFilterType::New();
+    rescaleFilter->SetInput(grayImage);
+    rescaleFilter->SetOutputMinimum(0.f);
+    rescaleFilter->SetOutputMaximum(1.f);
+
+
+    std::unique_ptr<LoGFilter<floatImageT,floatImageT>> logFilter(new LoGFilter<floatImageT,floatImageT>());
+    logFilter->setImage(rescaleFilter->GetOutput());
+    logFilter->setSigma(0.25f);
+    logFilter->setKernelSize(51);
+    logFilter->compute();
+
+
+    //VTKViewer::visualize<floatImageT>(logFilter->getOutput() ,"LoG float Image");
+
+    //float to unsigned
+    using rescaleFilterType2= itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
+    rescaleFilterType2::Pointer rescaleFilter2 = rescaleFilterType2::New();
+    rescaleFilter2->SetInput(logFilter->getOutput());
+    rescaleFilter2->SetOutputMinimum(0);
+    rescaleFilter2->SetOutputMaximum(255);
+
+
+    logImage = rescaleFilter2->GetOutput();
+
+
+    VTKViewer::visualize<grayImageT>(logImage ,"LoG Image");
 */
-   // VTKViewer::visualize<grayImageT>(blurImage ,"blur Image");
-
-//TODO HEEEEEERERERERERE
-
-    using imageFloat = itk::Image<float, 2>;
-
-
-    using FilterType = itk::RescaleIntensityImageFilter<grayImageT, imageFloat>;
-    FilterType::Pointer filter = FilterType::New();
-    filter->SetInput(grayImage);
-    filter->SetOutputMinimum(0.f);
-    filter->SetOutputMaximum(1.f);
-    filter->Update();
-
-    std::unique_ptr<LoGFilter<imageFloat,imageFloat>> logFilter(new LoGFilter<imageFloat,imageFloat>());
-    logFilter->setImage(filter->GetOutput());
-    logFilter->setSigma(0.25);
-    logFilter->setKernelSize(17);
-    logFilter->compute(1,1);
-
-
-
-    using FilterType2 = itk::RescaleIntensityImageFilter<imageFloat, grayImageT>;
-    FilterType2::Pointer filter2 = FilterType2::New();
-    filter2->SetInput(logFilter->getOutput());
-    filter2->SetOutputMinimum(0);
-    filter2->SetOutputMaximum(255);
-    filter2->Update();
-
-    blurImage = filter2->GetOutput();
-
-
-    VTKViewer::visualize<grayImageT>(blurImage ,"blur Image");
-
 
 }
 
@@ -66,47 +90,43 @@ template<typename rgbImageT>
 void CellBinarizationFilter<rgbImageT>::histogramEqualization()
 {
 
+/*
+    //local equalization
+    using adaptiveHistogramEqualizationFilterT = itk::AdaptiveHistogramEqualizationImageFilter<grayImageT>;
+    adaptiveHistogramEqualizationFilterT::Pointer adaptiveHistogramEqualizationFilter = adaptiveHistogramEqualizationFilterT::New();
 
 
 
-    using AdaptiveHistogramEqualizationImageFilterType = itk::AdaptiveHistogramEqualizationImageFilter<grayImageT>;
-    AdaptiveHistogramEqualizationImageFilterType::Pointer adaptiveHistogramEqualizationImageFilter =
-    AdaptiveHistogramEqualizationImageFilterType::New();
-
-
-
-    adaptiveHistogramEqualizationImageFilter->SetAlpha(0);
-
-      //float beta = std::stod(argv[4]);
-    adaptiveHistogramEqualizationImageFilter->SetBeta(0);
+    adaptiveHistogramEqualizationFilter->SetAlpha(0);
+    adaptiveHistogramEqualizationFilter->SetBeta(0);
 
      // int                                                         radiusSize = std::stoi(argv[5]);
-    AdaptiveHistogramEqualizationImageFilterType::ImageSizeType radius;
-    radius.Fill(50);
-    adaptiveHistogramEqualizationImageFilter->SetRadius(radius);
-    adaptiveHistogramEqualizationImageFilter->SetInput(blurImage);
-    adaptiveHistogramEqualizationImageFilter->Update();
+    adaptiveHistogramEqualizationFilterT::ImageSizeType radius;
+    radius.Fill(100);
+    adaptiveHistogramEqualizationFilter->SetRadius(radius);
+    adaptiveHistogramEqualizationFilter->SetInput(logImage);
+    adaptiveHistogramEqualizationFilter->Update();
 
-    eqImage = adaptiveHistogramEqualizationImageFilter->GetOutput();
-
-
- VTKViewer::visualize<grayImageT>(eqImage ,"local equalization");
+    equalizedImage = adaptiveHistogramEqualizationFilter->GetOutput();
 
 
-/*
+    VTKViewer::visualize<grayImageT>(equalizedImage ,"local equalization");
+*/
+
+
     using ImageCalculatorFilterT = itk::MinimumMaximumImageCalculator<grayImageT>;
 
     ImageCalculatorFilterT::Pointer imageCalculatorF = ImageCalculatorFilterT::New();
-    imageCalculatorF->SetImage(blurImage);
+    imageCalculatorF->SetImage(logImage);
     imageCalculatorF->Compute();
 
 
-    eqImage = grayImageT::New();
-    eqImage->SetRegions(blurImage->GetRequestedRegion());
-    eqImage->Allocate();
+    equalizedImage = grayImageT::New();
+    equalizedImage->SetRegions(logImage->GetRequestedRegion());
+    equalizedImage->Allocate();
 
-    itk::ImageRegionIterator<grayImageT> itB(blurImage, blurImage->GetRequestedRegion());
-    itk::ImageRegionIterator<grayImageT> itE(eqImage, eqImage->GetRequestedRegion());
+    itk::ImageRegionIterator<grayImageT> itB(logImage, logImage->GetRequestedRegion());
+    itk::ImageRegionIterator<grayImageT> itE(equalizedImage, equalizedImage->GetRequestedRegion());
 
     std::cout<<imageCalculatorF->GetMinimum()<< ","<<imageCalculatorF->GetMaximum()<<std::endl;
 
@@ -122,9 +142,9 @@ void CellBinarizationFilter<rgbImageT>::histogramEqualization()
     }
 
 
-    VTKViewer::visualize<grayImageT>(eqImage ,"equalization");
+    VTKViewer::visualize<grayImageT>(equalizedImage ,"equalization");
 
-*/
+
 
 }
 
@@ -148,7 +168,7 @@ void CellBinarizationFilter<rgbImageT>::computeHistogram()
 
 
     typename ImageToHistogramFilterType::Pointer imageToHistogramFilter = ImageToHistogramFilterType::New();
-    imageToHistogramFilter->SetInput(eqImage);
+    imageToHistogramFilter->SetInput(equalizedImage);
     imageToHistogramFilter->SetHistogramBinMinimum(lowerBound);
     imageToHistogramFilter->SetHistogramBinMaximum(upperBound);
     imageToHistogramFilter->SetHistogramSize(size);
@@ -183,8 +203,10 @@ template<typename rgbImageT>
 void CellBinarizationFilter<rgbImageT>::binaryThreholding()
 {
     using thresholdFilterType = itk::BinaryThresholdImageFilter<grayImageT, grayImageT>;
+
+    /*
     thresholdFilterType::Pointer thresholdFilter = thresholdFilterType::New();
-    thresholdFilter->SetInput(eqImage);
+    thresholdFilter->SetInput(equalizedImage);
     thresholdFilter->SetLowerThreshold(0);
     thresholdFilter->SetUpperThreshold(threshold);
     thresholdFilter->SetOutsideValue(255);
@@ -192,12 +214,12 @@ void CellBinarizationFilter<rgbImageT>::binaryThreholding()
     thresholdFilter->Update();
 
     binaryImage  = thresholdFilter->GetOutput();
-
+*/
 
 
     //blur mask
     thresholdFilterType::Pointer thresholdFilter2 = thresholdFilterType::New();
-    thresholdFilter2->SetInput(eqImage);
+    thresholdFilter2->SetInput(equalizedImage);
     thresholdFilter2->SetLowerThreshold(0);
     thresholdFilter2->SetUpperThreshold(threshold);
     thresholdFilter2->SetOutsideValue(0);
@@ -206,7 +228,7 @@ void CellBinarizationFilter<rgbImageT>::binaryThreholding()
 
     using MaskFilterType = itk::MaskImageFilter<grayImageT, grayImageT>;
     MaskFilterType::Pointer maskFilter = MaskFilterType::New();
-    maskFilter->SetInput(eqImage);
+    maskFilter->SetInput(equalizedImage);
     maskFilter->SetMaskImage(thresholdFilter2->GetOutput());
     maskFilter->SetOutsideValue(255);
 
@@ -257,7 +279,7 @@ void CellBinarizationFilter<rgbImageT>::findThreshold()
 
     unsigned max = histogram[0];
     threshold = 0;
-    for(unsigned i = 0; i <= 85; ++i )
+    for(unsigned i = 0; i <= 170; ++i)
     {
         if(max <= histogram[i])
         {
@@ -269,36 +291,7 @@ void CellBinarizationFilter<rgbImageT>::findThreshold()
 
 
     std::cout<<threshold<<std::endl;
-/*
-    p1d::Persistence1D p;
-    p.RunPersistence(histogram);
 
-    std::vector< p1d::TPairedExtrema > Extrema;
-    p.GetPairedExtrema(Extrema, 0);
-
-    std::vector<unsigned> maxPeaks;
-    for(auto it = Extrema.begin(); it != Extrema.end(); it++)
-    {
-        maxPeaks.push_back(static_cast<unsigned>((*it).MaxIndex));
-
-        std::cout<<(*it).MaxIndex<< ", ";
-
-    }
-
-    std::sort(maxPeaks.begin(), maxPeaks.end());
-
-    threshold = maxIndex1;
-    for(auto it = maxPeaks.begin(); it != maxPeaks.end(); ++it)
-    {
-        if(maxIndex1 < *it &&  *it < maxIndex2)
-        {
-            threshold = *it;
-
-        }
-
-    }
-
-*/
 
 }
 
@@ -351,7 +344,7 @@ template<typename rgbImageT>
 typename CellBinarizationFilter<rgbImageT>::grayImageP
 CellBinarizationFilter<rgbImageT>:: getEqualizedImage()
 {
-    return eqImage;
+    return equalizedImage;
 }
 
 

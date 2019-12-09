@@ -71,7 +71,7 @@ private:
     spSizesT spSizes;
 
     unsigned sideLength = 10;
-    double   lambda1    = 1;
+    double   lambda1    = 2;
     double   lambda2    = 0.25;
     unsigned iterations = 25;
 

@@ -60,7 +60,8 @@ void CellSegmentator<rgbImageT>::superPixels()
     filter->SetInput(multiplyImage);
     filter->Update();
 
-    superPixels->setImage(inputImage);
+    //superPixels->setImage(filter->GetOutput()); //input image
+    superPixels->setImage(inputImage); //input image
 
 
 
@@ -269,14 +270,14 @@ void CellSegmentator<imageT>::computeLocalMinimum()
 
 
     //showing results
-
+/*
     using rescaleFilterType = itk::RescaleIntensityImageFilter<grayImageT, grayImageT>;
     rescaleFilterType::Pointer rescaleFilter = rescaleFilterType::New();
     rescaleFilter->SetInput(eqImage);
     rescaleFilter->SetOutputMinimum(0);
     rescaleFilter->SetOutputMaximum(255);
     rescaleFilter->Update();
-
+*/
 
     using RegionalMinimaImageFilter = itk::RegionalMinimaImageFilter<grayImageT, grayImageT>;
     RegionalMinimaImageFilter::Pointer regionalMinimaFilter = RegionalMinimaImageFilter::New();

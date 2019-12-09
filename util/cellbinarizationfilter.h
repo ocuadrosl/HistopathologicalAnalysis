@@ -27,6 +27,11 @@ template<typename rgbImageT>
 class CellBinarizationFilter
 {
 
+
+    using floatImageT = itk::Image<float,2>;
+    using floatImageP = floatImageT::Pointer;
+
+
     using rgbImageP = typename rgbImageT::Pointer;
 
 
@@ -65,9 +70,14 @@ private:
     const unsigned numberOfBins = 255;
 
     rgbImageP  inputImage;
+    grayImageP logImage;
     grayImageP grayImage;
+    grayImageP equalizedImage;
+
+
+
     grayImageP blurImage;
-    grayImageP eqImage;
+
     grayImageP binaryImage;
     grayImageP blurMaskImage;
 
