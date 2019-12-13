@@ -73,6 +73,11 @@ public:
     using imageDoubleItIndex = itk::ImageRegionConstIteratorWithIndex<grayImageDoubleT>;
 
 
+    using cellsT = std::vector<std::vector<typename rgbImageT::IndexType>>;
+
+
+    using superPixelsT =  SuperPixels<rgbImageT>;
+
     //setters
 
     void setImage(imageP inputImage);
@@ -98,13 +103,12 @@ private:
     imageP       inputImage;
     grayImageP   grayImage;
     grayImageP   multiplyImage;
-    grayImageDP  euclideanMap;
     grayImageP   eqImage;
     grayImageP   blurMaskImage;
     grayImageP   cellNuclei;
     grayImageP   blurImage;
 
-
+    cellsT cells;
 
     std::vector<grayImageDP> LogNorm;
 
@@ -116,12 +120,14 @@ private:
     unsigned kernelSize = 5;
 
 
+    std::unique_ptr<superPixelsT> superPixelsP;
+
     void createGrayImage();
     void computeLoGNorm();
     void computeEuclideanMap();
     void computeLocalMinimum();
 
-    inline double computeSigmaMAX(imageDoubleIt it);
+    void extractCellsFromSuperPixels();
 
 
 

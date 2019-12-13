@@ -32,6 +32,34 @@ void QuadTree<imageT>::build()
 
 
 template <typename imageT>
+unsigned QuadTree<imageT>::getNumberOfPoints(std::unique_ptr<quadNodeT>& node, const pixelT& refPixel)
+{
+
+    const auto& begin = node->getBegin();
+    const auto& end   = node->getEnd();
+
+    typename imageT::RegionType region;
+
+    region.SetIndex(begin);
+    region.SetUpperIndex(end);
+
+
+    itk::ImageRegionConstIterator<imageT> it(inputImage, region);
+
+    unsigned count =0;
+    for( ;!it.IsAtEnd(); ++it )
+    {
+
+        count += (refPixel == it.Get());
+
+    }
+
+    return count;
+
+
+}
+
+template <typename imageT>
 void QuadTree<imageT>::recursiveBuild(std::unique_ptr<quadNodeT>& node)
 {
 
@@ -47,7 +75,11 @@ void QuadTree<imageT>::recursiveBuild(std::unique_ptr<quadNodeT>& node)
 
     if((end[0] - begin[0]) <= minimumSize || (end[1] - begin[1]) <= minimumSize)
     {
-        return;
+
+       //if(getNumberOfPoints(node, itk::NumericTraits<pixelT>::Zero+255) < 2)
+       {
+           return;
+       }
     }
 
 

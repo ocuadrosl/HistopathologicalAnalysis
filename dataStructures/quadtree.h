@@ -22,6 +22,9 @@ class QuadTree
     using quadNodeT   = QuadNode<imageT>;
     using grayImageT  = itk::Image<unsigned,2>;
     using grayImageP  = typename grayImageT::Pointer;
+    using pixelT      = typename imageT::PixelType;
+
+
 
 
 public:
@@ -47,6 +50,8 @@ private:
     void createLabelImage(std::unique_ptr<quadNodeT>& node, unsigned label);
 
     unsigned labelAux=0;
+
+    unsigned getNumberOfPoints(std::unique_ptr<quadNodeT>& node, const pixelT& refPixel);
 
 
 };

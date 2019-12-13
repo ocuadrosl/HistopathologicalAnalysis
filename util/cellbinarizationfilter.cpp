@@ -16,10 +16,6 @@ void CellBinarizationFilter<rgbImageT>::setImage(rgbImageP inputImage)
     rgbToGrayFilter->SetInput(inputImage);
     rgbToGrayFilter->Update();
 
-
-
-
-
 }
 
 template<typename rgbImageT>

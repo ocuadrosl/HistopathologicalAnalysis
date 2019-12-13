@@ -403,8 +403,26 @@ void SuperPixels<imageT>::show()
 
     VTKViewer::visualize<imageT>(spImage, "Super Pixels");
 
-
-
-
 }
+
+
+template<typename imageT>
+typename SuperPixels<imageT>::labelImageP
+SuperPixels<imageT>::getLabelImage() const
+{
+    return labelImage;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 

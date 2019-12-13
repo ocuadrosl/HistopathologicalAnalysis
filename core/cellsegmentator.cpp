@@ -50,9 +50,9 @@ void CellSegmentator<rgbImageT>::superPixels()
 {
 
 
-    using superPixelsT =  SuperPixels<rgbImageT>;
 
-    std::unique_ptr<superPixelsT> superPixels(new superPixelsT());
+    //std::unique_ptr<superPixelsT> superPixels(new superPixelsT());
+    superPixelsP = std::make_unique<superPixelsT>();
 
 
     using FilterType = itk::CastImageFilter<grayImageT, rgbImageT>;
@@ -61,7 +61,7 @@ void CellSegmentator<rgbImageT>::superPixels()
     filter->Update();
 
     //superPixels->setImage(filter->GetOutput()); //input image
-    superPixels->setImage(inputImage); //input image
+    superPixelsP->setImage(inputImage); //input image
 
 
 
@@ -70,13 +70,13 @@ void CellSegmentator<rgbImageT>::superPixels()
     quadTree->setImage(cellNuclei);
     quadTree->build();
 
-    superPixels->setInitialGrid(quadTree->getLabelImage());
-    superPixels->setSpNumber(quadTree->getLeavesNumber());
+    superPixelsP->setInitialGrid(quadTree->getLabelImage());
+    superPixelsP->setSpNumber(quadTree->getLeavesNumber());
 
 
 
-    superPixels->create();
-    superPixels->show();
+    superPixelsP->create();
+    superPixelsP->show();
 
      IO::printOK("Creating Super Pixels");
 
@@ -107,10 +107,7 @@ void CellSegmentator<rgbImageT>::findCellNuclei()
     eqImage = cellBinarizationF->getEqualizedImage();
     computeLocalMinimum();
 
-
-
 }
-
 
 
 template<typename imageT>
@@ -130,6 +127,7 @@ template<typename imageT>
 void CellSegmentator<imageT>::computeLoGNorm()
 {
 
+    /*
     LogNorm.clear();
 
     //computing LoG for various sigmas
@@ -141,7 +139,7 @@ void CellSegmentator<imageT>::computeLoGNorm()
     using multiplyFilterT = itk::MultiplyImageFilter<grayImageDoubleT, grayImageDoubleT, grayImageDoubleT>;
 
 
-    for(double sigma=sigmaMin; sigma <= sigmaMax; sigma += stepSize)
+    for(float sigma=sigmaMin; sigma <= sigmaMax; sigma += stepSize)
     {
 
        logFilter->setSigma(sigma);
@@ -159,7 +157,7 @@ void CellSegmentator<imageT>::computeLoGNorm()
        //itk::ViewImage<grayImageDoubleT>::View(multiplyFilter->GetOutput(), "sigma 2");
 
     }
-
+*/
 
 }
 
@@ -380,19 +378,19 @@ void CellSegmentator<imageT>::computeLocalMinimum()
     IO::printOK("Computing Cell Nuclei");
 
 
-
-
 }
+
 
 
 template<typename imageT>
-inline double CellSegmentator<imageT>::computeSigmaMAX(imageDoubleIt it)
+void CellSegmentator<imageT>:: extractCellsFromSuperPixels()
 {
 
-    return std::max(sigmaMin, std::min(sigmaMax, 2*it.Get()));
+
+
+
+
 }
-
-
 
 
 

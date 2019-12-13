@@ -59,6 +59,8 @@ public:
     void setInitialGrid(labelImageP labelImage);
     void setSpNumber(unsigned number);
 
+    labelImageP getLabelImage() const;
+
 
 private:
 
