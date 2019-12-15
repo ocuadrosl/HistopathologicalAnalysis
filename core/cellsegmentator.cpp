@@ -51,7 +51,7 @@ void CellSegmentator<rgbImageT>::superPixels()
 
 
 
-    //std::unique_ptr<superPixelsT> superPixels(new superPixelsT());
+    std::unique_ptr<superPixelsT> superPixelsP(new superPixelsT());
     superPixelsP = std::make_unique<superPixelsT>();
 
 
@@ -74,9 +74,14 @@ void CellSegmentator<rgbImageT>::superPixels()
     superPixelsP->setSpNumber(quadTree->getLeavesNumber());
 
 
-
     superPixelsP->create();
     superPixelsP->show();
+
+
+    labelImage = superPixelsP->getLabelImage();
+
+    extractCellsFromSuperPixels();
+
 
      IO::printOK("Creating Super Pixels");
 
@@ -106,6 +111,7 @@ void CellSegmentator<rgbImageT>::findCellNuclei()
     blurImage = cellBinarizationF->getBlurImage();
     eqImage = cellBinarizationF->getEqualizedImage();
     computeLocalMinimum();
+
 
 }
 
@@ -382,13 +388,85 @@ void CellSegmentator<imageT>::computeLocalMinimum()
 
 
 
-template<typename imageT>
-void CellSegmentator<imageT>:: extractCellsFromSuperPixels()
+template<typename rgbImageT>
+void CellSegmentator<rgbImageT>::extractCellsFromSuperPixels()
 {
 
 
+    using LabelObjectType = itk::LabelObject<unsigned, 2>;
+    using LabelMapType = itk::LabelMap<LabelObjectType>;
 
 
+    using LabelImage2LabelMapType = itk::LabelImageToLabelMapFilter<grayImageT, LabelMapType>;
+    typename LabelImage2LabelMapType::Pointer convert = LabelImage2LabelMapType::New();
+    convert->SetInput(labelImage);
+    convert->Update();
+    auto labelMap = convert->GetOutput();
+
+    using labelMapToRGBFilterT = itk::LabelMapToRGBImageFilter<LabelMapType, rgbImageT>;
+    typename labelMapToRGBFilterT::Pointer  labelMapToRGB = labelMapToRGBFilterT::New();
+    labelMapToRGB->SetInput(labelMap);
+    labelMapToRGB->Update();
+
+    VTKViewer::visualize<rgbImageT>(labelMapToRGB->GetOutput() ,"SP");
+
+
+    //TODO delet labels
+
+
+    itk::ImageRegionConstIteratorWithIndex<grayImageT> labelIt(labelImage, labelImage->GetRequestedRegion());
+    itk::ImageRegionConstIterator<grayImageT> nucleiIt(cellNuclei, cellNuclei->GetRequestedRegion());
+
+    std::vector<unsigned> nucleiLabels;
+
+    for(nucleiIt.GoToBegin(); !nucleiIt.IsAtEnd(); ++nucleiIt, ++labelIt)
+    {
+
+            if(nucleiIt.Get() == 255) //white
+            {
+                nucleiLabels.push_back(labelIt.Get());
+
+            }
+    }
+    labelIt.GoToBegin();
+
+
+    itk::ImageRegionConstIteratorWithIndex<rgbImageT> inputIt(inputImage, inputImage->GetRequestedRegion());
+
+
+    auto cells = rgbImageT::New();
+    cells->SetRegions(inputImage->GetRequestedRegion());
+    cells->Allocate();
+
+
+    itk::ImageRegionIterator<rgbImageT> cellsIt(cells, cells->GetRequestedRegion());
+
+
+    pixelCompT red;
+    red.SetRed(255);
+
+    while(!labelIt.IsAtEnd())
+    {
+        //
+        if(std::find(nucleiLabels.begin(), nucleiLabels.end(), labelIt.Get()) != nucleiLabels.end())
+        {
+
+            cellsIt.Set(red);
+
+        }
+        else
+        {
+            cellsIt.Set(inputIt.Get());
+
+        }
+        ++labelIt;
+        ++inputIt;
+        ++cellsIt;
+
+    }
+
+
+    VTKViewer::visualize<rgbImageT>(cells ,"Cells");
 
 }
 

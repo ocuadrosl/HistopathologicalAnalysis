@@ -21,6 +21,8 @@
 #include <itkRegionalMinimaImageFilter.h>
 #include <itkConnectedComponentImageFilter.h>
 #include <itkCastImageFilter.h>
+#include <itkLabelMapToRGBImageFilter.h>
+
 
 #include "itkLiThresholdImageFilter.h"
 #include "itkHuangThresholdImageFilter.h"
@@ -107,6 +109,8 @@ private:
     grayImageP   blurMaskImage;
     grayImageP   cellNuclei;
     grayImageP   blurImage;
+    grayImageP   labelImage; //superpixels
+
 
     cellsT cells;
 
@@ -120,7 +124,7 @@ private:
     unsigned kernelSize = 5;
 
 
-    std::unique_ptr<superPixelsT> superPixelsP;
+    //std::unique_ptr<superPixelsT> superPixelsP;
 
     void createGrayImage();
     void computeLoGNorm();
