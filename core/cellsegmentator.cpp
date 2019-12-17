@@ -51,8 +51,8 @@ void CellSegmentator<rgbImageT>::superPixels()
 
 
 
-    std::unique_ptr<superPixelsT> superPixelsP(new superPixelsT());
-    superPixelsP = std::make_unique<superPixelsT>();
+    std::unique_ptr<superPixelsT> superPixels(new superPixelsT());
+    superPixels = std::make_unique<superPixelsT>();
 
 
     using FilterType = itk::CastImageFilter<grayImageT, rgbImageT>;
@@ -60,8 +60,8 @@ void CellSegmentator<rgbImageT>::superPixels()
     filter->SetInput(multiplyImage);
     filter->Update();
 
-    //superPixels->setImage(filter->GetOutput()); //input image
-    superPixelsP->setImage(inputImage); //input image
+    superPixels->setImage(filter->GetOutput()); //input image
+    //superPixelsP->setImage(inputImage); //input image
 
 
 
@@ -70,15 +70,15 @@ void CellSegmentator<rgbImageT>::superPixels()
     quadTree->setImage(cellNuclei);
     quadTree->build();
 
-    superPixelsP->setInitialGrid(quadTree->getLabelImage());
-    superPixelsP->setSpNumber(quadTree->getLeavesNumber());
+    superPixels->setInitialGrid(quadTree->getLabelImage());
+    superPixels->setSpNumber(quadTree->getLeavesNumber());
 
 
-    superPixelsP->create();
-    superPixelsP->show();
+    superPixels->create();
+    superPixels->show();
 
 
-    labelImage = superPixelsP->getLabelImage();
+    labelImage = superPixels->getLabelImage();
 
     extractCellsFromSuperPixels();
 

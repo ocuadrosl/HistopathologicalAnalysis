@@ -22,7 +22,7 @@ template<typename rgbImageT>
 void CellBinarizationFilter<rgbImageT>::gaussianBlur()
 {
 
-    using FilterType = itk::DiscreteGaussianImageFilter<grayImageT, floatImageT>;
+ /*   using FilterType = itk::DiscreteGaussianImageFilter<grayImageT, floatImageT>;
     FilterType::Pointer smoothFilter = FilterType::New();
 
     smoothFilter->SetVariance(sigma);
@@ -43,9 +43,9 @@ void CellBinarizationFilter<rgbImageT>::gaussianBlur()
 
 
     VTKViewer::visualize<grayImageT>(logImage ,"blur Image");
+*/
 
 
-/*
     //Laplacian of Gaussian
     using floatImageT = itk::Image<float,2>;
 
@@ -78,7 +78,7 @@ void CellBinarizationFilter<rgbImageT>::gaussianBlur()
 
 
     VTKViewer::visualize<grayImageT>(logImage ,"LoG Image");
-*/
+
 
 }
 

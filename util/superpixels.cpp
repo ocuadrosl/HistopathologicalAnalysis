@@ -21,6 +21,7 @@ template<typename imageT>
 void SuperPixels<imageT>::rgbToLabImage()
 {
 
+/*
     using rgbToXyzFilterT = ColorConverterFilter<imageT, labImageT>;
     std::unique_ptr< rgbToXyzFilterT> rgbToXyzFilter(new rgbToXyzFilterT());
     rgbToXyzFilter->setInput(inputImage);
@@ -32,16 +33,16 @@ void SuperPixels<imageT>::rgbToLabImage()
     xyzToLabFilter->xyzToLab();
 
     labImage = xyzToLabFilter->getOutput();
+*/
 
 
-/*
     //testing.....
     using castFilterType = itk::CastImageFilter<imageT, labImageT>;
     typename castFilterType::Pointer castfilter = castFilterType::New();
     castfilter->SetInput(inputImage);
     castfilter->Update();
     labImage = castfilter->GetOutput();
-*/
+
     //labImage = inputImage;
 
 

@@ -29,7 +29,7 @@ template<typename inputImageT, typename outputImageT>
 void LoGFilter<inputImageT, outputImageT>::compute(bool show, bool echo)
 {
 
-    createKernel();
+    createKernel(1);
 
     using castInputImageT = itk::CastImageFilter<inputImageT, imageFloatT>;
     typename castInputImageT::Pointer castInputImageFilter = castInputImageT::New();

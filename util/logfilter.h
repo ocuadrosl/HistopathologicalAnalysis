@@ -44,7 +44,7 @@ private:
     imageFloatP kernel;
 
     unsigned kernelSize = 5;
-    float   sigma      = 0.5;
+    float   sigma      = 1.5;
 
     void createKernel(bool show=false);
 
