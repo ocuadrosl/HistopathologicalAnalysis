@@ -49,7 +49,7 @@ private:
 
 template class QuadNode<itk::Image<unsigned, 2>>;
 template class QuadNode<itk::Image<unsigned char, 2>>;
-
+template class QuadNode<itk::Image<float, 2>>;
 using imageUnsigned = itk::Image<itk::RGBPixel<unsigned>, 2>;
 template class QuadNode<imageUnsigned>;
 

@@ -58,7 +58,7 @@ private:
 
 template class QuadTree<itk::Image<unsigned, 2>>;
 //template class QuadTree<itk::Image<unsigned char, 2>>;
-
+template class QuadTree<itk::Image<float, 2>>;
 using imageUnsigned = itk::Image<itk::RGBPixel<unsigned>, 2>;
 template class QuadTree<imageUnsigned>;
 

@@ -49,6 +49,9 @@
 #include "../util/overlayrgbimagefilter.h"
 #include "../util/cellbinarizationfilter.h"
 #include "../util/math.h"
+#include "../util/overlayrgbimagefilter.h"
+#include "../util/extractchannelfilter.h"
+#include "../util/replaceimagechannelfilter.h"
 
 
 template<typename rgbImageT>
@@ -66,6 +69,8 @@ public:
     using grayImageDoubleT = itk::Image<double,2>;
     using grayImageDP =  grayImageDoubleT::Pointer;
 
+
+
     //Using float because double type is not allowed...
     using vectorImageT = itk::Image<itk::CovariantVector<float, 2>, 2>;
     using vectorImageP = vectorImageT::Pointer;
@@ -78,7 +83,13 @@ public:
     using cellsT = std::vector<std::vector<typename rgbImageT::IndexType>>;
 
 
-    using superPixelsT =  SuperPixels<rgbImageT>;
+
+
+    using floatImageT = itk::Image<float,2>;
+    using floatImageP = floatImageT::Pointer;
+
+
+
 
     //setters
 
@@ -97,8 +108,6 @@ public:
     void superPixels();
 
 
-
-
 private:
 
     vectorImageP outputImage;
@@ -110,6 +119,8 @@ private:
     grayImageP   cellNuclei;
     grayImageP   blurImage;
     grayImageP   labelImage; //superpixels
+
+    floatImageP   logImage;
 
 
     cellsT cells;

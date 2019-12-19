@@ -21,7 +21,7 @@ template<typename imageT>
 void SuperPixels<imageT>::rgbToLabImage()
 {
 
-/*
+
     using rgbToXyzFilterT = ColorConverterFilter<imageT, labImageT>;
     std::unique_ptr< rgbToXyzFilterT> rgbToXyzFilter(new rgbToXyzFilterT());
     rgbToXyzFilter->setInput(inputImage);
@@ -33,8 +33,8 @@ void SuperPixels<imageT>::rgbToLabImage()
     xyzToLabFilter->xyzToLab();
 
     labImage = xyzToLabFilter->getOutput();
-*/
 
+/*
 
     //testing.....
     using castFilterType = itk::CastImageFilter<imageT, labImageT>;
@@ -44,7 +44,7 @@ void SuperPixels<imageT>::rgbToLabImage()
     labImage = castfilter->GetOutput();
 
     //labImage = inputImage;
-
+*/
 
 }
 template<typename imageT>
@@ -52,7 +52,7 @@ void SuperPixels<imageT>::create()
 {
     rgbToLabImage();
 
-    //initRegularGrid();
+    initRegularGrid();
 
     //initQuadTreeGrid();
 
@@ -80,8 +80,8 @@ inline bool SuperPixels<imageT>::costFunction(unsigned cLabel, unsigned nLabel, 
     auto nSPMean = colorMeans[nLabel];
 
 
-    double cost1 = 0;
-    double cost2 = 0;
+    float cost1 = 0;
+    float cost2 = 0;
 
     const auto sedColor = Math::squaredEuclideanDistance<labPixelT>;
     const auto sedIndex = Math::squaredEuclideanDistance<labIndexT, 2>;
@@ -343,7 +343,10 @@ template<typename imageT>
 void SuperPixels<imageT>::show()
 {
 
-    inputImageP spImage = imageT::New();
+
+    using rgbImageT   = itk::Image<itk::RGBPixel<unsigned char>, 2>;
+
+    rgbImageT::Pointer spImage = rgbImageT::New();
     spImage->SetRegions(inputImage->GetRequestedRegion());
     spImage->Allocate();
 
@@ -357,7 +360,7 @@ void SuperPixels<imageT>::show()
 
     constNeighborhoodIteratorT  labelIt(radius,labelImage, labelImage->GetRequestedRegion());
     regionIteratorT  it(inputImage, inputImage->GetRequestedRegion());
-    regionIteratorT  spIt(spImage, spImage->GetRequestedRegion());
+    itk::ImageRegionIterator<rgbImageT>  spIt(spImage, spImage->GetRequestedRegion());
 
 
 
@@ -365,7 +368,7 @@ void SuperPixels<imageT>::show()
     it.GoToBegin();
     spIt.GoToBegin();
 
-    typename imageT::PixelType red;
+    typename rgbImageT::PixelType red;
     red.SetRed(255);
 
     unsigned cLabel;
@@ -402,7 +405,7 @@ void SuperPixels<imageT>::show()
     }
 
 
-    VTKViewer::visualize<imageT>(spImage, "Super Pixels");
+    VTKViewer::visualize<rgbImageT>(spImage, "Super Pixels");
 
 }
 

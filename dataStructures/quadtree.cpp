@@ -178,7 +178,17 @@ typename QuadTree<imageT>::grayImageP QuadTree<imageT>::getLabelImage()
 
     if constexpr(std::is_arithmetic<pixelT>::value) // is gray-level
     {
-        grayImage = inputImage;
+       // grayImage = inputImage;
+
+        //testing.....
+        using castFilterType = itk::CastImageFilter<imageT, grayImageT>;
+        typename castFilterType::Pointer castfilter = castFilterType::New();
+        castfilter->SetInput(inputImage);
+        castfilter->Update();
+        grayImage = castfilter->GetOutput();
+
+
+
 
     }
     else if constexpr (std::is_unsigned<typename pixelT::ComponentType>::value)

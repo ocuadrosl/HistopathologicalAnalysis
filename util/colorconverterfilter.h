@@ -92,5 +92,7 @@ template  class ColorConverterFilter<imageDouble  , imageDouble>;
 template  class ColorConverterFilter<imageUnsigned, imageDouble>;
 template  class ColorConverterFilter<imageDouble  , imageUnsigned>;
 template  class ColorConverterFilter<imageUnsigned, imageFloat >;
+template  class ColorConverterFilter<imageFloat, imageFloat >;
+template  class ColorConverterFilter<imageFloat, imageUnsigned>;
 
 #endif // COLORCONVERTERFILTER_H

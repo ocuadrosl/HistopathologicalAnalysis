@@ -30,7 +30,7 @@ class SuperPixels
     using inputImageP = typename imageT::Pointer;
 
     //CIELAB image type
-    using labPixelT = itk::RGBPixel<double>;
+    using labPixelT = itk::RGBPixel<float>;
     using labImageT = itk::Image<labPixelT, 2>;
     using labImageP = typename labImageT::Pointer;
     using labIndexT = labImageT::IndexType;
@@ -72,12 +72,12 @@ private:
     spIndexMeansT indexMeans;
     spSizesT spSizes;
 
-    unsigned sideLength = 10;
-    double   lambda1    = 2;
-    double   lambda2    = 0.25;
-    unsigned iterations = 25;
+    unsigned sideLength = 20;
+    float   lambda1    = 1;
+    float   lambda2    = 0.1;
+    unsigned iterations = 20;
 
-    unsigned spNumber=0;
+    unsigned spNumber = 0;
 
 
     void rgbToLabImage();
@@ -94,6 +94,8 @@ private:
 //using imageDouble   = itk::Image<itk::RGBPixel<double  >, 2>;
 using imageUnsigned = itk::Image<itk::RGBPixel<unsigned>, 2>;
 
+//template class SuperPixels<itk::Image<float   , 2>>;
+//template class SuperPixels<itk::Image<unsigned, 2>>;
 template class SuperPixels<imageUnsigned>;
 
 
