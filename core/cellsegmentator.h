@@ -117,7 +117,7 @@ private:
     grayImageP   eqImage;
     grayImageP   blurMaskImage;
     grayImageP   cellNuclei;
-    grayImageP   blurImage;
+    floatImageP   blurImage;
     grayImageP   labelImage; //superpixels
 
     floatImageP   logImage;

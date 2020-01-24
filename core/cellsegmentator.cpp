@@ -55,15 +55,26 @@ void CellSegmentator<rgbImageT>::superPixels()
     superPixels = std::make_unique<superPixelsT>();
 
 
-   using FilterType = itk::CastImageFilter<grayImageT, rgbImageT>;
+    //rescale to 0 - 1
+    using rescaleFilterType = itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
+    rescaleFilterType::Pointer rescaleFilter = rescaleFilterType::New();
+    rescaleFilter->SetInput(blurImage);
+    rescaleFilter->SetOutputMinimum(0);
+    rescaleFilter->SetOutputMaximum(255);
+    rescaleFilter->Update();
+
+
+
+
+    using FilterType = itk::CastImageFilter<grayImageT, rgbImageT>;
     typename FilterType::Pointer filter = FilterType::New();
-    filter->SetInput(blurImage);
+    filter->SetInput(rescaleFilter->GetOutput());
     filter->Update();
 
     superPixels->setImage(filter->GetOutput()); //input image
     //superPixels->setImage(blurImage); //input image
 
-/*
+    /*
     std::unique_ptr<QuadTree<grayImageT>> quadTree(new QuadTree<grayImageT>());
 
     quadTree->setImage(cellNuclei);
@@ -89,30 +100,6 @@ void CellSegmentator<rgbImageT>::superPixels()
 template<typename rgbImageT>
 void CellSegmentator<rgbImageT>::findCellNuclei()
 {
-/*
-    //delete it
-    using rgbToGrayFilterT = itk::RGBToLuminanceImageFilter<rgbImageT, grayImageT >;
-    typename rgbToGrayFilterT::Pointer rgbToGrayFilter = rgbToGrayFilterT::New();
-    rgbToGrayFilter->SetInput(inputImage);
-    rgbToGrayFilter->Update();
-    grayImage = rgbToGrayFilter->GetOutput();
-
-
-
-
-    // my own implementation
-    using cellBinarizationFilterT = CellBinarizationFilter<rgbImageT>;
-    std::unique_ptr<cellBinarizationFilterT> cellBinarizationF(new cellBinarizationFilterT);
-    cellBinarizationF->setImage(inputImage);
-    cellBinarizationF->compute();
-
-    blurMaskImage = cellBinarizationF->getBlurMaskImage();
-    blurImage = cellBinarizationF->getBlurImage();
-    eqImage = cellBinarizationF->getEqualizedImage();
-    computeLocalMinimum();
-
-  */
-
 
     //CIELAB image type
     using labPixelT = itk::RGBPixel<float>;
@@ -140,148 +127,56 @@ void CellSegmentator<rgbImageT>::findCellNuclei()
     extractChannelFilter->extractChannel(2);
 
 
-    //rgb to luminance
-  /*  using rgbToGrayFilterT = itk::RGBToLuminanceImageFilter< rgbImageT, grayImageT >;
-    typename rgbToGrayFilterT::Pointer rgbToGrayFilter = rgbToGrayFilterT::New();
-    rgbToGrayFilter->SetInput(inputImage);
-    rgbToGrayFilter->Update();
 
-    VTKViewer::visualize<grayImageT>(rgbToGrayFilter->GetOutput() ,"gray Image");
-*/
-/*
-    //Guassian smooth
-    using smoothFilterT = itk::SmoothingRecursiveGaussianImageFilter<floatImageT, floatImageT>;
-
-    smoothFilterT::Pointer smoothFilter = smoothFilterT::New();
-    smoothFilter->SetNormalizeAcrossScale(false);
-    smoothFilter->SetInput(extractChannelFilter->getOutputImage());
-    smoothFilter->SetSigma(5);
-    smoothFilter->Update();
-    //logImage = smoothFilter->GetOutput(); //try this
-*/
-
-    //laplacian
-    using smoothFilterT = itk::LaplacianRecursiveGaussianImageFilter<floatImageT, floatImageT>;
-    smoothFilterT::Pointer smoothFilter = smoothFilterT::New();
-    smoothFilter->SetNormalizeAcrossScale(false);
-    smoothFilter->SetInput(extractChannelFilter->getOutputImage());
-    smoothFilter->SetSigma(10);
-    smoothFilter->Update();
-
-
-
-
-    using rescaleFilterType2= itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
-    rescaleFilterType2::Pointer rescaleFilter2 = rescaleFilterType2::New();
-    rescaleFilter2->SetInput(smoothFilter->GetOutput());
-    rescaleFilter2->SetOutputMinimum(0);
-    rescaleFilter2->SetOutputMaximum(255);
-    VTKViewer::visualize<grayImageT>(rescaleFilter2->GetOutput() ,"Smooth b channel Image");
-    blurImage = rescaleFilter2->GetOutput();
-
-
-    //replace B channel
-
-    using replaceImageChannelT = ReplaceImageChannelFilter<labImageT>;
-    std::unique_ptr<replaceImageChannelT> replaceImageChannelFilter(new replaceImageChannelT);
-    replaceImageChannelFilter->setInputImage(labImage);
-    replaceImageChannelFilter->setChannelImage(smoothFilter->GetOutput());
-    replaceImageChannelFilter->replaceChannel(2);
-    labImage = replaceImageChannelFilter->getOutput();
-
-
-
-    using labToXyzFilterT = ColorConverterFilter<labImageT, labImageT>;
-    std::unique_ptr< labToXyzFilterT> labToXyzFilter(new labToXyzFilterT());
-    labToXyzFilter->setInput(labImage);
-    labToXyzFilter->labToXyz();
-
-    using xyzToRgbFilterT = ColorConverterFilter<labImageT, rgbImageT>;
-    std::unique_ptr< xyzToRgbFilterT> xyzToRgbFilter(new xyzToRgbFilterT());
-    xyzToRgbFilter->setInput(labToXyzFilter->getOutput());
-    xyzToRgbFilter->xyzToRgb();
-
-
-    //VTKViewer::visualize<rgbImageT>(inputImage ,"Input Image");
-   // VTKViewer::visualize<rgbImageT>(xyzToRgbFilter->getOutput() ,"Smooth lab Image");
-
-
-
-
-
-/*
-
-    using FilterType = itk::DiscreteGaussianImageFilter<floatImageT, floatImageT>;
-    FilterType::Pointer smoothFilter = FilterType::New();
-
-    smoothFilter->SetVariance(10);
-    smoothFilter->SetMaximumKernelWidth(17);
-    smoothFilter->SetInput(bChannel);
-    smoothFilter->Update();
-
-*/
-
-/*
-    using FilterType = itk::LaplacianRecursiveGaussianImageFilter<grayImageT, floatImageT>;
-    FilterType::Pointer filter = FilterType::New();
-    filter->SetInput(rgbToGrayFilter->GetOutput());
-    filter->SetSigma(1);
-    filter->Update();
-*/
-
-
-    //logImage = smoothFilter->GetOutput(); //<- delete it
-
-    /*
-
-    //float to unsigned
-    using rescaleFilterType2= itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
-    rescaleFilterType2::Pointer rescaleFilter2 = rescaleFilterType2::New();
-    rescaleFilter2->SetInput(smoothFilter->GetOutput());
-    rescaleFilter2->SetOutputMinimum(0);
-    rescaleFilter2->SetOutputMaximum(255);
-
-
-
-
-    VTKViewer::visualize<grayImageT>(rescaleFilter2->GetOutput() ,"blur Image");
-*/
-/*
-
-
-
-
-    using rescaleFilterType = itk::RescaleIntensityImageFilter<grayImageT, floatImageT>;
+    //rescale to 0 - 1
+    using rescaleFilterType = itk::RescaleIntensityImageFilter<floatImageT, floatImageT>;
     rescaleFilterType::Pointer rescaleFilter = rescaleFilterType::New();
-    rescaleFilter->SetInput(rgbToGrayFilter->GetOutput());
+    rescaleFilter->SetInput(extractChannelFilter->getOutputImage());
     rescaleFilter->SetOutputMinimum(0.f);
     rescaleFilter->SetOutputMaximum(1.f);
     rescaleFilter->Update();
 
 
 
-    std::unique_ptr<LoGFilter<floatImageT,floatImageT>> logFilter(new LoGFilter<floatImageT,floatImageT>());
-    logFilter->setImage(rescaleFilter->GetOutput());
-    logFilter->setSigma(0.25f);
-    logFilter->setKernelSize(17);
-    logFilter->compute();
+    //laplacian
+    using smoothFilterT = itk::SmoothingRecursiveGaussianImageFilter<floatImageT, floatImageT>;
+    smoothFilterT::Pointer smoothFilter = smoothFilterT::New();
+    smoothFilter->SetNormalizeAcrossScale(false);
+    smoothFilter->SetInput(rescaleFilter->GetOutput());
+    smoothFilter->SetSigma(10);
+    smoothFilter->Update();
 
+    blurImage = smoothFilter->GetOutput();
 
-    logImage = logFilter->getOutput();
-
-    VTKViewer::visualize<floatImageT>(logImage ,"LOG");
-
-    using rescaleFilterType2 = itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
+    //visualizing
+    using rescaleFilterType2= itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
     rescaleFilterType2::Pointer rescaleFilter2 = rescaleFilterType2::New();
-    rescaleFilter2->SetInput(logImage);
+    rescaleFilter2->SetInput(rescaleFilter->GetOutput());
     rescaleFilter2->SetOutputMinimum(0);
     rescaleFilter2->SetOutputMaximum(255);
     rescaleFilter2->Update();
 
+    VTKViewer::visualize<grayImageT>(rescaleFilter2->GetOutput() ,"b channel Image");
 
-    VTKViewer::visualize<grayImageT>(rescaleFilter2->GetOutput() ,"LOG rescale");
 
-    */
+
+
+    //visualizing
+    using rescaleFilterType3= itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
+    rescaleFilterType3::Pointer rescaleFilter3 = rescaleFilterType3::New();
+    rescaleFilter3->SetInput(blurImage);
+    rescaleFilter3->SetOutputMinimum(0);
+    rescaleFilter3->SetOutputMaximum(255);
+    rescaleFilter3->Update();
+
+    VTKViewer::visualize<grayImageT>(rescaleFilter3->GetOutput() ,"Smooth b channel Image");
+
+
+
+
+    //computeLocalMinimum();
+
+
 
 }
 
@@ -299,118 +194,17 @@ void CellSegmentator<imageT>::createGrayImage()
 }
 
 
-template<typename imageT>
-void CellSegmentator<imageT>::computeLoGNorm()
-{
 
-    /*
-    LogNorm.clear();
-
-    //computing LoG for various sigmas
-
-    using logFilterT = LoGFilter<grayImageT, grayImageDoubleT>;
-    std::unique_ptr<logFilterT> logFilter(new logFilterT);
-    logFilter->setImage(grayImage);
-
-    using multiplyFilterT = itk::MultiplyImageFilter<grayImageDoubleT, grayImageDoubleT, grayImageDoubleT>;
-
-
-    for(float sigma=sigmaMin; sigma <= sigmaMax; sigma += stepSize)
-    {
-
-       logFilter->setSigma(sigma);
-       logFilter->setKernelSize(kernelSize);
-       logFilter->compute();
-
-       multiplyFilterT::Pointer multiplyFilter = multiplyFilterT::New();
-       multiplyFilter->SetInput(logFilter->getOutput());
-       multiplyFilter->SetConstant(sigma*sigma);
-       multiplyFilter->Update();
-
-       LogNorm.push_back(multiplyFilter->GetOutput());
-
-       //itk::ViewImage<grayImageD>::View(logFilter->getOutput(), "sigma");
-       //itk::ViewImage<grayImageDoubleT>::View(multiplyFilter->GetOutput(), "sigma 2");
-
-    }
-*/
-
-}
-
-
-template<typename rgbImageT>
-void CellSegmentator<rgbImageT>::computeEuclideanMap()
-{
-
-
-    using LiFilterType             = itk::LiThresholdImageFilter<grayImageT, grayImageT>;
-    using HuangFilterType          = itk::HuangThresholdImageFilter<grayImageT, grayImageT>;
-    using IntermodesFilterType     = itk::IntermodesThresholdImageFilter<grayImageT, grayImageT>;
-    using IsoDataFilterType        = itk::IsoDataThresholdImageFilter<grayImageT, grayImageT>;
-    using KittlerIllingworthFilterType = itk::KittlerIllingworthThresholdImageFilter<grayImageT, grayImageT>;
-    using LiFilterType             = itk::LiThresholdImageFilter<grayImageT, grayImageT>;
-    using MaximumEntropyFilterType = itk::MaximumEntropyThresholdImageFilter<grayImageT, grayImageT>;
-    using MomentsFilterType        = itk::MomentsThresholdImageFilter<grayImageT, grayImageT>;
-    using OtsuFilterType           = itk::OtsuThresholdImageFilter<grayImageT, grayImageT>;
-    using RenyiEntropyFilterType   = itk::RenyiEntropyThresholdImageFilter<grayImageT, grayImageT>;
-    using ShanbhagFilterType       = itk::ShanbhagThresholdImageFilter<grayImageT, grayImageT>;
-    using TriangleFilterType       = itk::TriangleThresholdImageFilter<grayImageT, grayImageT>;
-    using YenFilterType            = itk::YenThresholdImageFilter<grayImageT, grayImageT>;
-
-    using FilterContainerType =  std::map<std::string, itk::HistogramThresholdImageFilter<grayImageT, grayImageT>::Pointer>;
-    FilterContainerType filterContainer;
-
-    filterContainer["Huang"] = HuangFilterType::New();
-    filterContainer["Intermodes"] = IntermodesFilterType::New();
-    filterContainer["IsoData"] = IsoDataFilterType::New();
-    filterContainer["KittlerIllingworth"] = KittlerIllingworthFilterType::New();
-    filterContainer["Li"] = LiFilterType::New();
-    filterContainer["MaximumEntropy"] = MaximumEntropyFilterType::New();
-    filterContainer["Moments"] = MomentsFilterType::New();
-    filterContainer["Otsu"] = OtsuFilterType::New();
-    filterContainer["RenyiEntropy"] = RenyiEntropyFilterType::New();
-    filterContainer["Shanbhag"] = ShanbhagFilterType::New();
-    filterContainer["Triangle"] = TriangleFilterType::New();
-    filterContainer["Yen"] = YenFilterType::New();
-
-    std::string filterName = "MaximumEntropy";
-    filterContainer[filterName]->SetInsideValue(0);
-    filterContainer[filterName]->SetOutsideValue(1);
-    filterContainer[filterName]->SetInput(grayImage);
-    filterContainer[filterName]->Update();
-
-
-    // my own implementation
-    using cellBinarizationFilterT = CellBinarizationFilter<rgbImageT>;
-    std::unique_ptr<cellBinarizationFilterT> cellBinarizationF(new cellBinarizationFilterT);
-    cellBinarizationF->setImage(inputImage);
-    cellBinarizationF->compute();
-
-    blurMaskImage = cellBinarizationF->getBlurMaskImage();
-
-
-/*
-    using signedMaurerDistanceMapImageFilterT =   itk::SignedMaurerDistanceMapImageFilter<grayImageT, grayImageDoubleT>;
-    signedMaurerDistanceMapImageFilterT::Pointer distanceMapImageFilter =   signedMaurerDistanceMapImageFilterT::New();
-    distanceMapImageFilter->SetInput(cellBinarizationF->getBinaryImage());
-    distanceMapImageFilter->InsideIsPositiveOn();
-
-    distanceMapImageFilter->Update();
-    euclideanMap = distanceMapImageFilter->GetOutput();
-    //itk::ViewImage<grayImageDoubleT>::View(euclideanMap, "Euclidean Map");
-*/
-
-}
 
 
 template<typename imageT>
 void CellSegmentator<imageT>::computeLocalMinimum()
 {
 
-
+/*
 
     itk::ImageRegionConstIterator<grayImageT> grayIt(grayImage, grayImage->GetRequestedRegion());
-    itk::ImageRegionConstIterator<grayImageT> blurIt(eqImage, eqImage->GetRequestedRegion());
+    itk::ImageRegionConstIterator<grayImageT> blurIt(blurImage, blurImage->GetRequestedRegion());
 
 
     multiplyImage = grayImageT::New();
@@ -432,7 +226,7 @@ void CellSegmentator<imageT>::computeLocalMinimum()
         ++surfIt;
 
     }
-
+*/
   /*  using rescaleFilterType = itk::RescaleIntensityImageFilter<grayImageDoubleT, grayImageT>;
     rescaleFilterType::Pointer rescaleFilter2 = rescaleFilterType::New();
     rescaleFilter2->SetInput(surface);
@@ -440,7 +234,7 @@ void CellSegmentator<imageT>::computeLocalMinimum()
     rescaleFilter2->SetOutputMaximum(255);
     rescaleFilter2->Update();
 */
-    VTKViewer::visualize<grayImageT>(multiplyImage ,"multiply");
+    //VTKViewer::visualize<grayImageT>(multiplyImage ,"multiply");
 
 
     //showing results
@@ -453,13 +247,19 @@ void CellSegmentator<imageT>::computeLocalMinimum()
     rescaleFilter->Update();
 */
 
-    using RegionalMinimaImageFilter = itk::RegionalMinimaImageFilter<grayImageT, grayImageT>;
+    using RegionalMinimaImageFilter = itk::RegionalMinimaImageFilter<floatImageT, grayImageT>;
     RegionalMinimaImageFilter::Pointer regionalMinimaFilter = RegionalMinimaImageFilter::New();
-    regionalMinimaFilter->SetInput(blurMaskImage);
+    regionalMinimaFilter->SetInput(blurImage);
     regionalMinimaFilter->SetBackgroundValue(0);
     regionalMinimaFilter->SetForegroundValue(255);
 
     regionalMinimaFilter->Update();
+
+
+    VTKViewer::visualize<grayImageT>(regionalMinimaFilter->GetOutput() ,"Seeds");
+
+
+    return;
 
     using ConnectedComponentImageFilterType = itk::ConnectedComponentImageFilter<grayImageT, grayImageT>;
     ConnectedComponentImageFilterType::Pointer connected = ConnectedComponentImageFilterType::New();
