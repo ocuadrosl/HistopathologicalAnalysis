@@ -176,6 +176,15 @@ void CellSegmentator<rgbImageT>::findCellNuclei()
 
     //computeLocalMinimum();
 
+    //TO-DO delete this
+    using rgbToGrayFilterT = itk::RGBToLuminanceImageFilter< rgbImageT, grayImageT >;
+    typename rgbToGrayFilterT::Pointer rgbToGrayFilter = rgbToGrayFilterT::New();
+    rgbToGrayFilter->SetInput(inputImage);
+    rgbToGrayFilter->Update();
+    VTKViewer::visualize<grayImageT>(rgbToGrayFilter->GetOutput() ,"Gray-scale image");
+
+
+
 
 
 }
