@@ -83,10 +83,11 @@ public:
     using cellsT = std::vector<std::vector<typename rgbImageT::IndexType>>;
 
 
-
-
     using floatImageT = itk::Image<float,2>;
     using floatImageP = floatImageT::Pointer;
+
+    using labPixelT = itk::RGBPixel<float>;
+    using labImageT = itk::Image<labPixelT, 2>;
 
 
 
@@ -101,8 +102,8 @@ public:
 
 
     //methods
-    void computeGradients();
-    void findCellNuclei();
+
+    void findCells();
     void visualize();
 
     void superPixels();
@@ -117,10 +118,10 @@ private:
     grayImageP   eqImage;
     grayImageP   blurMaskImage;
     grayImageP   cellNuclei;
-    floatImageP   blurImage;
-    grayImageP   labelImage; //superpixels
+    floatImageP  distanceMap;
+    grayImageP   labelMap; //superpixels
 
-    floatImageP   logImage;
+    floatImageP   BImage;
 
 
     cellsT cells;
@@ -137,14 +138,18 @@ private:
 
     //std::unique_ptr<superPixelsT> superPixelsP;
 
+
+    void LabelRoughly();
+    void CreateImageB(bool show=false);
+    void computeDistances(bool show=false);
+
+
     void createGrayImage();
     void computeLoGNorm();
     void computeEuclideanMap();
     void computeLocalMinimum();
 
     void extractCellsFromSuperPixels();
-
-
 
 
 };

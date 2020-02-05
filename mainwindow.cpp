@@ -48,7 +48,7 @@ void MainWindow::cellSegmentation()
     cellSegmentator->setImage(inputImage);
     //cellSegmentator->computeGradients();
 
-    cellSegmentator->findCellNuclei();
+    cellSegmentator->findCells();
     cellSegmentator->superPixels();
 
 

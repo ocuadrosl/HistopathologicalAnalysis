@@ -64,7 +64,7 @@ int main(int argc, char **argv)
     using cellSegmentatorT = CellSegmentator<grayImageT>;
     std::unique_ptr<cellSegmentatorT>  cellSegmentator(new cellSegmentatorT());
     cellSegmentator->setImage(reader->getGrayScaleImage());
-    cellSegmentator->computeGradients();
+
 
 
 
