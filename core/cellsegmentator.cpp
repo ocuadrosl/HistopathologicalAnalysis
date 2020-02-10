@@ -41,7 +41,19 @@ void CellSegmentator<rgbImageT>::CreateImageB(bool show)
     extractChannelFilter->setImputImage(xyzToLabFilter->getOutput());
     extractChannelFilter->extractChannel(2);
 
-    BImage = extractChannelFilter->getOutputImage();
+
+
+    using rescaleFilterType2= itk::RescaleIntensityImageFilter<floatImageT, floatImageT>;
+    rescaleFilterType2::Pointer rescaleFilter = rescaleFilterType2::New();
+    rescaleFilter->SetInput(extractChannelFilter->getOutputImage());
+    rescaleFilter->SetOutputMinimum(-1.f);
+    rescaleFilter->SetOutputMaximum(1.f);
+    rescaleFilter->Update();
+     BImage = rescaleFilter->GetOutput();
+
+
+    //BImage = extractChannelFilter->getOutputImage();
+
 
     //visualizing
     if(show)
@@ -49,7 +61,7 @@ void CellSegmentator<rgbImageT>::CreateImageB(bool show)
 
         using rescaleFilterType2= itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
         rescaleFilterType2::Pointer rescaleFilter2 = rescaleFilterType2::New();
-        rescaleFilter2->SetInput(extractChannelFilter->getOutputImage());
+        rescaleFilter2->SetInput(BImage);
         rescaleFilter2->SetOutputMinimum(0);
         rescaleFilter2->SetOutputMaximum(255);
         rescaleFilter2->Update();
@@ -61,39 +73,68 @@ void CellSegmentator<rgbImageT>::CreateImageB(bool show)
 }
 
 template<typename rgbImageT>
-void CellSegmentator<rgbImageT>::computeDistances(bool show)
+typename CellSegmentator<rgbImageT>::floatImageP
+CellSegmentator<rgbImageT>::computeDistances(floatImageP inputImage, bool show)
 {
 
-    distanceMap =  floatImageT::New();
-    distanceMap->SetRegions(BImage->GetRequestedRegion());
-    distanceMap->Allocate();
+    auto outputImage =  floatImageT::New();
+    outputImage->SetRegions(BImage->GetRequestedRegion());
+    outputImage->Allocate();
 
 
 
     using neighborhoodIteratorT = itk::NeighborhoodIterator<floatImageT>;
     neighborhoodIteratorT::RadiusType radius;
-    radius.Fill(5);
+    radius.Fill(10);
 
-    itk::NeighborhoodIterator<floatImageT> it(radius , BImage, BImage->GetRequestedRegion());
-    itk::ImageRegionIterator<floatImageT> dIt(distanceMap, distanceMap->GetRequestedRegion());
+    itk::NeighborhoodIterator<floatImageT> it(radius , inputImage, inputImage->GetRequestedRegion());
+    itk::ImageRegionIterator<floatImageT>  dIt(outputImage, outputImage->GetRequestedRegion());
+
+
+
+    float mean1, size1;
+    float mean2, size2;
+    float distance;
+    float side;
+    float weight;
 
 
      while(!it.IsAtEnd())
      {
-         float distance =0.f;
+         distance = mean1 = mean2 = size1 = size2 = 0.f;
 
          for(unsigned i=0; i< it.Size(); ++i)
          {
-             distance += std::abs(it.GetCenterPixel() - it.GetPixel(i));
+
+             if (it.GetPixel(i) < 0) //cells
+             {
+                 mean1 += it.GetPixel(i);
+                 ++size1;
+             }
+             else
+             {
+                 mean2 += it.GetPixel(i);
+                 ++size2;
+             }
+
+
+
+
+
+             //distance += std::exp(-std::abs(it.GetCenterPixel() - it.GetPixel(i)));
          }
 
-         dIt.Set(distance/it.Size() + (10*it.GetCenterPixel()));
+         size1 /= it.Size();
+         size2 /= it.Size();
+
+         side = (size1 > size2)? -1 : 1;
+         weight = (size1 > size2)? size1 : size2;
+
+         dIt.Set(it.GetCenterPixel() + (( side - it.GetCenterPixel()) * weight) );
 
          ++it;
          ++dIt;
      }
-
-
 
 
      if(show)
@@ -101,7 +142,7 @@ void CellSegmentator<rgbImageT>::computeDistances(bool show)
 
          using rescaleFilterType2= itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
          rescaleFilterType2::Pointer rescaleFilter = rescaleFilterType2::New();
-         rescaleFilter->SetInput(distanceMap);
+         rescaleFilter->SetInput(outputImage);
          rescaleFilter->SetOutputMinimum(0);
          rescaleFilter->SetOutputMaximum(255);
          rescaleFilter->Update();
@@ -110,7 +151,7 @@ void CellSegmentator<rgbImageT>::computeDistances(bool show)
      }
 
 
-
+    return outputImage;
 
 
 }
@@ -139,21 +180,35 @@ void CellSegmentator<rgbImageT>::LabelRoughly()
     labelMap->SetRegions(BImage->GetRequestedRegion());
     labelMap->Allocate();
 
-    itk::ImageRegionConstIterator<floatImageT> BIt(BImage, BImage->GetRequestedRegion());
+    itk::ImageRegionIterator<floatImageT> BIt(BImage, BImage->GetRequestedRegion());
     itk::ImageRegionIterator<grayImageT> labelIt(labelMap, labelMap->GetRequestedRegion());
 
 
     while(!BIt.IsAtEnd())
     {
 
-        labelIt.Set( (BIt.Get() <= threshold)? 1 : 255 );
+        labelIt.Set( (BIt.Get() <= threshold)? 0 : 255 );
+
+        BIt.Set((BIt.Get() <= threshold)? BIt.Get() : 0);
 
         ++BIt;
         ++labelIt;
 
     }
 
-    VTKViewer::visualize<grayImageT>(labelMap ,"Label Map");
+    //VTKViewer::visualize<grayImageT>(labelMap ,"Label Map");
+
+    //visualizing
+
+
+        using rescaleFilterType2= itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
+        rescaleFilterType2::Pointer rescaleFilter2 = rescaleFilterType2::New();
+        rescaleFilter2->SetInput(BImage);
+        rescaleFilter2->SetOutputMinimum(0);
+        rescaleFilter2->SetOutputMaximum(255);
+        rescaleFilter2->Update();
+
+        VTKViewer::visualize<grayImageT>(rescaleFilter2->GetOutput() ,"Labels");
 
 
 
@@ -167,9 +222,15 @@ void CellSegmentator<rgbImageT>::findCells()
 {
 
     CreateImageB(true);
-    computeDistances(true);
-    //LabelRoughly();
 
+
+    //LabelRoughly();
+    auto map = computeDistances(BImage, true);
+    map = computeDistances(map, true);
+    //map = computeDistances(map, true);
+    //map = computeDistances(map, true);
+    //map = computeDistances(map, true);
+   // map = computeDistances(map, true);
 
 
 }

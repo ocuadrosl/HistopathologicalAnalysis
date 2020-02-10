@@ -22,6 +22,9 @@
 #include <itkConnectedComponentImageFilter.h>
 #include <itkCastImageFilter.h>
 #include <itkLabelMapToRGBImageFilter.h>
+#include <itkImageDuplicator.h>
+
+#include <itkOtsuMultipleThresholdsImageFilter.h>
 
 
 #include "itkLiThresholdImageFilter.h"
@@ -118,10 +121,12 @@ private:
     grayImageP   eqImage;
     grayImageP   blurMaskImage;
     grayImageP   cellNuclei;
+
+
+    grayImageP   edges;
     floatImageP  distanceMap;
     grayImageP   labelMap; //superpixels
-
-    floatImageP   BImage;
+    floatImageP  BImage;
 
 
     cellsT cells;
@@ -141,7 +146,8 @@ private:
 
     void LabelRoughly();
     void CreateImageB(bool show=false);
-    void computeDistances(bool show=false);
+    floatImageP computeDistances(floatImageP inputImage , bool show=false);
+    void findEdges(bool show=false);
 
 
     void createGrayImage();
