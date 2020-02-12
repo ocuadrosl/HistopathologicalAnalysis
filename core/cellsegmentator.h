@@ -25,6 +25,7 @@
 #include <itkImageDuplicator.h>
 
 #include <itkOtsuMultipleThresholdsImageFilter.h>
+#include <itkImageLinearConstIteratorWithIndex.h>
 
 
 #include "itkLiThresholdImageFilter.h"
@@ -40,7 +41,7 @@
 #include "itkTriangleThresholdImageFilter.h"
 #include "itkYenThresholdImageFilter.h"
 
-
+#include <itkCannyEdgeDetectionImageFilter.h>
 
 
 
@@ -121,12 +122,14 @@ private:
     grayImageP   eqImage;
     grayImageP   blurMaskImage;
     grayImageP   cellNuclei;
+    floatImageP  blurImage;
 
 
     grayImageP   edges;
     floatImageP  distanceMap;
     grayImageP   labelMap; //superpixels
     floatImageP  BImage;
+    floatImageP  diffMap;
 
 
     cellsT cells;
@@ -150,8 +153,12 @@ private:
     void findEdges(bool show=false);
 
 
+    void computeDistanceDifferences(bool show = false);
+
+
     void createGrayImage();
-    void computeLoGNorm();
+    void GaussianBlur(bool show=false);
+    void edgeDetection(bool show=false);
     void computeEuclideanMap();
     void computeLocalMinimum();
 
