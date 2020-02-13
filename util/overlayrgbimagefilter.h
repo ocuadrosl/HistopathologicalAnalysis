@@ -42,7 +42,7 @@ private:
    rgbImageP outputImage;
 
    float backgroundAlpha = 1.0f;
-   float foregroundAlpha = 0.5;
+   float foregroundAlpha = 0.5f;
 
 
    inline float blendMode(float background, float foreground,std::string mode);

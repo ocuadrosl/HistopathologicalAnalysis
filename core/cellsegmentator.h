@@ -43,6 +43,10 @@
 
 #include <itkCannyEdgeDetectionImageFilter.h>
 
+#include <itkLabelMapOverlayImageFilter.h>
+#include <itkGradientImageFilter.h>
+#include <itkVectorImageToImageAdaptor.h>
+
 
 
 //local includes
@@ -67,7 +71,7 @@ public:
     using imageP     = typename rgbImageT::Pointer;
     using pixelCompT = typename rgbImageT::PixelType;
 
-    using grayImageT = itk::Image<unsigned,2>;
+    using grayImageT = itk::Image<unsigned, 2>;
     using grayImageP =  grayImageT::Pointer;
 
     using grayImageDoubleT = itk::Image<double,2>;
@@ -152,6 +156,10 @@ private:
     floatImageP computeDistances(floatImageP inputImage , bool show=false);
     void findEdges(bool show=false);
 
+    void ComputeGradients();
+
+
+
 
     void computeDistanceDifferences(bool show = false);
 
@@ -163,6 +171,10 @@ private:
     void computeLocalMinimum();
 
     void extractCellsFromSuperPixels();
+
+
+
+    void overlay(grayImageP image);
 
 
 };

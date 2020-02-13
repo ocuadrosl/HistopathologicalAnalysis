@@ -255,7 +255,7 @@ void CellSegmentator<rgbImageT>::edgeDetection(bool show)
     using CannyFilterType = itk::CannyEdgeDetectionImageFilter<floatImageT, floatImageT>;
     CannyFilterType::Pointer cannyFilter = CannyFilterType::New();
     cannyFilter->SetInput(BImage);
-    cannyFilter->SetVariance(20);
+    cannyFilter->SetVariance(10);
     //cannyFilter->SetUpperThreshold(upperThreshold);
     //cannyFilter->SetLowerThreshold(lowerThreshold);
     cannyFilter->Update();
@@ -271,7 +271,7 @@ void CellSegmentator<rgbImageT>::edgeDetection(bool show)
     if(show)
     {
 
-        VTKViewer::visualize<grayImageT>(rescaleFilter->GetOutput() ,"Canny");
+        VTKViewer::visualize<grayImageT>(edges ,"Canny");
     }
 
 
@@ -307,7 +307,7 @@ void CellSegmentator<rgbImageT>::computeDistanceDifferences(bool show)
     {
         if(itEdges.Get()==255)
         {
-            diffMap->SetPixel(itEdges.GetIndex(), 255);
+            diffMap->SetPixel(itEdges.GetIndex(), 0);
             continue;
         }
 
@@ -355,11 +355,9 @@ void CellSegmentator<rgbImageT>::computeDistanceDifferences(bool show)
 
         dCols = euclideanDistance(indexAux, itEdges.GetIndex());
 
-
-        //std::cout<<dCols<<std::endl;
-        //tigstd::cout<<std::abs(dCols - dRows)<<std::endl;
-        //float diff = (dCols - dRows)/dCols;
-        diffMap->SetPixel(itEdges.GetIndex(), (std::abs(dCols-dRows)< 2)?0:255);
+        float diff = std::abs(dCols - dRows)/dCols;
+        //std::cout<<diff<<std::endl;
+        diffMap->SetPixel(itEdges.GetIndex(), diff);
 
 
 
@@ -373,8 +371,6 @@ void CellSegmentator<rgbImageT>::computeDistanceDifferences(bool show)
         rescaleFilter->SetOutputMinimum(0);
         rescaleFilter->SetOutputMaximum(255);
         rescaleFilter->Update();
-        edges = rescaleFilter->GetOutput();
-
 
         VTKViewer::visualize<grayImageT>(rescaleFilter->GetOutput() ,"Diff");
     }
@@ -394,7 +390,21 @@ void CellSegmentator<rgbImageT>::findCells()
     CreateImageB();
     //GaussianBlur(true);
     edgeDetection();
-    computeDistanceDifferences(true);
+    computeDistanceDifferences();
+
+    ComputeGradients();
+
+
+    using rescaleFilterType2= itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
+    rescaleFilterType2::Pointer rescaleFilter = rescaleFilterType2::New();
+    rescaleFilter->SetInput(diffMap);
+    rescaleFilter->SetOutputMinimum(0);
+    rescaleFilter->SetOutputMaximum(255);
+    rescaleFilter->Update();
+
+
+
+    overlay(rescaleFilter->GetOutput());
 
 
     //LabelRoughly();
@@ -404,6 +414,48 @@ void CellSegmentator<rgbImageT>::findCells()
     //map = computeDistances(map, true);
     //map = computeDistances(map, true);
     // map = computeDistances(map, true);
+
+
+}
+
+
+
+template<typename rgbImageT>
+void CellSegmentator<rgbImageT>::overlay(grayImageP image)
+{
+
+    using FilterType = itk::CastImageFilter<grayImageT, rgbImageT>;
+    typename FilterType::Pointer filter = FilterType::New();
+    filter->SetInput(image);
+    filter->Update();
+
+    using overlayFilterType = OverlayRGBImageFilter<rgbImageT>;
+    std::unique_ptr<overlayFilterType> overlayFilter(new overlayFilterType());
+
+    overlayFilter->setBackgroundImage(inputImage);
+    overlayFilter->setForegroundImage(filter->GetOutput());
+    overlayFilter->setForegroundAlpha(0.5);
+    overlayFilter->overlay();
+
+
+
+    VTKViewer::visualize<rgbImageT>(overlayFilter->getOutput() ,"Overlay");
+
+
+
+}
+
+
+
+template<typename imageT>
+void CellSegmentator<imageT>::ComputeGradients()
+{
+
+    // Create and setup a gradient filter
+    using GradientFilterType = itk::GradientImageFilter<floatImageT, float>;
+    GradientFilterType::Pointer gradientFilter = GradientFilterType::New();
+    gradientFilter->SetInput(BImage);
+    gradientFilter->Update();
 
 
 }
