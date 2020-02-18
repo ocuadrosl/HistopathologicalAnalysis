@@ -46,6 +46,7 @@
 #include <itkLabelMapOverlayImageFilter.h>
 #include <itkGradientImageFilter.h>
 #include <itkVectorImageToImageAdaptor.h>
+#include <itkCovariantVector.h>
 
 
 
@@ -88,9 +89,6 @@ public:
     using imageDoubleItIndex = itk::ImageRegionConstIteratorWithIndex<grayImageDoubleT>;
 
 
-    using cellsT = std::vector<std::vector<typename rgbImageT::IndexType>>;
-
-
     using floatImageT = itk::Image<float,2>;
     using floatImageP = floatImageT::Pointer;
 
@@ -122,30 +120,14 @@ private:
     vectorImageP outputImage;
     imageP       inputImage;
     grayImageP   grayImage;
-    grayImageP   multiplyImage;
-    grayImageP   eqImage;
-    grayImageP   blurMaskImage;
-    grayImageP   cellNuclei;
+
     floatImageP  blurImage;
-
-
     grayImageP   edges;
     floatImageP  distanceMap;
     grayImageP   labelMap; //superpixels
     floatImageP  BImage;
     floatImageP  diffMap;
 
-
-    cellsT cells;
-
-    std::vector<grayImageDP> LogNorm;
-
-    double   sigmaMin = 2;
-    double   sigmaMax = 8;
-    double   stepSize = 1;
-
-    unsigned radius = 5;
-    unsigned kernelSize = 5;
 
 
     //std::unique_ptr<superPixelsT> superPixelsP;
@@ -164,11 +146,9 @@ private:
     void computeDistanceDifferences(bool show = false);
 
 
-    void createGrayImage();
+
     void GaussianBlur(bool show=false);
     void edgeDetection(bool show=false);
-    void computeEuclideanMap();
-    void computeLocalMinimum();
 
     void extractCellsFromSuperPixels();
 

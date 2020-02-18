@@ -256,8 +256,10 @@ void CellSegmentator<rgbImageT>::edgeDetection(bool show)
     CannyFilterType::Pointer cannyFilter = CannyFilterType::New();
     cannyFilter->SetInput(BImage);
     cannyFilter->SetVariance(10);
-    //cannyFilter->SetUpperThreshold(upperThreshold);
-    //cannyFilter->SetLowerThreshold(lowerThreshold);
+    //cannyFilter->SetUpperThreshold(100);
+    //cannyFilter->SetLowerThreshold(0);
+    //std::cout<<cannyFilter->GetLowerThreshold()
+
     cannyFilter->Update();
 
     using rescaleFilterType2= itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
@@ -355,6 +357,7 @@ void CellSegmentator<rgbImageT>::computeDistanceDifferences(bool show)
 
         dCols = euclideanDistance(indexAux, itEdges.GetIndex());
 
+
         float diff = std::abs(dCols - dRows)/dCols;
         //std::cout<<diff<<std::endl;
         diffMap->SetPixel(itEdges.GetIndex(), diff);
@@ -387,9 +390,9 @@ template<typename rgbImageT>
 void CellSegmentator<rgbImageT>::findCells()
 {
 
-    CreateImageB();
+    CreateImageB(true);
     //GaussianBlur(true);
-    edgeDetection();
+    edgeDetection(true);
     computeDistanceDifferences();
 
     ComputeGradients();
@@ -457,6 +460,7 @@ void CellSegmentator<imageT>::ComputeGradients()
     gradientFilter->SetInput(BImage);
     gradientFilter->Update();
 
+    itk::Image<itk::CovariantVector<float, 2>, 2>::Pointer gradient = gradientFilter->GetOutput();
 
 }
 
