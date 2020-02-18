@@ -303,6 +303,19 @@ void CellSegmentator<rgbImageT>::computeDistanceDifferences(bool show)
 
     const auto euclideanDistance =  Math::euclideanDistance<grayImageT::IndexType, 2>;
 
+    using VectorType = itk::CovariantVector<float, 2>;
+
+    VectorType nearestContourDir;
+    nearestContourDir[0] = std::cos(90.f * 3.14f/180.f);
+    nearestContourDir[1] = std::sin(90.f * 3.14f/180.f);
+
+    nearestContourDir[0] /= static_cast<float>(nearestContourDir.GetNorm());
+    nearestContourDir[1] /= static_cast<float>(nearestContourDir.GetNorm());
+
+
+    std::cout<<nearestContourDir<<std::endl;
+
+
     float dRows, dCols; //distance to
 
     for( ;!itEdges.IsAtEnd(); ++itEdges)
@@ -334,6 +347,8 @@ void CellSegmentator<rgbImageT>::computeDistanceDifferences(bool show)
         }
 
         dRows = euclideanDistance(indexAux, itEdges.GetIndex());
+        float orientation  = gradient->GetPixel(indexAux) * nearestContourDir;
+        //std::cout<<orientation<<std::endl;
 
         //cols direction
         indexAux = itEdges.GetIndex();
@@ -360,7 +375,9 @@ void CellSegmentator<rgbImageT>::computeDistanceDifferences(bool show)
 
         float diff = std::abs(dCols - dRows)/dCols;
         //std::cout<<diff<<std::endl;
-        diffMap->SetPixel(itEdges.GetIndex(), diff);
+        //diffMap->SetPixel(itEdges.GetIndex(), diff);
+
+        diffMap->SetPixel(itEdges.GetIndex(), orientation);
 
 
 
@@ -385,41 +402,6 @@ void CellSegmentator<rgbImageT>::computeDistanceDifferences(bool show)
 
 
 
-
-template<typename rgbImageT>
-void CellSegmentator<rgbImageT>::findCells()
-{
-
-    CreateImageB(true);
-    //GaussianBlur(true);
-    edgeDetection(true);
-    computeDistanceDifferences();
-
-    ComputeGradients();
-
-
-    using rescaleFilterType2= itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
-    rescaleFilterType2::Pointer rescaleFilter = rescaleFilterType2::New();
-    rescaleFilter->SetInput(diffMap);
-    rescaleFilter->SetOutputMinimum(0);
-    rescaleFilter->SetOutputMaximum(255);
-    rescaleFilter->Update();
-
-
-
-    overlay(rescaleFilter->GetOutput());
-
-
-    //LabelRoughly();
-    //auto map = computeDistances(BImage, true);
-    //map = computeDistances(map, true);
-    //map = computeDistances(map, true);
-    //map = computeDistances(map, true);
-    //map = computeDistances(map, true);
-    // map = computeDistances(map, true);
-
-
-}
 
 
 
@@ -460,7 +442,9 @@ void CellSegmentator<imageT>::ComputeGradients()
     gradientFilter->SetInput(BImage);
     gradientFilter->Update();
 
-    itk::Image<itk::CovariantVector<float, 2>, 2>::Pointer gradient = gradientFilter->GetOutput();
+    gradient = gradientFilter->GetOutput();
+
+    IO::printOK("Compute gradient");
 
 }
 
@@ -473,6 +457,42 @@ void CellSegmentator<imageT>::superPixels()
 
 }
 
+
+template<typename rgbImageT>
+void CellSegmentator<rgbImageT>::findCells()
+{
+
+    CreateImageB(true);
+    edgeDetection();
+
+    ComputeGradients();
+    computeDistanceDifferences(true);
+
+
+
+
+    using rescaleFilterType2= itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
+    rescaleFilterType2::Pointer rescaleFilter = rescaleFilterType2::New();
+    rescaleFilter->SetInput(diffMap);
+    rescaleFilter->SetOutputMinimum(0);
+    rescaleFilter->SetOutputMaximum(255);
+    rescaleFilter->Update();
+
+
+
+    overlay(rescaleFilter->GetOutput());
+
+
+    //LabelRoughly();
+    //auto map = computeDistances(BImage, true);
+    //map = computeDistances(map, true);
+    //map = computeDistances(map, true);
+    //map = computeDistances(map, true);
+    //map = computeDistances(map, true);
+    // map = computeDistances(map, true);
+
+
+}
 
 
 

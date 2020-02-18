@@ -96,6 +96,10 @@ public:
     using labImageT = itk::Image<labPixelT, 2>;
 
 
+    using CovariantImage = itk::Image<itk::CovariantVector<float, 2>, 2>;
+    using CovarianteImageP = CovariantImage::Pointer;
+
+
 
 
     //setters
@@ -127,6 +131,7 @@ private:
     grayImageP   labelMap; //superpixels
     floatImageP  BImage;
     floatImageP  diffMap;
+    CovarianteImageP gradient;
 
 
 
