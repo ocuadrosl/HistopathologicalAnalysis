@@ -187,7 +187,7 @@ inline outputT squaredEuclideanDistance( vectorT vector1, vectorT vector2)
     outputT sum=0;
     for(unsigned i=0 ; i < size; ++i)
     {
-        sum += std::pow(vector1[i] - vector2[i], 2.0);
+        sum += std::pow(static_cast<outputT>(vector1[i]) - static_cast<outputT>(vector2[i]), 2.0);
     }
     return sum;
 
@@ -199,7 +199,7 @@ inline outputT squaredEuclideanDistance( vectorT vector1, vectorT vector2)
 template <typename vectorT, unsigned size=3, typename outputT=float>
 inline outputT euclideanDistance( vectorT vector1, vectorT vector2)
 {
-    return std::sqrt(squaredEuclideanDistance<vectorT,size, outputT>(vector1, vector2));
+    return std::sqrt(squaredEuclideanDistance<vectorT, size, outputT>(vector1, vector2));
 }
 
 

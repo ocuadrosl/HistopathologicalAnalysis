@@ -280,11 +280,159 @@ void CellSegmentator<rgbImageT>::edgeDetection(bool show)
 
 }
 
+template<typename rgbImageT>
+void CellSegmentator<rgbImageT>::computeRayFetures(bool show)
+{
+
+    //defs
+
+    diffMap = floatImageT::New();
+    diffMap->SetRegions(edges->GetRequestedRegion());
+    diffMap->Allocate();
+    diffMap->FillBuffer(0);
+
+    const auto euclideanDistance =  Math::euclideanDistance<grayImageT::IndexType, 2, float>;
+
+    using VectorType = itk::CovariantVector<float, 2>;
+    VectorType cosSin;
+    cosSin[0] = std::cos(90.f * 3.14f/180.f);
+    cosSin[1] = std::sin(90.f * 3.14f/180.f);
+
+    const float pi = 3.14f;
+    const float angleStep = 30;
+
+    ofstream wekaFile;
+    wekaFile.open("/home/oscar/test/weka_file.arff");
+
+    wekaFile<<"@RELATION dataset"<<std::endl;
+    wekaFile<<"@ATTRIBUTE color NUMERIC"<<std::endl;
+    wekaFile<<"@ATTRIBUTE orien NUMERIC"<<std::endl;
+    wekaFile<<"@ATTRIBUTE diffe NUMERIC"<<std::endl;
+    wekaFile<<"@ATTRIBUTE class {1,2}"<<std::endl;
+    wekaFile<<"@DATA"<<std::endl;
+
+
+    auto imgSize = edges->GetRequestedRegion().GetSize();
+    using indexT = floatImageT::IndexType;
+
+
+    unsigned nearEdgesFlag=0;
+    float radius=1.f;
+    float dFirst, dSecond, orientation, diff; //distance to
+
+    std::string features;
+    for(unsigned row=0; row< imgSize[1]; ++row)
+    {
+        for(unsigned col=0; col< imgSize[0]; ++col)
+        {
+
+            indexT index = {{col, row}};
+            features = "";
+            features += std::to_string(BImage->GetPixel(index))+",";
+
+            indexT indexAux, firstEdge, secondEdge;
+
+            radius = 1.f;
+            nearEdgesFlag=0;
+            while(nearEdgesFlag < 2)
+            {
+                for(float angle=0.f; angle < 2.f*pi; angle += (2.f*pi/angleStep))
+                {
+                    indexAux[0] = index[0] + static_cast<int>(radius*std::cos(angle));
+                    indexAux[1] = index[1] + static_cast<int>(radius*std::sin(angle));
+
+                    if(index[0]==indexAux[0] && index[1]==indexAux[1] ){ continue; }
+
+                    if(!edges->GetRequestedRegion().IsInside(indexAux)){ continue; }
+
+                    if(edges->GetPixel(indexAux) == 255) //is edge?
+                    {
+                        if(nearEdgesFlag == 0) //first
+                        {
+                            firstEdge = indexAux;
+                            dFirst =  euclideanDistance(index, firstEdge);
+
+
+                            cosSin[0] = std::cos(angle);
+                            cosSin[1] = std::sin(angle);
+                            orientation  = (gradient->GetPixel(firstEdge)/gradient->GetPixel(firstEdge).GetNorm()) * cosSin;
+                            features += std::to_string(orientation)+",";
+
+                            ++nearEdgesFlag;
+                            continue;
+                        }
+                        else if(nearEdgesFlag == 1 && (firstEdge[0]!= indexAux[0] || firstEdge[1]!= indexAux[1])) //second
+                        {
+                            secondEdge = indexAux;
+                            dSecond =  euclideanDistance(index, secondEdge);
+                            ++nearEdgesFlag;
+                            continue;
+                        }
+                        else if(nearEdgesFlag >= 2)
+                        {
+                            break;
+                        }
+
+                    }
+
+                }
+
+                radius++;
+
+            }
+
+            //std::cout<<(dFirst-dSecond)/dFirst<<std::endl;
+            //diff = (dFirst - dSecond)/dFirst;
+
+            diff = std::abs(dFirst - dSecond);
+            features += std::to_string(diff);
+
+            wekaFile<<features<<std::endl;
+
+            diffMap->SetPixel(index, diff);
+            //diffMap->SetPixel(secondEdge, 255);
+
+
+        }
+
+    }
+    wekaFile.close();
+
+
+    IO::printOK("Compute ray features");
+
+    if(show)
+    {
+        using rescaleFilterType2= itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
+        rescaleFilterType2::Pointer rescaleFilter = rescaleFilterType2::New();
+        rescaleFilter->SetInput(diffMap);
+        rescaleFilter->SetOutputMinimum(0);
+        rescaleFilter->SetOutputMaximum(255);
+        rescaleFilter->Update();
+
+        VTKViewer::visualize<grayImageT>(rescaleFilter->GetOutput() ,"Diff");
+    }
+
+
+
+
+
+}
+
 
 template<typename rgbImageT>
 void CellSegmentator<rgbImageT>::computeDistanceDifferences(bool show)
 {
 
+    ofstream wekaFile;
+    wekaFile.open("/home/oscar/test/weka_file.arff");
+
+    wekaFile<<"@RELATION dataset"<<std::endl;
+    wekaFile<<"@ATTRIBUTE color NUMERIC"<<std::endl;
+    wekaFile<<"@ATTRIBUTE orien NUMERIC"<<std::endl;
+    wekaFile<<"@ATTRIBUTE diffe NUMERIC"<<std::endl;
+    wekaFile<<"@ATTRIBUTE class {1,2}"<<std::endl;
+    wekaFile<<"@DATA"<<std::endl;
 
 
     diffMap = floatImageT::New();
@@ -297,47 +445,55 @@ void CellSegmentator<rgbImageT>::computeDistanceDifferences(bool show)
 
     grayImageT::RegionType regionAux;
 
-    grayImageT::IndexType indexAux;
+    grayImageT::IndexType indexAux, upperIndexAux;
 
     auto upperIndex = edges->GetRequestedRegion().GetUpperIndex();
 
-    const auto euclideanDistance =  Math::euclideanDistance<grayImageT::IndexType, 2>;
+    const auto euclideanDistance =  Math::euclideanDistance<grayImageT::IndexType, 2, float>;
 
     using VectorType = itk::CovariantVector<float, 2>;
 
-    VectorType nearestContourDir;
-    nearestContourDir[0] = std::cos(90.f * 3.14f/180.f);
-    nearestContourDir[1] = std::sin(90.f * 3.14f/180.f);
 
-    nearestContourDir[0] /= static_cast<float>(nearestContourDir.GetNorm());
-    nearestContourDir[1] /= static_cast<float>(nearestContourDir.GetNorm());
+    VectorType cosSin;
+    cosSin[0] = std::cos(90.f * 3.14f/180.f);
+    cosSin[1] = std::sin(90.f * 3.14f/180.f);
 
-
-    std::cout<<nearestContourDir<<std::endl;
+    //nearestContourDir[0] /= static_cast<float>(nearestContourDir.GetNorm());
+    //nearestContourDir[1] /= static_cast<float>(nearestContourDir.GetNorm());
 
 
     float dRows, dCols; //distance to
 
-    for( ;!itEdges.IsAtEnd(); ++itEdges)
+    std::string features = "";
+
+
+
+    itk::ImageRegionConstIterator<floatImageT> imgIt(BImage, BImage->GetRequestedRegion());
+
+
+    for( ;!itEdges.IsAtEnd(); ++itEdges, ++imgIt)
     {
-        if(itEdges.Get()==255)
-        {
-            diffMap->SetPixel(itEdges.GetIndex(), 0);
-            continue;
-        }
+
+        features = "";
+
+        features += std::to_string(imgIt.Get())+",";
 
         //rows direction
-        indexAux = itEdges.GetIndex();
-        regionAux.SetIndex(itEdges.GetIndex());
 
-        indexAux[1] = upperIndex[1];
-        regionAux.SetUpperIndex(indexAux);
+        indexAux = upperIndexAux = itEdges.GetIndex();
+
+        indexAux[1] = (indexAux[1] == upperIndex[1]) ? indexAux[1] : indexAux[1] + 1;
+
+        upperIndexAux[1] = upperIndex[1];
+
+        regionAux.SetIndex(indexAux);
+        regionAux.SetUpperIndex(upperIndexAux);
 
         edgesIterator itRows(edges, regionAux);
 
-        while(!itRows.IsAtEnd() )
+        while(!itRows.IsAtEnd())
         {
-            if(itRows.Get() == 255)
+            if(itRows.Get() == 255) //is edge?
             {
                 indexAux = itRows.GetIndex();
                 break;
@@ -347,21 +503,28 @@ void CellSegmentator<rgbImageT>::computeDistanceDifferences(bool show)
         }
 
         dRows = euclideanDistance(indexAux, itEdges.GetIndex());
-        float orientation  = gradient->GetPixel(indexAux) * nearestContourDir;
-        //std::cout<<orientation<<std::endl;
+
+
+        //Orientation using gradient in row direction
+        float orientation  = (gradient->GetPixel(indexAux)/gradient->GetPixel(indexAux).GetNorm()) * cosSin;
+        features += std::to_string(orientation)+",";
+
 
         //cols direction
-        indexAux = itEdges.GetIndex();
-        regionAux.SetIndex(itEdges.GetIndex());
+        indexAux = upperIndexAux = itEdges.GetIndex();
 
-        indexAux[0] = upperIndex[0];
-        regionAux.SetUpperIndex(indexAux);
+        indexAux[0] = (indexAux[0] == upperIndex[0]) ? indexAux[0] : indexAux[0] + 1;
+
+        upperIndexAux[0] = upperIndex[0];
+
+        regionAux.SetIndex(indexAux);
+        regionAux.SetUpperIndex(upperIndexAux);
 
         edgesIterator itCols(edges, regionAux);
 
         while(!itCols.IsAtEnd() )
         {
-            if(itCols.Get() == 255)
+            if(itCols.Get() == 255) //is edge?
             {
                 indexAux = itCols.GetIndex();
                 break;
@@ -372,16 +535,28 @@ void CellSegmentator<rgbImageT>::computeDistanceDifferences(bool show)
 
         dCols = euclideanDistance(indexAux, itEdges.GetIndex());
 
+        //std::cout<<indexAux<<"->"<<itEdges.GetIndex()<<std::endl;
+        //std::cout<<dCols<<std::endl;
 
-        float diff = std::abs(dCols - dRows)/dCols;
+        float diff = (dRows == 0.f) ? 0 : (dRows - dCols)/dRows;
         //std::cout<<diff<<std::endl;
-        //diffMap->SetPixel(itEdges.GetIndex(), diff);
-
-        diffMap->SetPixel(itEdges.GetIndex(), orientation);
 
 
+        //features += std::to_string(diff)+","+std::to_string((std::rand()%2)+1);
+        features += std::to_string(diff);
+
+        std::cout<<features<<std::endl;
+
+        diffMap->SetPixel(itEdges.GetIndex(), diff);
+
+        wekaFile<<features<<std::endl;
+        //std::cout<<count++<<std::endl;
 
     }
+
+    wekaFile.close();
+
+    IO::printOK("Fetures vector");
 
     if(show)
     {
@@ -463,12 +638,11 @@ void CellSegmentator<rgbImageT>::findCells()
 {
 
     CreateImageB(true);
-    edgeDetection();
+    edgeDetection(true);
 
     ComputeGradients();
-    computeDistanceDifferences(true);
-
-
+    //computeDistanceDifferences(true);
+    computeRayFetures(true);
 
 
     using rescaleFilterType2= itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
@@ -478,19 +652,7 @@ void CellSegmentator<rgbImageT>::findCells()
     rescaleFilter->SetOutputMaximum(255);
     rescaleFilter->Update();
 
-
-
     overlay(rescaleFilter->GetOutput());
-
-
-    //LabelRoughly();
-    //auto map = computeDistances(BImage, true);
-    //map = computeDistances(map, true);
-    //map = computeDistances(map, true);
-    //map = computeDistances(map, true);
-    //map = computeDistances(map, true);
-    // map = computeDistances(map, true);
-
 
 }
 

@@ -48,7 +48,7 @@
 #include <itkVectorImageToImageAdaptor.h>
 #include <itkCovariantVector.h>
 
-
+#include <fstream>
 
 //local includes
 #include "../util/customprint.h"
@@ -135,6 +135,9 @@ private:
 
 
 
+
+
+
     //std::unique_ptr<superPixelsT> superPixelsP;
 
 
@@ -149,6 +152,7 @@ private:
 
 
     void computeDistanceDifferences(bool show = false);
+    void computeRayFetures(bool show = false);
 
 
 
