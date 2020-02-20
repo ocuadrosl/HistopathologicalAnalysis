@@ -15,7 +15,7 @@ find_package(ITK REQUIRED)
 
 include(${ITK_USE_FILE})
 
-include_directories("/usr/local/include/eigen3")
+
 
 file(GLOB core
     "core/*.h"

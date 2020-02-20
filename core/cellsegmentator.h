@@ -143,6 +143,8 @@ private:
     floatImageP  differenceFeatures;
     CovarianteImageP gradient;
 
+    grayImageP binaryImage;
+
 
     featuresVectorT featuresVector;
 
@@ -173,6 +175,8 @@ private:
 
 
     void overlay(grayImageP image);
+
+    void threshold(bool show=false);
 
 
 };

@@ -5,14 +5,14 @@
 #include "../util/customprint.h"
 
 #include <itkImage.h>
-#include <Eigen/SparseCholesky>
-using Eigen::MatrixXd;
+//#include <Eigen/SparseCholesky>
+//using Eigen::MatrixXd;
 
 
 class Graph
 {
 
-    using sparseMatrixT = Eigen::SparseMatrix<float>;
+    //using sparseMatrixT = Eigen::SparseMatrix<float>;
 
     using featuresVectorT = std::vector<std::vector<float>>;
 
@@ -31,7 +31,7 @@ public:
 
 
 private:
-    sparseMatrixT adjacencyMatrix;
+    //sparseMatrixT adjacencyMatrix;
     featuresVectorT featuresVector;
     grayImageP superPixelsLabels;
 

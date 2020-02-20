@@ -555,12 +555,48 @@ void CellSegmentator<rgbImageT>::WriteFeaturesVector(const std::string& fileName
 
 }
 
+
+template<typename rgbImageT>
+void CellSegmentator<rgbImageT>::threshold(bool show)
+{
+
+     /////////////////////////////////////////////////////////////
+    // AVICITA SOLO CAMBIA EL NOMBRE EL FILTRO/////////////////
+
+
+    //using FilterType = itk::OtsuThresholdImageFilter<floatImageT, grayImageT>;
+    using FilterType = itk::TriangleThresholdImageFilter<floatImageT, grayImageT>;
+
+
+
+    FilterType::Pointer thresholdFilter = FilterType::New();
+    thresholdFilter->SetInput(bChannel);
+    thresholdFilter->SetInsideValue(0);
+    thresholdFilter->SetOutsideValue(255);
+    thresholdFilter->SetNumberOfHistogramBins(400);
+
+    thresholdFilter->Update(); // To compute threshold
+    binaryImage = thresholdFilter->GetOutput();
+
+    if(show)
+    {
+        VTKViewer::visualize<grayImageT>(binaryImage ,"Result");
+    }
+
+
+
+}
+
+
 template<typename rgbImageT>
 void CellSegmentator<rgbImageT>::findCells()
 {
 
 
     CreateImageB(true);
+    threshold(true);
+
+    return;
     DetectEdges(true);
     ComputeGradients();
     ComputeRayFetures();
