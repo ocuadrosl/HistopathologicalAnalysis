@@ -79,28 +79,44 @@ template<typename rgbImageT>
 void CellSegmentator<rgbImageT>:: GaussianBlur(bool show)
 {
 
-    using smoothFilterT = itk::SmoothingRecursiveGaussianImageFilter<floatImageT, floatImageT>;
+    using smoothFilterT = itk::SmoothingRecursiveGaussianImageFilter<grayImageT, grayImageT>;
     smoothFilterT::Pointer smoothFilter = smoothFilterT::New();
     smoothFilter->SetNormalizeAcrossScale(false);
-    smoothFilter->SetInput(bChannel);
+    smoothFilter->SetInput(resultGrayImage);
     smoothFilter->SetSigma(5);
     smoothFilter->Update();
 
-    blurImage = smoothFilter->GetOutput();
+    using rescaleFilterType2= itk::RescaleIntensityImageFilter<grayImageT, grayImageT>;
+    rescaleFilterType2::Pointer rescaleFilter = rescaleFilterType2::New();
+    rescaleFilter->SetInput(smoothFilter->GetOutput());
+    rescaleFilter->SetOutputMinimum(0);
+    rescaleFilter->SetOutputMaximum(255);
+    rescaleFilter->Update();
+
+    blurImage = rescaleFilter->GetOutput();
+
+
+    itk::ImageRegionConstIterator<grayImageT> biIt(resultBinaryImage, resultBinaryImage->GetRequestedRegion());
+    itk::ImageRegionIterator<grayImageT> blIt(blurImage, blurImage->GetRequestedRegion());
+
+    for(;!biIt.IsAtEnd(); ++biIt, ++blIt)
+    {
+        if(biIt.Get()==0)
+        {
+            blIt.Set(255);
+
+        }
+
+    }
 
 
 
     if(show)
     {
 
-        using rescaleFilterType2= itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
-        rescaleFilterType2::Pointer rescaleFilter = rescaleFilterType2::New();
-        rescaleFilter->SetInput(blurImage);
-        rescaleFilter->SetOutputMinimum(0);
-        rescaleFilter->SetOutputMaximum(255);
-        rescaleFilter->Update();
 
-        VTKViewer::visualize<grayImageT>(rescaleFilter->GetOutput() ,"distance map");
+
+        VTKViewer::visualize<grayImageT>(blurImage ,"Gaussian Blur");
     }
 
 
@@ -322,7 +338,7 @@ template<typename rgbImageT>
 void CellSegmentator<rgbImageT>::ComputeSuperPixels(bool show )
 {
 
-/*
+    /*
 
     //rescale to 0 - 1
     using rescaleFilterType = itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
@@ -536,7 +552,7 @@ void CellSegmentator<rgbImageT>::WriteFeaturesVector(const std::string& fileName
     wekaFile<<"@ATTRIBUTE color NUMERIC"<<std::endl;
     wekaFile<<"@ATTRIBUTE orien NUMERIC"<<std::endl;
     wekaFile<<"@ATTRIBUTE diffe NUMERIC"<<std::endl;
-   // wekaFile<<"@ATTRIBUTE lbp NUMERIC"<<std::endl;
+    // wekaFile<<"@ATTRIBUTE lbp NUMERIC"<<std::endl;
     //wekaFile<<"@ATTRIBUTE class {1,2}"<<std::endl;
     wekaFile<<"@DATA"<<std::endl;
 
@@ -560,12 +576,16 @@ template<typename rgbImageT>
 void CellSegmentator<rgbImageT>::threshold(bool show)
 {
 
-     /////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////
     // AVICITA SOLO CAMBIA EL NOMBRE EL FILTRO/////////////////
 
 
+    //using FilterType = itk::MomentsThresholdImageFilter<floatImageT, grayImageT>;
     //using FilterType = itk::OtsuThresholdImageFilter<floatImageT, grayImageT>;
+    //using FilterType = itk::OtsuMultipleThresholdsImageFilter<floatImageT, grayImageT>;
+
     using FilterType = itk::TriangleThresholdImageFilter<floatImageT, grayImageT>;
+
 
 
 
@@ -573,17 +593,127 @@ void CellSegmentator<rgbImageT>::threshold(bool show)
     thresholdFilter->SetInput(bChannel);
     thresholdFilter->SetInsideValue(0);
     thresholdFilter->SetOutsideValue(255);
-    thresholdFilter->SetNumberOfHistogramBins(400);
-
+    thresholdFilter->SetNumberOfHistogramBins(100);
     thresholdFilter->Update(); // To compute threshold
     binaryImage = thresholdFilter->GetOutput();
 
     if(show)
     {
-        VTKViewer::visualize<grayImageT>(binaryImage ,"Result");
+        VTKViewer::visualize<grayImageT>(binaryImage ,"Threshold");
     }
 
 
+
+}
+
+
+template<typename rgbImageT>
+void CellSegmentator<rgbImageT>:: binaryToSuperPixels(std::string fileName, bool show)
+{
+
+
+
+    itk::ImageRegionConstIterator<grayImageT> spIt(superPixelsLabels, superPixelsLabels->GetRequestedRegion());
+    itk::ImageRegionConstIterator<grayImageT> bIt(binaryImage, binaryImage->GetRequestedRegion());
+
+
+    std::vector<unsigned> pixelsCounter(superPixelsNumber,0);
+    std::vector<unsigned> superPixelsSize(superPixelsNumber,0);
+
+    for(; !spIt.IsAtEnd(); ++spIt, ++bIt)
+    {
+        pixelsCounter[  spIt.Get() ] += (bIt.Get()==0) ? 1 : 0;
+        ++superPixelsSize[spIt.Get()];
+    }
+
+    resultBinaryImage = grayImageT::New();
+    resultBinaryImage->SetRegions(superPixelsLabels->GetRequestedRegion());
+    resultBinaryImage->Allocate();
+    resultBinaryImage->FillBuffer(0);
+
+    auto resultImage = rgbImageT::New();
+    resultImage->SetRegions(superPixelsLabels->GetRequestedRegion());
+    resultImage->Allocate();
+    resultImage->FillBuffer(255);
+
+
+    itk::ImageRegionIterator<grayImageT> rbIt(resultBinaryImage, resultBinaryImage->GetRequestedRegion());
+    itk::ImageRegionIterator<rgbImageT>  rIt(resultImage, resultImage->GetRequestedRegion());
+    itk::ImageRegionIterator<rgbImageT>  inIt(inputImage, inputImage->GetRequestedRegion());
+
+    for(spIt.GoToBegin(); !spIt.IsAtEnd(); ++spIt, ++rbIt, ++inIt, ++rIt)
+    {
+
+        if(pixelsCounter[spIt.Get()] > (superPixelsSize[spIt.Get()]*0.8))
+        {
+            rbIt.Set(255);
+            rIt.Set(inIt.Get());
+        }
+
+    }
+
+    //creating gray image froom rgb result
+
+    using rgbToGrayFilterT = itk::RGBToLuminanceImageFilter<rgbImageT, grayImageT>;
+    typename  rgbToGrayFilterT::Pointer rgbToGrayF = rgbToGrayFilterT::New();
+    rgbToGrayF->SetInput(resultImage);
+    resultGrayImage = rgbToGrayF->GetOutput();
+
+
+
+
+    //writing results
+    using rescaleFilterType2= itk::RescaleIntensityImageFilter<grayImageT, itk::Image<unsigned char,2>>;
+    rescaleFilterType2::Pointer rescaleFilter = rescaleFilterType2::New();
+    rescaleFilter->SetInput(resultBinaryImage);
+    rescaleFilter->SetOutputMinimum(0);
+    rescaleFilter->SetOutputMaximum(255);
+    rescaleFilter->Update();
+
+
+    using WriterType = itk::ImageFileWriter<itk::Image<unsigned char,2>>;
+    WriterType::Pointer writer = WriterType::New();
+    writer->SetFileName(fileName);
+    writer->SetInput(rescaleFilter->GetOutput());
+    writer->Update();
+
+
+
+
+    if(show)
+    {
+        VTKViewer::visualize<grayImageT>(resultBinaryImage ,"Result");
+        VTKViewer::visualize<rgbImageT>(resultImage ,"Result RGB");
+        VTKViewer::visualize<grayImageT>(resultGrayImage ,"Result gray");
+
+    }
+
+
+
+
+
+    IO::printOK("Binary to Super Pixels");
+
+}
+
+
+
+template<typename rgbImageT>
+void CellSegmentator<rgbImageT>::findLocalMinima(bool show)
+{
+
+    using RegionalMinimaImageFilter = itk::RegionalMinimaImageFilter<grayImageT, grayImageT>;
+
+    RegionalMinimaImageFilter::Pointer filter = RegionalMinimaImageFilter::New();
+
+    filter->SetFlatIsMinima(true);
+    filter->FullyConnectedOff();
+    filter->SetInput(blurImage);
+
+    if(show)
+    {
+        VTKViewer::visualize<grayImageT>(filter->GetOutput() ,"Local Maxima");
+    }
 
 }
 
@@ -593,21 +723,30 @@ void CellSegmentator<rgbImageT>::findCells()
 {
 
 
-    CreateImageB(true);
+    CreateImageB();
     threshold(true);
+    ComputeSuperPixels();
+    binaryToSuperPixels("/home/oscar/test/result.png", true) ;
+    GaussianBlur(true);
+    findLocalMinima(true);
+
+
 
     return;
-    DetectEdges(true);
+    DetectEdges();
     ComputeGradients();
     ComputeRayFetures();
-    ComputeSuperPixels(true);
-    ComputeFeaturesVector(true);
-    WriteFeaturesVector("/home/oscar/test/weka_file.arff");
+
+    ComputeFeaturesVector();
+
+
+
+    //WriteFeaturesVector("/home/oscar/test/weka_file.arff");
 
 
 
 
-    ReadWekaFile("/home/oscar/test/em.arff",  "/home/oscar/test/result.png");
+    //ReadWekaFile("/home/oscar/test/em.arff",  "/home/oscar/test/result.png");
 
 
 }

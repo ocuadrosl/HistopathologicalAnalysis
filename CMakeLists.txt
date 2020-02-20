@@ -27,7 +27,6 @@ file(GLOB util
     "util/*.h"
    "util/*.cpp"
    "util/*.hpp"
-
 )
 
 file(GLOB dataStructures

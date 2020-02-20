@@ -48,6 +48,7 @@
 #include <itkGradientImageFilter.h>
 #include <itkVectorImageToImageAdaptor.h>
 #include <itkCovariantVector.h>
+#include <itkRegionalMaximaImageFilter.h>
 
 #include <fstream>
 #include <string>
@@ -63,6 +64,7 @@
 #include "../util/extractchannelfilter.h"
 #include "../util/replaceimagechannelfilter.h"
 #include "../util/text.h"
+
 
 
 #include "graph.h"
@@ -135,7 +137,7 @@ private:
     imageP       inputImage;
     grayImageP   grayImage;
 
-    floatImageP  blurImage;
+    grayImageP  blurImage;
     grayImageP   edges;
     floatImageP  orientationFeatures;
     grayImageP   superPixelsLabels; //superpixels
@@ -147,6 +149,19 @@ private:
 
 
     featuresVectorT featuresVector;
+
+
+
+
+    grayImageP resultBinaryImage;
+    grayImageP resultGrayImage;
+
+
+
+
+
+
+
 
     unsigned superPixelsNumber=0;
 
@@ -177,6 +192,10 @@ private:
     void overlay(grayImageP image);
 
     void threshold(bool show=false);
+
+    void binaryToSuperPixels(std::string fileName, bool show=false );
+
+    void findLocalMinima(bool show=false);
 
 
 };
