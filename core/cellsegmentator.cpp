@@ -41,8 +41,9 @@ void CellSegmentator<rgbImageT>::CreateImageB(bool show)
     extractChannelFilter->setImputImage(xyzToLabFilter->getOutput());
     extractChannelFilter->extractChannel(2);
 
+    bChannel = extractChannelFilter->getOutputImage();
 
-
+    /*
     using rescaleFilterType2= itk::RescaleIntensityImageFilter<floatImageT, floatImageT>;
     rescaleFilterType2::Pointer rescaleFilter = rescaleFilterType2::New();
     rescaleFilter->SetInput(extractChannelFilter->getOutputImage());
@@ -50,9 +51,9 @@ void CellSegmentator<rgbImageT>::CreateImageB(bool show)
     rescaleFilter->SetOutputMaximum(1.f);
     rescaleFilter->Update();
     bChannel = rescaleFilter->GetOutput();
+*/
 
 
-    //BImage = extractChannelFilter->getOutputImage();
 
 
     //visualizing
@@ -160,17 +161,6 @@ void CellSegmentator<rgbImageT>::ComputeRayFetures(bool show)
     VectorType cosSin;
 
 
-    ofstream wekaFile;
-    wekaFile.open("/home/oscar/test/weka_file.arff");
-
-    wekaFile<<"@RELATION dataset"<<std::endl;
-    wekaFile<<"@ATTRIBUTE color NUMERIC"<<std::endl;
-    wekaFile<<"@ATTRIBUTE orien NUMERIC"<<std::endl;
-    wekaFile<<"@ATTRIBUTE diffe NUMERIC"<<std::endl;
-    wekaFile<<"@ATTRIBUTE lbp NUMERIC"<<std::endl;
-    wekaFile<<"@ATTRIBUTE class {1,2}"<<std::endl;
-    wekaFile<<"@DATA"<<std::endl;
-
 
     auto imgSize = edges->GetRequestedRegion().GetSize();
     using indexT = floatImageT::IndexType;
@@ -252,7 +242,6 @@ void CellSegmentator<rgbImageT>::ComputeRayFetures(bool show)
             //diff = dFirst;
             features += std::to_string(dFirst);
 
-            wekaFile<<features<<std::endl;
 
             differenceFeatures->SetPixel(index, dFirst);
             //diffMap->SetPixel(secondEdge, 255);
@@ -261,7 +250,7 @@ void CellSegmentator<rgbImageT>::ComputeRayFetures(bool show)
         }
 
     }
-    wekaFile.close();
+
 
 
     IO::printOK("Compute ray features");
@@ -378,7 +367,7 @@ void CellSegmentator<rgbImageT>::ComputeSuperPixels(bool show )
 
 
 template<typename rgbImageT>
-void CellSegmentator<rgbImageT>::ComputeFeaturesVector()
+void CellSegmentator<rgbImageT>::ComputeFeaturesVector(bool show)
 {
 
     //allocate features vector
@@ -435,19 +424,22 @@ void CellSegmentator<rgbImageT>::ComputeFeaturesVector()
     }
 
 
-    using rescaleFilterType2= itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
-    rescaleFilterType2::Pointer rescaleFilter = rescaleFilterType2::New();
-    rescaleFilter->SetInput(testImage);
-    rescaleFilter->SetOutputMinimum(0);
-    rescaleFilter->SetOutputMaximum(255);
-    rescaleFilter->Update();
+    if(show)
+    {
 
-    VTKViewer::visualize<grayImageT>(rescaleFilter->GetOutput() ,"test");
+        using rescaleFilterType2= itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
+        rescaleFilterType2::Pointer rescaleFilter = rescaleFilterType2::New();
+        rescaleFilter->SetInput(testImage);
+        rescaleFilter->SetOutputMinimum(0);
+        rescaleFilter->SetOutputMaximum(255);
+        rescaleFilter->Update();
+
+        VTKViewer::visualize<grayImageT>(rescaleFilter->GetOutput() ,"test");
 
 
 
-    overlay(rescaleFilter->GetOutput());
-
+        overlay(rescaleFilter->GetOutput());
+    }
 
 
 
@@ -457,7 +449,7 @@ void CellSegmentator<rgbImageT>::ComputeFeaturesVector()
 }
 
 template<typename rgbImageT>
-void CellSegmentator<rgbImageT>::ReadWekaFile(const std::string& fileName)
+void CellSegmentator<rgbImageT>::ReadWekaFile(const std::string& fileName, const std::string& imageName)
 {
     std::ifstream wekaFile(fileName);
     std::string line;
@@ -473,7 +465,7 @@ void CellSegmentator<rgbImageT>::ReadWekaFile(const std::string& fileName)
     {
         unsigned cluster = static_cast<unsigned>(line.back())-48;
 
-        clusters.push_back((cluster==1)? 0 : 1 );
+        clusters.push_back((cluster==1)? 0 : 255 );
         //std::cout<<cluster<<std::endl;
     }
 
@@ -487,13 +479,13 @@ void CellSegmentator<rgbImageT>::ReadWekaFile(const std::string& fileName)
     wekaFile.close();
 
 
-    auto testImage = grayImageT::New();
-    testImage->SetRegions(superPixelsLabels->GetRequestedRegion());
-    testImage->Allocate();
-    testImage->FillBuffer(0);
+    auto resultImage = grayImageT::New();
+    resultImage->SetRegions(superPixelsLabels->GetRequestedRegion());
+    resultImage->Allocate();
+    resultImage->FillBuffer(0);
 
 
-    itk::ImageRegionIterator<grayImageT> tIt(testImage, testImage->GetRequestedRegion());
+    itk::ImageRegionIterator<grayImageT> tIt(resultImage, resultImage->GetRequestedRegion());
 
     itk::ImageRegionConstIterator<grayImageT> spIt(superPixelsLabels, superPixelsLabels->GetRequestedRegion());
 
@@ -503,16 +495,26 @@ void CellSegmentator<rgbImageT>::ReadWekaFile(const std::string& fileName)
 
     }
 
-    using rescaleFilterType2= itk::RescaleIntensityImageFilter<grayImageT, grayImageT>;
+
+
+    using rescaleFilterType2= itk::RescaleIntensityImageFilter<grayImageT, itk::Image<unsigned char,2>>;
     rescaleFilterType2::Pointer rescaleFilter = rescaleFilterType2::New();
-    rescaleFilter->SetInput(testImage);
+    rescaleFilter->SetInput(resultImage);
     rescaleFilter->SetOutputMinimum(0);
     rescaleFilter->SetOutputMaximum(255);
     rescaleFilter->Update();
 
-    VTKViewer::visualize<grayImageT>(rescaleFilter->GetOutput() ,"Result");
 
-    overlay(testImage);
+    using WriterType = itk::ImageFileWriter<itk::Image<unsigned char,2>>;
+    WriterType::Pointer writer = WriterType::New();
+    writer->SetFileName(imageName);
+    writer->SetInput(rescaleFilter->GetOutput());
+    writer->Update();
+
+
+    VTKViewer::visualize<grayImageT>(resultImage ,"Result");
+
+    overlay(resultImage);
 
 
 
@@ -558,17 +560,18 @@ void CellSegmentator<rgbImageT>::findCells()
 {
 
 
-
-    CreateImageB();
-    DetectEdges();
+    CreateImageB(true);
+    DetectEdges(true);
     ComputeGradients();
     ComputeRayFetures();
-    ComputeSuperPixels();
-    ComputeFeaturesVector();
-
-
+    ComputeSuperPixels(true);
+    ComputeFeaturesVector(true);
     WriteFeaturesVector("/home/oscar/test/weka_file.arff");
-    ReadWekaFile("/home/oscar/test/em.arff");
+
+
+
+
+    ReadWekaFile("/home/oscar/test/em.arff",  "/home/oscar/test/result.png");
 
 
 }

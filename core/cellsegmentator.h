@@ -26,6 +26,7 @@
 
 #include <itkOtsuMultipleThresholdsImageFilter.h>
 #include <itkImageLinearConstIteratorWithIndex.h>
+#include <itkImageFileWriter.h>
 
 
 #include "itkLiThresholdImageFilter.h"
@@ -123,7 +124,7 @@ public:
     void findCells();
     void visualize();
     void WriteFeaturesVector(const std::string& fileName);
-    void ReadWekaFile(const std::string& fileName);
+    void ReadWekaFile(const std::string& fileName, const std::string& imageName);
 
 
 
@@ -161,7 +162,7 @@ private:
     void ComputeRayFetures(bool show = false);
     void ComputeSuperPixels(bool show = false);
 
-    void ComputeFeaturesVector();// from super pixels
+    void ComputeFeaturesVector(bool show=false);// from super pixels
 
 
     void GaussianBlur(bool show=false);
