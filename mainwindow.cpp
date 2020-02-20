@@ -49,7 +49,6 @@ void MainWindow::cellSegmentation()
     //cellSegmentator->computeGradients();
 
     cellSegmentator->findCells();
-    cellSegmentator->superPixels();
 
 
 

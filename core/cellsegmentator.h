@@ -49,7 +49,7 @@
 #include <itkCovariantVector.h>
 
 #include <fstream>
-
+#include <string>
 //local includes
 #include "../util/customprint.h"
 #include "../util/superpixels.h"
@@ -61,6 +61,10 @@
 #include "../util/overlayrgbimagefilter.h"
 #include "../util/extractchannelfilter.h"
 #include "../util/replaceimagechannelfilter.h"
+#include "../util/text.h"
+
+
+#include "graph.h"
 
 
 template<typename rgbImageT>
@@ -100,6 +104,9 @@ public:
     using CovarianteImageP = CovariantImage::Pointer;
 
 
+    using  featuresVectorT = std::vector<std::vector<float>>;
+
+
 
 
     //setters
@@ -115,8 +122,10 @@ public:
 
     void findCells();
     void visualize();
+    void WriteFeaturesVector(const std::string& fileName);
+    void ReadWekaFile(const std::string& fileName);
 
-    void superPixels();
+
 
 
 private:
@@ -127,14 +136,16 @@ private:
 
     floatImageP  blurImage;
     grayImageP   edges;
-    floatImageP  distanceMap;
-    grayImageP   labelMap; //superpixels
-    floatImageP  BImage;
-    floatImageP  diffMap;
+    floatImageP  orientationFeatures;
+    grayImageP   superPixelsLabels; //superpixels
+    floatImageP  bChannel;
+    floatImageP  differenceFeatures;
     CovarianteImageP gradient;
 
 
+    featuresVectorT featuresVector;
 
+    unsigned superPixelsNumber=0;
 
 
 
@@ -147,17 +158,14 @@ private:
     void findEdges(bool show=false);
 
     void ComputeGradients();
+    void ComputeRayFetures(bool show = false);
+    void ComputeSuperPixels(bool show = false);
 
-
-
-
-    void computeDistanceDifferences(bool show = false);
-    void computeRayFetures(bool show = false);
-
+    void ComputeFeaturesVector();// from super pixels
 
 
     void GaussianBlur(bool show=false);
-    void edgeDetection(bool show=false);
+    void DetectEdges(bool show=false);
 
     void extractCellsFromSuperPixels();
 

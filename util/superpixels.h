@@ -59,6 +59,8 @@ public:
     void setInitialGrid(labelImageP labelImage);
     void setSpNumber(unsigned number);
 
+    unsigned GetNumberOfSuperPixels() const;
+
     labelImageP getLabelImage() const;
 
 
@@ -74,8 +76,8 @@ private:
 
     unsigned sideLength = 20;
     float   lambda1    = 1;
-    float   lambda2    = 0.1;
-    unsigned iterations = 20;
+    float   lambda2    = 0.5;
+    unsigned iterations = 25;
 
     unsigned spNumber = 0;
 

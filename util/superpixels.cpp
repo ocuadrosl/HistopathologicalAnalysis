@@ -277,6 +277,12 @@ void SuperPixels<imageT>:: setSpNumber(unsigned number)
     spNumber = number;
 }
 
+template<typename imageT>
+unsigned SuperPixels<imageT>::GetNumberOfSuperPixels() const
+{
+    return spNumber;
+
+}
 
 template<typename imageT>
 void SuperPixels<imageT>::setInitialGrid(labelImageP labelImage)

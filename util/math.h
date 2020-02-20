@@ -10,6 +10,10 @@
 namespace Math
 {
 
+
+
+
+
 template<typename type>
 inline void diff(const std::vector<type>& data, std::vector<type>& output)
 {
