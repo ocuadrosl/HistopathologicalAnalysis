@@ -115,6 +115,7 @@ public:
     //setters
 
     void setImage(imageP inputImage);
+    void setNames(const std::string& dirPath, const std::string& fileName);
 
 
     //getters
@@ -155,6 +156,10 @@ private:
 
     grayImageP resultBinaryImage;
     grayImageP resultGrayImage;
+
+
+    std::string imageName = "";
+    std::string dirPath   = "";
 
 
 

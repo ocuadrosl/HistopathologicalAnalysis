@@ -110,11 +110,11 @@ void CellSegmentator<rgbImageT>:: GaussianBlur(bool show)
     }
 
 
+    IO::printOK("Gaussian blur");
+
 
     if(show)
     {
-
-
 
         VTKViewer::visualize<grayImageT>(blurImage ,"Gaussian Blur");
     }
@@ -644,7 +644,7 @@ void CellSegmentator<rgbImageT>:: binaryToSuperPixels(std::string fileName, bool
     for(spIt.GoToBegin(); !spIt.IsAtEnd(); ++spIt, ++rbIt, ++inIt, ++rIt)
     {
 
-        if(pixelsCounter[spIt.Get()] > (superPixelsSize[spIt.Get()]*0.8))
+        if(pixelsCounter[spIt.Get()] > (superPixelsSize[spIt.Get()]*0.9))
         {
             rbIt.Set(255);
             rIt.Set(inIt.Get());
@@ -657,6 +657,7 @@ void CellSegmentator<rgbImageT>:: binaryToSuperPixels(std::string fileName, bool
     using rgbToGrayFilterT = itk::RGBToLuminanceImageFilter<rgbImageT, grayImageT>;
     typename  rgbToGrayFilterT::Pointer rgbToGrayF = rgbToGrayFilterT::New();
     rgbToGrayF->SetInput(resultImage);
+    rgbToGrayF->Update();
     resultGrayImage = rgbToGrayF->GetOutput();
 
 
@@ -710,6 +711,8 @@ void CellSegmentator<rgbImageT>::findLocalMinima(bool show)
     filter->FullyConnectedOff();
     filter->SetInput(blurImage);
 
+    IO::printOK("Finding Local minima");
+
     if(show)
     {
         VTKViewer::visualize<grayImageT>(filter->GetOutput() ,"Local Maxima");
@@ -719,35 +722,27 @@ void CellSegmentator<rgbImageT>::findLocalMinima(bool show)
 
 
 template<typename rgbImageT>
+void CellSegmentator<rgbImageT>::setNames(const std::string& dirPath, const std::string& fileName)
+{
+    imageName = fileName;
+    this->dirPath = dirPath;
+}
+
+template<typename rgbImageT>
 void CellSegmentator<rgbImageT>::findCells()
 {
 
+    IO::printWait("Image: "+imageName);
 
     CreateImageB();
-    threshold(true);
+    threshold();
     ComputeSuperPixels();
-    binaryToSuperPixels("/home/oscar/test/result.png", true) ;
-    GaussianBlur(true);
-    findLocalMinima(true);
+    binaryToSuperPixels(dirPath+"/"+imageName+"_result.png") ;
+    GaussianBlur();
+    findLocalMinima();
 
-
-
-    return;
-    DetectEdges();
-    ComputeGradients();
-    ComputeRayFetures();
-
-    ComputeFeaturesVector();
-
-
-
-    //WriteFeaturesVector("/home/oscar/test/weka_file.arff");
-
-
-
-
-    //ReadWekaFile("/home/oscar/test/em.arff",  "/home/oscar/test/result.png");
-
+    IO::printOK("Find Cells");
+    std::cout<<std::endl;
 
 }
 

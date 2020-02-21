@@ -19,23 +19,45 @@ MainWindow::~MainWindow()
 
 
 
+void MainWindow::readDirectory(const QStringList& fileNames)
+{
+    std::string fileName, dirPath;
+    for(int i=0; i < fileNames.size(); ++i)
+    {
+        fileName = fileNames[i].split("/").back().split(".").first().toStdString();
+        auto pathAux = fileNames[i].split("/");
+        pathAux.pop_back();
+        dirPath = pathAux.join("/").toStdString();
+
+        readImage(fileNames[i].toStdString() ,dirPath, fileName);
+
+
+    }
+
+}
+
+
 void MainWindow::on_actionOpenImage_triggered()
 {
 
 
     QFileDialog qFileDialog(this);
 
+    qFileDialog.setFileMode(QFileDialog::ExistingFiles);
+
     qFileDialog.setNameFilter(tr("Images (*.vsi *.tiff)"));
 
-    auto fileName = qFileDialog.getOpenFileName().toStdString();
-    //QMessageBox::information(this, "title", fileName);
-    readImage(fileName);
+    //auto fileName = qFileDialog.getOpenFileName().toStdString();
+    auto fileNames  = qFileDialog.getOpenFileNames();
+
+    readDirectory(fileNames);
+
 
 }
 
 
 
-void MainWindow::cellSegmentation()
+void MainWindow::cellSegmentation(const std::string& dirPath, const std::string& fileName)
 {
 
 
@@ -46,7 +68,7 @@ void MainWindow::cellSegmentation()
     using cellSegmentatorT = CellSegmentator<rgbImageT>;
     std::unique_ptr<cellSegmentatorT>  cellSegmentator(new cellSegmentatorT());
     cellSegmentator->setImage(inputImage);
-    //cellSegmentator->computeGradients();
+    cellSegmentator->setNames(dirPath, fileName);
 
     cellSegmentator->findCells();
 
@@ -60,7 +82,7 @@ void MainWindow::cellSegmentation()
 
 
 
-void MainWindow::readImage(std::string fileName)
+void MainWindow::readImage( std::string imageName, const std::string& dirPath, const std::string& fileName)
 {
 
     using imageReaderT = ImageReader<rgbImageT>;
@@ -75,7 +97,7 @@ void MainWindow::readImage(std::string fileName)
     {
 
         //Replace white spaces with shell-style white spaces "\\ "
-        fileName = std::regex_replace(fileName, std::regex("\\s+"), "\\ ");
+        imageName = std::regex_replace(fileName, std::regex("\\s+"), "\\ ");
 
         //TODO replace this directory for a local project dir
         std::string tmpFileName = "/home/oscar/src/HistopathologicalAnalysis/tmp/tmpImage.tiff";
@@ -87,7 +109,7 @@ void MainWindow::readImage(std::string fileName)
     }
     else
     {
-        reader->read(fileName);
+        reader->read(imageName);
     }
 
     inputImage = reader->getRGBImage();
@@ -96,7 +118,7 @@ void MainWindow::readImage(std::string fileName)
     //VTKViewer::visualize<rgbImageT>(inputImage);
 
 
-    cellSegmentation();
+     cellSegmentation(dirPath, fileName);
 
 
 }

@@ -50,8 +50,10 @@ private:
     rgbImageP inputImage;
 
 
-    void readImage(std::string fileName);
-    void cellSegmentation();
+    void readImage( std::string imageName, const std::string& dirPath, const std::string& fileName);
+    void cellSegmentation(const std::string& dirPath, const std::string& fileName);
+
+    void readDirectory(const QStringList& fileNames);
 
 
 
