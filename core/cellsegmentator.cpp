@@ -581,10 +581,10 @@ void CellSegmentator<rgbImageT>::threshold(bool show)
 
 
     //using FilterType = itk::MomentsThresholdImageFilter<floatImageT, grayImageT>;
-    //using FilterType = itk::OtsuThresholdImageFilter<floatImageT, grayImageT>;
-    //using FilterType = itk::OtsuMultipleThresholdsImageFilter<floatImageT, grayImageT>;
+    using FilterType = itk::OtsuThresholdImageFilter<floatImageT, grayImageT>;
 
-    using FilterType = itk::TriangleThresholdImageFilter<floatImageT, grayImageT>;
+
+    //using FilterType = itk::TriangleThresholdImageFilter<floatImageT, grayImageT>;
 
 
 
@@ -735,8 +735,8 @@ void CellSegmentator<rgbImageT>::findCells()
     IO::printWait("Image: "+imageName);
 
     CreateImageB();
-    threshold();
-    ComputeSuperPixels();
+    threshold(true);
+    ComputeSuperPixels(true);
     binaryToSuperPixels(dirPath+"/"+imageName+"_result.png") ;
     GaussianBlur();
     findLocalMinima();
