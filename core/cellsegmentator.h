@@ -64,6 +64,7 @@
 #include "../util/extractchannelfilter.h"
 #include "../util/replaceimagechannelfilter.h"
 #include "../util/text.h"
+#include "../util/adaptiveotsufilter.h"
 
 
 

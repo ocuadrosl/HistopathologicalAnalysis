@@ -10,6 +10,7 @@
 #include <itkLabelImageToLabelMapFilter.h>
 #include <itkLabelToRGBImageFilter.h>
 #include <itkMinimumMaximumImageCalculator.h>
+#include <itkImageFileWriter.h>
 
 //local includes
 #include "../util/colorconverterfilter.h"

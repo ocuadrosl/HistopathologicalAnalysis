@@ -576,6 +576,14 @@ template<typename rgbImageT>
 void CellSegmentator<rgbImageT>::threshold(bool show)
 {
 
+    using AdaptiveOtsuFilter = AdaptiveOtsuFilter<floatImageT, grayImageT>;
+
+    auto adaptive =  std::make_unique<AdaptiveOtsuFilter>();
+    adaptive->SetInputImage(bChannel);
+
+    adaptive->ComputeLocalThresholds();
+
+
     /////////////////////////////////////////////////////////////
     // AVICITA SOLO CAMBIA EL NOMBRE EL FILTRO/////////////////
 

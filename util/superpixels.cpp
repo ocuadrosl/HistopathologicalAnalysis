@@ -410,6 +410,13 @@ void SuperPixels<imageT>::show()
 
     }
 
+    using WriterType = itk::ImageFileWriter<rgbImageT>;
+    WriterType::Pointer writer = WriterType::New();
+    writer->SetFileName("super-pixels.png");
+    writer->SetInput(spImage);
+    writer->Update();
+
+
 
     VTKViewer::visualize<rgbImageT>(spImage, "Super Pixels");
 
