@@ -12,6 +12,13 @@ template<typename InputImageT, typename OutputImageT>
 void AdaptiveOtsuFilter<InputImageT, OutputImageT>::ComputeLocalThresholds()
 {
 
+    pointSet = PointSetType::New();
+
+    PointsContainerPointer  pointsContainer = pointSet->GetPoints();
+
+    PointDataContainerPointer  pointDataContainer = PointDataContainer::New();
+
+    //pointSet->SetPointData( pointDataContainer );
 
     thresholdImage = InputImageT::New();
     thresholdImage->SetRegions(inputImage->GetRequestedRegion());
@@ -27,9 +34,22 @@ void AdaptiveOtsuFilter<InputImageT, OutputImageT>::ComputeLocalThresholds()
     indexT index, upperIndex;
     index.Fill(0);
 
-    using otsuFilterType = itk::OtsuThresholdImageFilter<InputImageT, OutputImageT>;
+    using otsuFilterType = itk::OtsuThresholdImageFilter<InputImageT, InputImageT>;
 
-    using roiFilterType = itk::RegionOfInterestImageFilter<InputImageT, InputImageT>;
+
+    VectorPixelType V;
+
+
+    unsigned i=0;
+    PointSetPointType point;
+
+
+
+    using roiFilterT = RegionOfInterestFilter<InputImageT, InputImageT>;
+
+
+
+
 
     for(unsigned r=regionSize; r < size[1] ; r += regionSize )
     {
@@ -47,21 +67,35 @@ void AdaptiveOtsuFilter<InputImageT, OutputImageT>::ComputeLocalThresholds()
             region.SetUpperIndex(upperIndex);
 
             auto otsuFilter = otsuFilterType::New();
-            auto roiFilter = roiFilterType::New();
-            roiFilter->SetInput(inputImage);
-            roiFilter->SetRegionOfInterest(region);
 
-            otsuFilter->SetInput(roiFilter->GetOutput());
-            otsuFilter->SetNumberOfHistogramBins(100);
+            auto roiFilter = std::make_unique<roiFilterT>();
+            roiFilter->SetInputImage(inputImage);
+            roiFilter->SetRegionOfInterest(region);
+            roiFilter->Compute();
+
+
+
+
+            otsuFilter->SetInput(roiFilter->GetRegionOfInterest());
+            otsuFilter->SetNumberOfHistogramBins(50);
             otsuFilter->Update();
 
 
             //std::cout<<otsuFilter->GetThreshold()<<std::endl;
 
-            thresholdImage->SetPixel(index,otsuFilter->GetThreshold() );
+
+            V[0] = static_cast<InputCoordType>(otsuFilter->GetThreshold());
+
+            pointDataContainer->InsertElement(i,V);
+            inputImage->TransformIndexToPhysicalPoint(index, point);
+            pointsContainer->InsertElement(i,point);
+
+
+            //thresholdImage->SetPixel(index,otsuFilter->GetThreshold() );
 
             index[0] = upperIndex[0];
 
+            ++i;
 
         }
 
@@ -73,17 +107,38 @@ void AdaptiveOtsuFilter<InputImageT, OutputImageT>::ComputeLocalThresholds()
 
 
 
-    using DecompositionType =  itk::BSplineDecompositionImageFilter<InputImageT, InputImageT>;
-    typename DecompositionType::Pointer decomposition = DecompositionType::New();
-    decomposition->SetSplineOrder(5);
-    decomposition->SetInput(thresholdImage);
-    decomposition->Update();
+    pointSet->SetPoints(pointsContainer);
+    pointSet->SetPointData(pointDataContainer);
+
+    typename SDAFilterType::ArrayType ncps;
+    ncps.Fill(50);
+
+    SDAFilterPointer filter = SDAFilterType::New();
+    filter->SetSplineOrder( 3 );
+    filter->SetNumberOfControlPoints( ncps );
+    filter->SetNumberOfLevels( 5 );
 
 
-    //writing results
+    filter->SetOrigin( inputImage->GetOrigin() );
+    filter->SetSpacing( inputImage->GetSpacing() );
+
+    filter->SetSize( size);
+    filter->SetInput( pointSet );
+    filter->Update();
+
+
+    IndexFilterPointer componentExtractor = IndexFilterType::New();
+    componentExtractor->SetInput( filter->GetOutput() );
+    componentExtractor->SetIndex( 0 );
+    componentExtractor->Update();
+    thresholdImage = componentExtractor->GetOutput();
+
+
+
+
     using rescaleFilterType2= itk::RescaleIntensityImageFilter<InputImageT, itk::Image<unsigned char,2>>;
     typename rescaleFilterType2::Pointer rescaleFilter = rescaleFilterType2::New();
-    rescaleFilter->SetInput(decomposition->GetOutput());
+    rescaleFilter->SetInput(thresholdImage);
     rescaleFilter->SetOutputMinimum(0);
     rescaleFilter->SetOutputMaximum(255);
     rescaleFilter->Update();
@@ -92,15 +147,93 @@ void AdaptiveOtsuFilter<InputImageT, OutputImageT>::ComputeLocalThresholds()
 
     VTKViewer::visualize<itk::Image<unsigned char,2>>(rescaleFilter->GetOutput() ,"B-Spline");
 
-
+    //VTKViewer::visualize<InputImageT>(thresholdImage ,"B-Spline");
 
 
 }
 
 
 template<typename InputImageT, typename OutputImageT>
-void AdaptiveOtsuFilter<InputImageT, OutputImageT>::SetInputImage(InputImageP inputImage)
+void AdaptiveOtsuFilter<InputImageT, OutputImageT>::SetInputImage(InputImageP image)
 {
 
-    this->inputImage = inputImage;
+
+    this->inputImage = image;
+
+    //VTKViewer::visualize<itk::Image<unsigned char,2>>(rescaleFilter->GetOutput() ,"input");
 }
+
+
+template<typename InputImageT, typename OutputImageT>
+typename AdaptiveOtsuFilter<InputImageT, OutputImageT>::OutputImageP AdaptiveOtsuFilter<InputImageT, OutputImageT>::GetOutput()
+{
+
+    return outputImage;
+}
+
+template<typename InputImageT, typename OutputImageT>
+void AdaptiveOtsuFilter<InputImageT, OutputImageT>::Compute()
+{
+    outputImage = OutputImageT::New();
+    outputImage->SetRegions(inputImage->GetRequestedRegion());
+    outputImage->Allocate();
+    outputImage->FillBuffer(255);
+
+    ComputeLocalThresholds();
+
+
+
+ /*  using rescaleFilterType= itk::RescaleIntensityImageFilter<InputImageT, itk::Image<unsigned ,2>>;
+    typename rescaleFilterType::Pointer rescaleFilter = rescaleFilterType::New();
+    rescaleFilter->SetInput(inputImage);
+    rescaleFilter->SetOutputMinimum(0);
+    rescaleFilter->SetOutputMaximum(255);
+    rescaleFilter->Update();
+
+
+
+    typename rescaleFilterType::Pointer rescaleFilter2 = rescaleFilterType::New();
+    rescaleFilter2->SetInput(thresholdImage);
+    rescaleFilter2->SetOutputMinimum(0);
+    rescaleFilter2->SetOutputMaximum(255);
+    rescaleFilter2->Update();
+
+*/
+
+    itk::ImageRegionConstIterator<InputImageT> iIt(inputImage, inputImage->GetRequestedRegion());
+    itk::ImageRegionConstIterator<InputImageT> tIt(thresholdImage, thresholdImage->GetRequestedRegion());
+    itk::ImageRegionIterator<OutputImageT> oIt(outputImage, outputImage->GetRequestedRegion());
+
+    std::cout<<inputImage->GetRequestedRegion()<<std::endl;
+
+
+    for(; !iIt.IsAtEnd(); ++iIt, ++tIt, ++oIt)
+    {
+        //std::cout<<iIt.Get()<<" - "<<tIt.Get()<<std::endl;
+
+        if(iIt.Get() >= tIt.Get())
+        {
+            //std::cout<<iIt.Get()<<" - "<<tIt.Get()<<std::endl;
+            oIt.Set(0);
+        }
+
+    }
+
+    //VTKViewer::visualize<OutputImageT>(outputImage ,"Adaptive Otsu");
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

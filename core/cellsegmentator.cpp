@@ -581,7 +581,7 @@ void CellSegmentator<rgbImageT>::threshold(bool show)
     auto adaptive =  std::make_unique<AdaptiveOtsuFilter>();
     adaptive->SetInputImage(bChannel);
 
-    adaptive->ComputeLocalThresholds();
+    adaptive->Compute();
 
 
     /////////////////////////////////////////////////////////////
@@ -603,7 +603,9 @@ void CellSegmentator<rgbImageT>::threshold(bool show)
     thresholdFilter->SetOutsideValue(255);
     thresholdFilter->SetNumberOfHistogramBins(100);
     thresholdFilter->Update(); // To compute threshold
-    binaryImage = thresholdFilter->GetOutput();
+    //binaryImage = thresholdFilter->GetOutput();
+
+    binaryImage = adaptive->GetOutput();
 
     if(show)
     {
