@@ -69,7 +69,7 @@ public:
 
 public:
 
-    unsigned regionSize=50;
+    unsigned regionSize=20;
 
     InputImageP inputImage;
     OutputImageP outputImage;

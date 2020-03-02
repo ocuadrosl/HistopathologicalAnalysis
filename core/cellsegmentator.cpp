@@ -151,143 +151,9 @@ void CellSegmentator<rgbImageT>::DetectEdges(bool show)
     }
 
 
-
 }
 
-template<typename rgbImageT>
-void CellSegmentator<rgbImageT>::ComputeRayFetures(bool show)
-{
 
-    //defs
-
-    differenceFeatures = floatImageT::New();
-    differenceFeatures->SetRegions(edges->GetRequestedRegion());
-    differenceFeatures->Allocate();
-    differenceFeatures->FillBuffer(0);
-
-    orientationFeatures = floatImageT::New();
-    orientationFeatures->SetRegions(edges->GetRequestedRegion());
-    orientationFeatures->Allocate();
-    orientationFeatures->FillBuffer(0);
-
-
-    const auto euclideanDistance =  Math::euclideanDistance<grayImageT::IndexType, 2, float>;
-
-    using VectorType = itk::CovariantVector<float, 2>;
-    VectorType cosSin;
-
-
-
-    auto imgSize = edges->GetRequestedRegion().GetSize();
-    using indexT = floatImageT::IndexType;
-
-    const float pi = 3.14f;
-    const float angleStep = 90;
-
-    unsigned nearEdgesFlag=0;
-    float radius=1.f;
-    float dFirst, dSecond, orientation, diff; //distance to
-
-    std::string features;
-    for(unsigned row=0; row< imgSize[1]; ++row)
-    {
-        for(unsigned col=0; col< imgSize[0]; ++col)
-        {
-
-            indexT index = {{col, row}};
-            features = "";
-            features += std::to_string(bChannel->GetPixel(index))+",";
-
-            indexT indexAux, firstEdge, secondEdge;
-
-            radius = 1.f;
-            nearEdgesFlag=0;
-            while(nearEdgesFlag < 2)
-            {
-                for(float angle=0.f; angle < 2.f*pi; angle += (2.f*pi/angleStep))
-                {
-                    indexAux[0] = index[0] + static_cast<int>(radius*std::cos(angle));
-                    indexAux[1] = index[1] + static_cast<int>(radius*std::sin(angle));
-
-                    if(index[0]==indexAux[0] && index[1]==indexAux[1] ){ continue; }
-
-                    if(!edges->GetRequestedRegion().IsInside(indexAux)){ continue; }
-
-                    if(edges->GetPixel(indexAux) == 255) //is edge?
-                    {
-                        if(nearEdgesFlag == 0) //first
-                        {
-                            firstEdge = indexAux;
-                            dFirst =  euclideanDistance(index, firstEdge);
-
-
-                            cosSin[0] = std::cos(angle);
-                            cosSin[1] = std::sin(angle);
-                            orientation  = (gradient->GetPixel(firstEdge)/gradient->GetPixel(firstEdge).GetNorm()) * cosSin;
-
-                            orientationFeatures->SetPixel(index, orientation);
-
-                            features += std::to_string(orientation)+",";
-
-                            ++nearEdgesFlag;
-                            continue;
-                        }
-                        else if(nearEdgesFlag == 1 && (firstEdge[0]!= indexAux[0] || firstEdge[1]!= indexAux[1])) //second
-                        {
-                            secondEdge = indexAux;
-                            dSecond =  euclideanDistance(index, secondEdge);
-                            ++nearEdgesFlag;
-                            continue;
-                        }
-                        else if(nearEdgesFlag >= 2)
-                        {
-                            break;
-                        }
-
-                    }
-
-                }
-
-                radius++;
-
-            }
-
-            //std::cout<<(dFirst-dSecond)/dFirst<<std::endl;
-            diff = std::abs(dFirst - dSecond);
-
-            //diff = dFirst;
-            features += std::to_string(dFirst);
-
-
-            differenceFeatures->SetPixel(index, dFirst);
-            //diffMap->SetPixel(secondEdge, 255);
-
-
-        }
-
-    }
-
-
-
-    IO::printOK("Compute ray features");
-
-    if(show)
-    {
-        using rescaleFilterType2= itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
-        rescaleFilterType2::Pointer rescaleFilter = rescaleFilterType2::New();
-        rescaleFilter->SetInput(differenceFeatures);
-        rescaleFilter->SetOutputMinimum(0);
-        rescaleFilter->SetOutputMaximum(255);
-        rescaleFilter->Update();
-
-        VTKViewer::visualize<grayImageT>(rescaleFilter->GetOutput() ,"Diff");
-    }
-
-
-
-
-
-}
 
 
 template<typename rgbImageT>
@@ -317,21 +183,6 @@ void CellSegmentator<rgbImageT>::overlay(grayImageP image)
 
 
 
-template<typename imageT>
-void CellSegmentator<imageT>::ComputeGradients()
-{
-
-    // Create and setup a gradient filter
-    using GradientFilterType = itk::GradientImageFilter<floatImageT, float>;
-    GradientFilterType::Pointer gradientFilter = GradientFilterType::New();
-    gradientFilter->SetInput(bChannel);
-    gradientFilter->Update();
-
-    gradient = gradientFilter->GetOutput();
-
-    IO::printOK("Compute gradient");
-
-}
 
 
 template<typename rgbImageT>
@@ -382,87 +233,6 @@ void CellSegmentator<rgbImageT>::ComputeSuperPixels(bool show )
 }
 
 
-template<typename rgbImageT>
-void CellSegmentator<rgbImageT>::ComputeFeaturesVector(bool show)
-{
-
-    //allocate features vector
-    featuresVector = featuresVectorT(superPixelsNumber, std::vector<float>(3, 0.f));
-
-    featuresVectorT &fv = featuresVector; //alias
-
-    itk::ImageRegionConstIterator<grayImageT> spIt(superPixelsLabels, superPixelsLabels->GetRequestedRegion());
-
-    itk::ImageRegionConstIterator<floatImageT> bIt(bChannel, bChannel->GetRequestedRegion());
-    itk::ImageRegionConstIterator<floatImageT> oriIt(orientationFeatures, orientationFeatures->GetRequestedRegion());
-    itk::ImageRegionConstIterator<floatImageT> diffIt(differenceFeatures, differenceFeatures->GetRequestedRegion());
-
-    unsigned label=0;
-    auto index = spIt.GetIndex();
-
-    std::vector<unsigned>  labelCounter(superPixelsNumber, 0);
-
-    for(;!spIt.IsAtEnd(); ++spIt, ++bIt, ++oriIt, ++diffIt)
-    {
-        index = spIt.GetIndex();
-        label = spIt.Get();
-        fv[label][0] += bIt.Get();
-        fv[label][1] += oriIt.Get();
-        fv[label][2] += diffIt.Get();
-
-        ++labelCounter[label];
-
-    }
-
-
-    for(unsigned i=0; i< superPixelsNumber; ++i)
-    {
-
-        fv[i][0] /= labelCounter[i];
-        fv[i][1] /= labelCounter[i];
-        fv[i][2] /= labelCounter[i];
-
-    }
-
-
-    auto testImage = floatImageT::New();
-    testImage->SetRegions(edges->GetRequestedRegion());
-    testImage->Allocate();
-    testImage->FillBuffer(0);
-
-
-    itk::ImageRegionIterator<floatImageT> it(testImage, testImage->GetRequestedRegion());
-
-
-    for( spIt.GoToBegin(); !it.IsAtEnd(); ++it, ++spIt)
-    {
-        it.Set(fv[spIt.Get()][0]);
-    }
-
-
-    if(show)
-    {
-
-        using rescaleFilterType2= itk::RescaleIntensityImageFilter<floatImageT, grayImageT>;
-        rescaleFilterType2::Pointer rescaleFilter = rescaleFilterType2::New();
-        rescaleFilter->SetInput(testImage);
-        rescaleFilter->SetOutputMinimum(0);
-        rescaleFilter->SetOutputMaximum(255);
-        rescaleFilter->Update();
-
-        VTKViewer::visualize<grayImageT>(rescaleFilter->GetOutput() ,"test");
-
-
-
-        overlay(rescaleFilter->GetOutput());
-    }
-
-
-
-
-    IO::printOK("Compute Features Vector");
-
-}
 
 template<typename rgbImageT>
 void CellSegmentator<rgbImageT>::ReadWekaFile(const std::string& fileName, const std::string& imageName)
@@ -573,7 +343,7 @@ void CellSegmentator<rgbImageT>::WriteFeaturesVector(const std::string& fileName
 
 
 template<typename rgbImageT>
-void CellSegmentator<rgbImageT>::threshold(bool show)
+void CellSegmentator<rgbImageT>::Threshold(bool show)
 {
 
     using AdaptiveOtsuFilter = AdaptiveOtsuFilter<floatImageT, grayImageT>;
@@ -584,24 +354,18 @@ void CellSegmentator<rgbImageT>::threshold(bool show)
     adaptive->Compute();
 
 
-    /////////////////////////////////////////////////////////////
-    // AVICITA SOLO CAMBIA EL NOMBRE EL FILTRO/////////////////
-
-
-    //using FilterType = itk::MomentsThresholdImageFilter<floatImageT, grayImageT>;
-    using FilterType = itk::OtsuThresholdImageFilter<floatImageT, grayImageT>;
+    using FilterType = itk::MomentsThresholdImageFilter<floatImageT, grayImageT>;
+    //using FilterType = itk::OtsuThresholdImageFilter<floatImageT, grayImageT>;
 
 
     //using FilterType = itk::TriangleThresholdImageFilter<floatImageT, grayImageT>;
-
-
 
 
     FilterType::Pointer thresholdFilter = FilterType::New();
     thresholdFilter->SetInput(bChannel);
     thresholdFilter->SetInsideValue(0);
     thresholdFilter->SetOutsideValue(255);
-    thresholdFilter->SetNumberOfHistogramBins(100);
+    thresholdFilter->SetNumberOfHistogramBins(400);
     thresholdFilter->Update(); // To compute threshold
     //binaryImage = thresholdFilter->GetOutput();
 
@@ -641,60 +405,90 @@ void CellSegmentator<rgbImageT>:: binaryToSuperPixels(std::string fileName, bool
     resultBinaryImage->Allocate();
     resultBinaryImage->FillBuffer(0);
 
-    auto resultImage = rgbImageT::New();
-    resultImage->SetRegions(superPixelsLabels->GetRequestedRegion());
-    resultImage->Allocate();
-    resultImage->FillBuffer(255);
+    auto resultLabelImage = grayImageT::New();
+    resultLabelImage->SetRegions(superPixelsLabels->GetRequestedRegion());
+    resultLabelImage->Allocate();
+    resultLabelImage->FillBuffer(0);
+
+
+    using rgbCharImageT = itk::Image<itk::RGBPixel<unsigned char>,2>;
+    auto resultRGBImage = rgbCharImageT::New();
+    resultRGBImage->SetRegions(superPixelsLabels->GetRequestedRegion());
+    resultRGBImage->Allocate();
+    resultRGBImage->FillBuffer(255);
 
 
     itk::ImageRegionIterator<grayImageT> rbIt(resultBinaryImage, resultBinaryImage->GetRequestedRegion());
-    itk::ImageRegionIterator<rgbImageT>  rIt(resultImage, resultImage->GetRequestedRegion());
+    itk::ImageRegionIterator<grayImageT> rlIt(resultLabelImage, resultLabelImage->GetRequestedRegion());
+    itk::ImageRegionIterator<rgbCharImageT>  rRGBIt(resultRGBImage, resultRGBImage->GetRequestedRegion());
     itk::ImageRegionIterator<rgbImageT>  inIt(inputImage, inputImage->GetRequestedRegion());
 
-    for(spIt.GoToBegin(); !spIt.IsAtEnd(); ++spIt, ++rbIt, ++inIt, ++rIt)
+    unsigned label=0;
+    for(spIt.GoToBegin(); !spIt.IsAtEnd(); ++spIt, ++rbIt, ++inIt, ++rRGBIt, ++rlIt)
     {
-
-        if(pixelsCounter[spIt.Get()] > (superPixelsSize[spIt.Get()]*0.9))
+        label = spIt.Get();
+        if(pixelsCounter[label] > (superPixelsSize[label]*0.9))
         {
             rbIt.Set(255);
-            rIt.Set(inIt.Get());
+            rRGBIt.Set(inIt.Get());
+            rlIt.Set(label+1);
         }
 
     }
 
-    //creating gray image froom rgb result
-
-    using rgbToGrayFilterT = itk::RGBToLuminanceImageFilter<rgbImageT, grayImageT>;
+    //compute gray from RGB, it is using by the gaussian filter
+    using rgbToGrayFilterT = itk::RGBToLuminanceImageFilter<rgbCharImageT, grayImageT>;
     typename  rgbToGrayFilterT::Pointer rgbToGrayF = rgbToGrayFilterT::New();
-    rgbToGrayF->SetInput(resultImage);
+    rgbToGrayF->SetInput(resultRGBImage);
     rgbToGrayF->Update();
     resultGrayImage = rgbToGrayF->GetOutput();
 
 
+    //creating gray image from rgb result
+
+    using WriterRGBType = itk::ImageFileWriter<rgbCharImageT>;
+    WriterRGBType::Pointer writerRGB = WriterRGBType::New();
+    writerRGB->SetFileName(fileName+"_RGB.png");
+    writerRGB->SetInput(resultRGBImage);
+    writerRGB->Update();
 
 
-    //writing results
-    using rescaleFilterType2= itk::RescaleIntensityImageFilter<grayImageT, itk::Image<unsigned char,2>>;
-    rescaleFilterType2::Pointer rescaleFilter = rescaleFilterType2::New();
-    rescaleFilter->SetInput(resultBinaryImage);
-    rescaleFilter->SetOutputMinimum(0);
-    rescaleFilter->SetOutputMaximum(255);
-    rescaleFilter->Update();
 
+    using charImageT = itk::Image<unsigned char,2>;
 
-    using WriterType = itk::ImageFileWriter<itk::Image<unsigned char,2>>;
+    using CastFilterType = itk::CastImageFilter<grayImageT, charImageT>;
+    CastFilterType::Pointer castFilter = CastFilterType::New();
+    castFilter->SetInput(resultBinaryImage);
+
+    using WriterType = itk::ImageFileWriter<charImageT>;
     WriterType::Pointer writer = WriterType::New();
-    writer->SetFileName(fileName);
-    writer->SetInput(rescaleFilter->GetOutput());
+    writer->SetFileName(fileName+"_binary.png");
+    writer->SetInput(castFilter->GetOutput());
     writer->Update();
+
+
+    castFilter = CastFilterType::New();
+    castFilter->SetInput(resultLabelImage);
+    castFilter->Update();
+
+    writer = WriterType::New();
+    writer->SetFileName(fileName+"_label.png");
+    writer->SetInput(castFilter->GetOutput());
+    writer->Update();
+
+
 
 
 
 
     if(show)
     {
+
+
+
+
         VTKViewer::visualize<grayImageT>(resultBinaryImage ,"Result");
-        VTKViewer::visualize<rgbImageT>(resultImage ,"Result RGB");
+        VTKViewer::visualize<rgbCharImageT>(resultRGBImage ,"Result RGB");
         VTKViewer::visualize<grayImageT>(resultGrayImage ,"Result gray");
 
     }
@@ -745,9 +539,9 @@ void CellSegmentator<rgbImageT>::findCells()
     IO::printWait("Image: "+imageName);
 
     CreateImageB();
-    threshold(true);
-    ComputeSuperPixels(true);
-    binaryToSuperPixels(dirPath+"/"+imageName+"_result.png") ;
+    Threshold();
+    ComputeSuperPixels();
+    binaryToSuperPixels(dirPath+"/"+imageName+"_result") ;
     GaussianBlur();
     findLocalMinima();
 

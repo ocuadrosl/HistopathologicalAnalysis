@@ -56,7 +56,6 @@ void SuperPixels<imageT>::create()
 
     //initQuadTreeGrid();
 
-
     for(unsigned i =1; i <= iterations ;++i)
     {
         //std::cout<<i<<std::endl;
@@ -80,8 +79,8 @@ inline bool SuperPixels<imageT>::costFunction(unsigned cLabel, unsigned nLabel, 
     auto nSPMean = colorMeans[nLabel];
 
 
-    float cost1 = 0;
-    float cost2 = 0;
+    float cost1 = 0.f;
+    float cost2 = 0.f;
 
     const auto sedColor = Math::squaredEuclideanDistance<labPixelT>;
     const auto sedIndex = Math::squaredEuclideanDistance<labIndexT, 2>;
@@ -106,19 +105,18 @@ void SuperPixels<imageT>::converge()
     flagImage->FillBuffer(false);
 
 
-
-
     using neighborhoodIteratorT = itk::NeighborhoodIterator<labelImageT>;
-
 
 
     neighborhoodIteratorT::RadiusType radius;
     radius.Fill(1);
 
 
-    itk::NeighborhoodIterator<labelImageT>       labelIt(radius,labelImage, labelImage->GetRequestedRegion()); //should be const
-    itk::ConstNeighborhoodIterator<labImageT>  labIt(radius,labImage, labImage->GetRequestedRegion());
-    itk::NeighborhoodIterator<flagImageT>        flagIt(radius, flagImage, flagImage->GetRequestedRegion());
+    itk::NeighborhoodIterator<labelImageT> labelIt(radius, labelImage, labelImage->GetRequestedRegion()); //should be const
+    itk::NeighborhoodIterator<flagImageT > flagIt (radius, flagImage,  flagImage ->GetRequestedRegion());
+
+    itk::ConstNeighborhoodIterator<labImageT> labIt(radius,labImage, labImage->GetRequestedRegion());
+
 
 
     //offsets
@@ -259,6 +257,11 @@ void SuperPixels<imageT>::updateMeans()
 
     for(unsigned i =0 ; i< spNumber ;++i)
     {
+        if(spSizes[i]==0)
+        {
+            continue;
+        }
+
         indexMeans[i][0] /= spSizes[i];
         indexMeans[i][1] /= spSizes[i];
 

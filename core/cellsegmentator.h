@@ -197,7 +197,7 @@ private:
 
     void overlay(grayImageP image);
 
-    void threshold(bool show=false);
+    void Threshold(bool show=false);
 
     void binaryToSuperPixels(std::string fileName, bool show=false );
 

@@ -145,7 +145,7 @@ void AdaptiveOtsuFilter<InputImageT, OutputImageT>::ComputeLocalThresholds()
 
 
 
-    VTKViewer::visualize<itk::Image<unsigned char,2>>(rescaleFilter->GetOutput() ,"B-Spline");
+   // VTKViewer::visualize<itk::Image<unsigned char,2>>(rescaleFilter->GetOutput() ,"B-Spline");
 
     //VTKViewer::visualize<InputImageT>(thresholdImage ,"B-Spline");
 
@@ -204,7 +204,7 @@ void AdaptiveOtsuFilter<InputImageT, OutputImageT>::Compute()
     itk::ImageRegionConstIterator<InputImageT> tIt(thresholdImage, thresholdImage->GetRequestedRegion());
     itk::ImageRegionIterator<OutputImageT> oIt(outputImage, outputImage->GetRequestedRegion());
 
-    std::cout<<inputImage->GetRequestedRegion()<<std::endl;
+   //std::cout<<inputImage->GetRequestedRegion()<<std::endl;
 
 
     for(; !iIt.IsAtEnd(); ++iIt, ++tIt, ++oIt)
