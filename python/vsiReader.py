@@ -34,9 +34,7 @@ def computeResizingFactors(inputPhyX, inputPhyY, inputMag, outputMag):
     
     return (inputPhyX / newPhySizeX, inputPhyY / newPhySizeY)
 
-    
-    
-    
+   
 
 def computeResolution(physicalX, physicalY, sizeX, sizeY, inputMagnification, outputMagnification):
     '''
@@ -57,6 +55,7 @@ def computeResolution(physicalX, physicalY, sizeX, sizeY, inputMagnification, ou
 
 def readVSI(inputFileName, outputMag=5, nTilesX=20, nTilesY=20):
 
+    
     '''
     Read a vsi image tile by tile and return a resized RGB TIFF image
     param outMag:  output magnification
@@ -65,6 +64,8 @@ def readVSI(inputFileName, outputMag=5, nTilesX=20, nTilesY=20):
     javabridge.start_vm(class_path=bioformats.JARS, run_headless=True, max_heap_size='8G')
 
     try:
+
+       
         log4j.basic_config()
 
         ome = OMEXML(bioformats.get_omexml_metadata(path=inputFileName))
@@ -158,8 +159,9 @@ if __name__ == '__main__':
     #inFileName = "/home/oscar/data/biopsy/Dataset 1/B 2009 8854/B 2009 8854 A.vsi"
     #inFileName = "/home/oscar/data/biopsy/B2046-18 B20181107/Image01B2046-18 B.vsi"
     #outFileName = "/home/oscar/image.tiff"
-    #print('py ',sys.argv[1], sys.argv[2], sys.argv[3])
+
     
+    print('py ', sys.argv[1], sys.argv[2], sys.argv[3])    
 
     # arg1 = input file name
     # arg2 = output file name

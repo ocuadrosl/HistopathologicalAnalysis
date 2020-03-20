@@ -75,10 +75,10 @@ private:
     spIndexMeansT indexMeans;
     spSizesT spSizes;
 
-    unsigned sideLength = 20;
+    unsigned sideLength = 15; //20
     float   lambda1    = 1;
     float   lambda2    = 0.5;
-    unsigned iterations = 25;
+    unsigned iterations = 20; //25
 
     unsigned spNumber = 0;
 

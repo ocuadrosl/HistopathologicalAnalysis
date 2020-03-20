@@ -14,6 +14,7 @@
 //local includes
 #include "core/imagereader.h"
 #include "core/cellsegmentator.h"
+#include "core/pleuradetector.h"
 #include "util/vtkviewer.h"
 
 
@@ -52,6 +53,9 @@ private:
 
     void readImage( std::string imageName, const std::string& dirPath, const std::string& fileName);
     void cellSegmentation(const std::string& dirPath, const std::string& fileName);
+    void PleuraDetection(const std::string& dirPath, const std::string& fileName);
+
+
 
     void readDirectory(const QStringList& fileNames);
 

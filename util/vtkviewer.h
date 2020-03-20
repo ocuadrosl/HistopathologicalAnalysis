@@ -21,7 +21,7 @@
 #include <vtkInteractorStyleImage.h>
 #include <vtkRenderWindowInteractor.h>
 
-
+#include <itkViewImage.h>
 
 namespace VTKViewer
 {
@@ -46,6 +46,7 @@ void visualize(typename imageT::Pointer image, std::string description="")
         castFilter->Update();
 
         //visualizing
+        //itk::ViewImage<imageChar>::View(castFilter->GetOutput());
         QuickView viewer;
         viewer.AddImage(castFilter->GetOutput(), true, description);
         viewer.Visualize();
@@ -65,6 +66,7 @@ void visualize(typename imageT::Pointer image, std::string description="")
         viewer.Visualize();
 
     }
+
 }
 
 template<typename imageT, typename vectorImageT>

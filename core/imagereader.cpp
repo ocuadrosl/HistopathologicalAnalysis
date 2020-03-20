@@ -11,10 +11,12 @@ void ImageReader<rgbImageT>::readVSI(std::string inputFileName, std::string outp
 {
 
 
+    //python reads args within quotes
     IO::printWait("Reading and resizing the VSI file", "a few minutes");
-    std::string pythonCmd = "python  /home/oscar/src/HistopathologicalAnalysis/python/vsiReader.py "+
-            inputFileName+" "+
-            outputFileName+" "+std::to_string(outputMag);
+    std::string pythonCmd = "python  /home/oscar/src/HistopathologicalAnalysis/python/vsiReader.py '"+
+            inputFileName+"' '"+
+            outputFileName+"' '"+std::to_string(outputMag)+"'";
+
 
     std::system(pythonCmd.c_str());
 

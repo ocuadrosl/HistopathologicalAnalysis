@@ -39,7 +39,7 @@ void CellSegmentator<rgbImageT>::CreateImageB(bool show)
     std::unique_ptr<ExtractChannelFilterT> extractChannelFilter(new ExtractChannelFilterT());
 
     extractChannelFilter->setImputImage(xyzToLabFilter->getOutput());
-    extractChannelFilter->extractChannel(2);
+    extractChannelFilter->extractChannel(0);
 
     bChannel = extractChannelFilter->getOutputImage();
 
@@ -346,16 +346,16 @@ template<typename rgbImageT>
 void CellSegmentator<rgbImageT>::Threshold(bool show)
 {
 
-    using AdaptiveOtsuFilter = AdaptiveOtsuFilter<floatImageT, grayImageT>;
+    /*using AdaptiveOtsuFilter = AdaptiveOtsuFilter<floatImageT, grayImageT>;
 
     auto adaptive =  std::make_unique<AdaptiveOtsuFilter>();
     adaptive->SetInputImage(bChannel);
 
     adaptive->Compute();
+*/
 
-
-    using FilterType = itk::MomentsThresholdImageFilter<floatImageT, grayImageT>;
-    //using FilterType = itk::OtsuThresholdImageFilter<floatImageT, grayImageT>;
+    //using FilterType = itk::MomentsThresholdImageFilter<floatImageT, grayImageT>;
+    using FilterType = itk::OtsuThresholdImageFilter<floatImageT, grayImageT>;
 
 
     //using FilterType = itk::TriangleThresholdImageFilter<floatImageT, grayImageT>;
@@ -367,9 +367,9 @@ void CellSegmentator<rgbImageT>::Threshold(bool show)
     thresholdFilter->SetOutsideValue(255);
     thresholdFilter->SetNumberOfHistogramBins(400);
     thresholdFilter->Update(); // To compute threshold
-    //binaryImage = thresholdFilter->GetOutput();
+    binaryImage = thresholdFilter->GetOutput();
 
-    binaryImage = adaptive->GetOutput();
+   // binaryImage = adaptive->GetOutput();
 
     if(show)
     {
@@ -484,9 +484,6 @@ void CellSegmentator<rgbImageT>:: binaryToSuperPixels(std::string fileName, bool
     if(show)
     {
 
-
-
-
         VTKViewer::visualize<grayImageT>(resultBinaryImage ,"Result");
         VTKViewer::visualize<rgbCharImageT>(resultRGBImage ,"Result RGB");
         VTKViewer::visualize<grayImageT>(resultGrayImage ,"Result gray");
@@ -538,9 +535,9 @@ void CellSegmentator<rgbImageT>::findCells()
 
     IO::printWait("Image: "+imageName);
 
-    CreateImageB();
-    Threshold();
-    ComputeSuperPixels();
+    CreateImageB(true);
+    Threshold(true);
+    ComputeSuperPixels(true);
     binaryToSuperPixels(dirPath+"/"+imageName+"_result") ;
     GaussianBlur();
     findLocalMinima();

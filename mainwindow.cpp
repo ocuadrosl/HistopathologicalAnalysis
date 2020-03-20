@@ -29,7 +29,7 @@ void MainWindow::readDirectory(const QStringList& fileNames)
         pathAux.pop_back();
         dirPath = pathAux.join("/").toStdString();
 
-        readImage(fileNames[i].toStdString() ,dirPath, fileName);
+        readImage(fileNames[i].toStdString(), dirPath, fileName);
 
 
     }
@@ -63,8 +63,6 @@ void MainWindow::cellSegmentation(const std::string& dirPath, const std::string&
 
     //rgb to grayscale
 
-
-
     using cellSegmentatorT = CellSegmentator<rgbImageT>;
     std::unique_ptr<cellSegmentatorT>  cellSegmentator(new cellSegmentatorT());
     cellSegmentator->setImage(inputImage);
@@ -72,11 +70,23 @@ void MainWindow::cellSegmentation(const std::string& dirPath, const std::string&
 
     cellSegmentator->findCells();
 
+}
 
 
-    //using vectorImageT =  itk::Image<itk::CovariantVector<float, 2>, 2>;
-    //VTKViewer::visualizeVectorImage<rgbImageT, vectorImageT>(inputImage, cellSegmentator->getGradients());
 
+void MainWindow::PleuraDetection(const std::string& dirPath, const std::string& fileName)
+{
+
+
+    //rgb to grayscale
+
+    using pleuraDetectorT = PleuraDetector<rgbImageT>;
+    std::unique_ptr<pleuraDetectorT>  pleuraDetector(new pleuraDetectorT());
+    pleuraDetector->SetInputImage(inputImage);
+    pleuraDetector->Detect();
+    //pleuraDetector->setNames(dirPath, fileName);
+
+    //pleuraDetector->findCells();
 
 }
 
@@ -88,21 +98,21 @@ void MainWindow::readImage( std::string imageName, const std::string& dirPath, c
     using imageReaderT = ImageReader<rgbImageT>;
     std::unique_ptr<imageReaderT> reader(new imageReaderT());
 
-    auto it = std::find(fileName.begin(), fileName.end(), '.');
-    std::string fileType("", static_cast<uint>(fileName.end() - it));
-    std::copy(it, fileName.end(), fileType.begin());
+    auto it = std::find(imageName.begin(), imageName.end(), '.');
+    std::string fileType("", static_cast<uint>(imageName.end() - it));
+    std::copy(it, imageName.end(), fileType.begin());
+
 
 
     if(fileType==".vsi")
     {
-
         //Replace white spaces with shell-style white spaces "\\ "
-        imageName = std::regex_replace(fileName, std::regex("\\s+"), "\\ ");
+        //imageName = std::regex_replace(imageName, std::regex("\\s+"), "\\ ");
 
         //TODO replace this directory for a local project dir
         std::string tmpFileName = "/home/oscar/src/HistopathologicalAnalysis/tmp/tmpImage.tiff";
 
-        reader->readVSI(fileName, tmpFileName, 1);
+        reader->readVSI(imageName, tmpFileName, 5);
 
 
 
@@ -118,7 +128,8 @@ void MainWindow::readImage( std::string imageName, const std::string& dirPath, c
     //VTKViewer::visualize<rgbImageT>(inputImage);
 
 
-     cellSegmentation(dirPath, fileName);
+     //cellSegmentation(dirPath, fileName);
+     PleuraDetection(dirPath, fileName);
 
 
 }
