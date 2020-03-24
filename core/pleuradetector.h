@@ -17,6 +17,7 @@
 #include <itkConnectedComponentImageFilter.h>
 #include <itkLabelImageToLabelMapFilter.h>
 #include <itkLabelToRGBImageFilter.h>
+#include <itkNeighborhoodIterator.h>
 
 
 //local includes
@@ -33,6 +34,11 @@ class PleuraDetector
     using GrayImageT = itk::Image<unsigned, 2>;
     using GrayImageP = GrayImageT::Pointer;
 
+    //default pixel values for binary images, i.e., edges, otsu, and etc
+    const GrayImageT::PixelType Background = 0;
+    const GrayImageT::PixelType Foreground = 255;
+
+
 
 
 public:
@@ -46,10 +52,13 @@ private:
     ImageP inputImage;
 
     //Auxiliary functions
-    GrayImageP FillHoles(GrayImageP grayImage, bool show=false);
-    void GeodesicActiveCountour(GrayImageP grayImage, bool show=false);
+    GrayImageP FillHoles(GrayImageP grayImage, bool show=false); //nope
+    void GeodesicActiveCountour(GrayImageP grayImage, bool show=false); //nope
+
+
     GrayImageP EdgeDetectionCanny(GrayImageP grayImage, bool show=false);
-    void ConnectedComponets(GrayImageP grayImage, bool show=false);
+    GrayImageP ConnectedComponets(GrayImageP grayImage, bool show=false);
+    void ComputeLocalFeatures(GrayImageP grayImage, GrayImageP components, unsigned radius=1, bool show=false);
 
 
 };

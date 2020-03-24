@@ -175,8 +175,8 @@ PleuraDetector<InputImageT>::EdgeDetectionCanny(GrayImageP grayImage, bool show)
     using RescaleType = itk::RescaleIntensityImageFilter<GrayImageFloatT, GrayImageT>;
     RescaleType::Pointer rescaler = RescaleType::New();
     rescaler->SetInput(filter->GetOutput());
-    rescaler->SetOutputMinimum(0);
-    rescaler->SetOutputMaximum(255);
+    rescaler->SetOutputMinimum(Background);
+    rescaler->SetOutputMaximum(Foreground);
     rescaler->Update();
 
     if(show)
@@ -191,41 +191,77 @@ PleuraDetector<InputImageT>::EdgeDetectionCanny(GrayImageP grayImage, bool show)
 }
 
 template<typename InputImageT>
-void PleuraDetector<InputImageT>::ConnectedComponets(GrayImageP edgesImage, bool show)
+typename PleuraDetector<InputImageT>::GrayImageP PleuraDetector<InputImageT>::ConnectedComponets(GrayImageP edgesImage, bool show)
 {
-
 
     using ConnectedComponentImageFilterType = itk::ConnectedComponentImageFilter<GrayImageT, GrayImageT>;
     ConnectedComponentImageFilterType::Pointer connected = ConnectedComponentImageFilterType::New();
     connected->SetInput(edgesImage);
     connected->FullyConnectedOn();
-    connected->SetBackgroundValue(0); //black
+    connected->SetBackgroundValue(Background); //black
     connected->Update();
-
-
-    typedef itk::LabelImageToLabelMapFilter<GrayImageT> LabelImageToLabelMapFilterType;
-    typename LabelImageToLabelMapFilterType::Pointer labelImageToLabelMapFilter = LabelImageToLabelMapFilterType::New();
-    labelImageToLabelMapFilter->SetInput(connected->GetOutput());
-    labelImageToLabelMapFilter->Update();
-
-
-    using  rgbImageT =  itk::Image<itk::RGBPixel<unsigned char>, 2>;
-    typedef itk::LabelToRGBImageFilter<GrayImageT, rgbImageT> RGBFilterType;
-    typename RGBFilterType::Pointer rgbFilter = RGBFilterType::New();
-    rgbFilter->SetInput(connected->GetOutput());
-    rgbFilter->Update();
 
     if(show)
     {
+
+        typedef itk::LabelImageToLabelMapFilter<GrayImageT> LabelImageToLabelMapFilterType;
+        typename LabelImageToLabelMapFilterType::Pointer labelImageToLabelMapFilter = LabelImageToLabelMapFilterType::New();
+        labelImageToLabelMapFilter->SetInput(connected->GetOutput());
+        labelImageToLabelMapFilter->Update();
+
+
+        using  rgbImageT =  itk::Image<itk::RGBPixel<unsigned char>, 2>;
+        typedef itk::LabelToRGBImageFilter<GrayImageT, rgbImageT> RGBFilterType;
+        typename RGBFilterType::Pointer rgbFilter = RGBFilterType::New();
+        rgbFilter->SetInput(connected->GetOutput());
+        rgbFilter->Update();
 
         VTKViewer::visualize<rgbImageT>(rgbFilter->GetOutput(), "Connected components");
 
     }
 
+    IO::printOK("Connected components");
 
+    return connected->GetOutput();
 
 }
 
+
+
+template<typename InputImageT>
+void PleuraDetector<InputImageT>::ComputeLocalFeatures(GrayImageP grayImage, GrayImageP components, unsigned radiusValue, bool show)
+{
+
+
+    using NeighborhoodIteratorType = itk::NeighborhoodIterator<GrayImageT>;
+    NeighborhoodIteratorType::RadiusType radius;
+    radius.Fill(radiusValue);
+    itk::NeighborhoodIterator<GrayImageT>  imgIt(radius, grayImage, grayImage->GetRequestedRegion());
+    itk::ImageRegionConstIterator<GrayImageT> cIt(components, components->GetRequestedRegion());
+
+
+    for(; !imgIt.IsAtEnd(); ++imgIt, ++cIt)
+    {
+
+        if(cIt.Get() != Background)
+        {
+
+
+
+        }
+
+    }
+
+
+
+
+
+
+
+
+    IO::printOK("Local features");
+
+}
 
 
 template<typename InputImageT>
@@ -257,12 +293,13 @@ void PleuraDetector<InputImageT>::Detect()
 
 */
 
-
     //VTKViewer::visualize<GrayImageT>(grayImage);
 
     //GeodesicActiveCountour(grayImage, true);
     auto edges = EdgeDetectionCanny(grayImage, false);
-    ConnectedComponets(edges, true);
+    auto components = ConnectedComponets(edges, true);
+    ComputeLocalFeatures(grayImage,components, 3);
+
 
 
 
