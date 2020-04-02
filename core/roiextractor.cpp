@@ -113,7 +113,7 @@ void ROIExtractor::computeDensity(bool showResult)
 
     }
 
-    IO::printOK("Computing density");
+    io::printOK("Computing density");
 
     //visualizing
     if(showResult)
@@ -132,7 +132,7 @@ void ROIExtractor::blendColorMap(bool showResult)
 
     if(colorMapImage.IsNull())
     {
-        IO::printFail("Blending colormap", "Call densityToColorMap before");
+        io::printFail("Blending colormap", "Call densityToColorMap before");
         return;
 
     }
@@ -144,7 +144,7 @@ void ROIExtractor::blendColorMap(bool showResult)
     overlayImageFilter->setForegroundAlpha(0.8f);
     overlayImageFilter->softLigh();
 
-    IO::printOK("Blending colormap");
+    io::printOK("Blending colormap");
 
     if(showResult)
     {
@@ -161,7 +161,7 @@ void ROIExtractor::densityToColorMap(bool showResult)
 
     if(densityImage.IsNull())
     {
-        IO::printFail("Density to colormap", "Call computeDensity before");
+        io::printFail("Density to colormap", "Call computeDensity before");
         return;
 
     }
@@ -200,7 +200,7 @@ void ROIExtractor::densityToColorMap(bool showResult)
     }
 
 
-    IO::printOK("Density to colormap");
+    io::printOK("Density to colormap");
 
     if(showResult)
     {
@@ -288,7 +288,7 @@ void ROIExtractor::computeConnectedComponents(bool showResult)
     connectedComponents = labelImageToLabelMapFilter->GetOutput();
 
 
-    IO::printOK("Computing connected components");
+    io::printOK("Computing connected components");
 
     if(showResult)
     {

@@ -99,7 +99,7 @@ void RGBHistogramFilter<rgbImageT>::computeComulativeDistribution()
 
     }
 
-        IO::printOK("Cumulative distribution");
+        io::printOK("Cumulative distribution");
 
 }
 
@@ -121,7 +121,7 @@ void RGBHistogramFilter<rgbImageT>:: normalizeHistogram()
 
     }
 
-    IO::printOK("Normalizing histogram");
+    io::printOK("Normalizing histogram");
 
 
 }
@@ -172,7 +172,7 @@ void RGBHistogramFilter<rgbImageT>::computeHistogram(bool normalized)
     }
 
 
-    IO::printOK("Computing Histogram");
+    io::printOK("Computing Histogram");
 
 
     if(normalized)

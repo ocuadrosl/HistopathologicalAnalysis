@@ -5,7 +5,7 @@
 #include <iostream>
 #include <iomanip>
 
-namespace IO
+namespace io
 {
 
 

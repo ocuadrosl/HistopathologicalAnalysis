@@ -20,7 +20,7 @@
 #include "../util/vtkviewer.h"
 #include "../util/math.h"
 #include "../util/findpeaks.h"
-#include "../util/persistence1d.hpp"
+//#include "../util/persistence1d.hpp"
 #include "../util/logfilter.h"
 
 template<typename rgbImageT>

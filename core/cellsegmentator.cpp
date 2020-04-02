@@ -110,7 +110,7 @@ void CellSegmentator<rgbImageT>:: GaussianBlur(bool show)
     }
 
 
-    IO::printOK("Gaussian blur");
+    io::printOK("Gaussian blur");
 
 
     if(show)
@@ -222,7 +222,7 @@ void CellSegmentator<rgbImageT>::ComputeSuperPixels(bool show )
     superPixelsLabels = superPixels->getLabelImage();
     superPixelsNumber = superPixels->GetNumberOfSuperPixels();
 
-    IO::printOK("Creating Super Pixels");
+    io::printOK("Creating Super Pixels");
 
     if(show)
     {
@@ -304,7 +304,7 @@ void CellSegmentator<rgbImageT>::ReadWekaFile(const std::string& fileName, const
 
 
 
-    IO::printOK("Reading weka file");
+    io::printOK("Reading weka file");
 
 
 }
@@ -336,7 +336,7 @@ void CellSegmentator<rgbImageT>::WriteFeaturesVector(const std::string& fileName
     }
     wekaFile.close();
 
-    IO::printOK("Writing Weka File");
+    io::printOK("Writing Weka File");
 
 
 }
@@ -494,7 +494,7 @@ void CellSegmentator<rgbImageT>:: binaryToSuperPixels(std::string fileName, bool
 
 
 
-    IO::printOK("Binary to Super Pixels");
+    io::printOK("Binary to Super Pixels");
 
 }
 
@@ -512,7 +512,7 @@ void CellSegmentator<rgbImageT>::findLocalMinima(bool show)
     filter->FullyConnectedOff();
     filter->SetInput(blurImage);
 
-    IO::printOK("Finding Local minima");
+    io::printOK("Finding Local minima");
 
     if(show)
     {
@@ -533,7 +533,7 @@ template<typename rgbImageT>
 void CellSegmentator<rgbImageT>::findCells()
 {
 
-    IO::printWait("Image: "+imageName);
+    io::printWait("Image: "+imageName);
 
     CreateImageB(true);
     Threshold(true);
@@ -542,7 +542,7 @@ void CellSegmentator<rgbImageT>::findCells()
     GaussianBlur();
     findLocalMinima();
 
-    IO::printOK("Find Cells");
+    io::printOK("Find Cells");
     std::cout<<std::endl;
 
 }

@@ -32,7 +32,7 @@ void Graph::Build()
 
 
 
-    IO::printOK("Building graph");
+    io::printOK("Building graph");
 
 
 }

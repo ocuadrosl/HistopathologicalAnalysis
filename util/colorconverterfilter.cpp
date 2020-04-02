@@ -94,7 +94,7 @@ void ColorConverterFilter<inputImageT, outputImageT>::rgbToHsv()
     }
 
 
-    IO::printOK("RGB to HSV");
+    io::printOK("RGB to HSV");
 
 }
 
@@ -191,7 +191,7 @@ void ColorConverterFilter<inputImageT, outputImageT>::hsvToRgb()
         ++outputIt;
     }
 
-     IO::printOK("HSV to RGB");
+     io::printOK("HSV to RGB");
 
 }
 
@@ -265,11 +265,11 @@ void ColorConverterFilter<inputImageT, outputImageT>::rgbToHsl()
         }
 
 
-        IO::printOK("RGB to HSL");
+        io::printOK("RGB to HSL");
     }
     else
     {
-        IO::printFail("RGB to HSL", "The output image type must be a float point type");
+        io::printFail("RGB to HSL", "The output image type must be a float point type");
 
     }
 
@@ -318,7 +318,7 @@ void ColorConverterFilter<inputImageT, outputImageT>:: labToXyz()
 
     }
 
-    IO::printOK("LAB to XYZ");
+    io::printOK("LAB to XYZ");
 
 }
 
@@ -402,7 +402,7 @@ void ColorConverterFilter<inputImageT, outputImageT>::xyzToLab()
 
     }
 
-    IO::printOK("XYZ to CIE Lab");
+    io::printOK("XYZ to CIE Lab");
 
 
 }
@@ -461,7 +461,7 @@ void ColorConverterFilter<inputImageT, outputImageT>:: xyzToRgb()
 
     }
 
-    IO::printOK("XYZ to RGB");
+    io::printOK("XYZ to RGB");
 
 }
 
@@ -512,7 +512,7 @@ void ColorConverterFilter<inputImageT, outputImageT>::rgbToXyz()
 
     }
 
-  IO::printOK("RGB to XYZ");
+  io::printOK("RGB to XYZ");
 
 }
 
@@ -574,7 +574,7 @@ ColorConverterFilter<inputImageT, outputImageT>::sRGBCompanding(const inputPixel
 }
 
 /*
-    rgbPixel must be scaled in the range [0-1]
+    rgbPixel must be scaled in [0-1]
     //rgbPixel = 'V' in {R, G,B}
 
 */

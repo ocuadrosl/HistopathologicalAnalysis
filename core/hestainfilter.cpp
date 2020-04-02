@@ -220,7 +220,7 @@ void HEStainFilter:: colorEnhancement(bool showResult)
     outputImage = hsvToRgbFilter->getOutput();
 
 
-    IO::printOK("Color Enhancement");
+    io::printOK("Color Enhancement");
 
 
     if(showResult)

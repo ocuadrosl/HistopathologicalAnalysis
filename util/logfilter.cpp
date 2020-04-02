@@ -60,7 +60,7 @@ void LoGFilter<inputImageT, outputImageT>::compute(bool show, bool echo)
 
     if(echo)
     {
-        IO::printOK("LoG filter");
+        io::printOK("LoG filter");
     }
 
 

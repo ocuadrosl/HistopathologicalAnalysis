@@ -15,8 +15,8 @@ template<typename imageT, typename labelMapT>
 void LabelMapToMultipleImagesFilter<imageT, labelMapT>::extractImages()
 {
 
-    IO::printWait("Extracting images");
-    IO::printInfo("Extracting images", std::to_string(labelMap->GetNumberOfLabelObjects()) +" images will be extracted");
+    io::printWait("Extracting images");
+    io::printInfo("Extracting images", std::to_string(labelMap->GetNumberOfLabelObjects()) +" images will be extracted");
 
     labelObjT * labelObj;
 
@@ -55,12 +55,12 @@ void LabelMapToMultipleImagesFilter<imageT, labelMapT>::extractImages()
         images.push_back(image);
 
 
-        IO::printProgress("Extracting images", ((objI+1)*100)/(numberOfObjs-2));
+        io::printProgress("Extracting images", ((objI+1)*100)/(numberOfObjs-2));
 
     }
 
 
-    IO::printOK("Extracting images");
+    io::printOK("Extracting images");
 
 }
 
@@ -90,7 +90,7 @@ void LabelMapToMultipleImagesFilter<imageT, labelMapT>::resizeImages(unsigned sh
 
     }
 
-    IO::printOK("Resizing images");
+    io::printOK("Resizing images");
 
 
 
@@ -190,7 +190,7 @@ void LabelMapToMultipleImagesFilter<imageT, labelMapT>::writeImages(std::string 
 
     }
 
-    IO::printOK("Writing images");
+    io::printOK("Writing images");
 
 }
 

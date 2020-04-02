@@ -15,141 +15,8 @@ void PleuraDetector<InputImageT>::SetInputImage(ImageP inputImage)
 
 }
 
-template<typename InputImageT>
-typename PleuraDetector<InputImageT>::GrayImageP
-PleuraDetector<InputImageT>::FillHoles(GrayImageP grayImage, bool show)
-{
-
-    using FilterType = itk::VotingBinaryIterativeHoleFillingImageFilter<GrayImageT>;
-    FilterType::InputSizeType radius;
-    radius.Fill(50);
-
-    FilterType::Pointer filter = FilterType::New();
-    filter->SetInput(grayImage);
-    filter->SetRadius(radius);
-    filter->SetMajorityThreshold(5);
-    filter->SetBackgroundValue(itk::NumericTraits<GrayImageT::PixelType>::Zero);
-    filter->SetForegroundValue(itk::NumericTraits<GrayImageT::PixelType>::max());
-    filter->SetMaximumNumberOfIterations(100);
-    filter->Update();
-
-    if(show)
-    {
-
-        VTKViewer::visualize<GrayImageT>(filter->GetOutput());
-    }
 
 
-    IO::printOK("Filling holes");
-
-    return filter->GetOutput();
-
-}
-
-
-template<typename InputImageT>
-void PleuraDetector<InputImageT>::GeodesicActiveCountour(GrayImageP grayImage, bool show)
-{
-
-
-    using GrayImageFloatT = itk::Image<float,2>;
-
-    using RescaleType = itk::RescaleIntensityImageFilter<GrayImageT, GrayImageFloatT>;
-    RescaleType::Pointer rescale = RescaleType::New();
-    rescale->SetInput(grayImage);
-    rescale->SetOutputMinimum(0.f);
-    rescale->SetOutputMaximum(1.f);
-
-
-    using SmoothingFilterType = itk::CurvatureAnisotropicDiffusionImageFilter<GrayImageFloatT, GrayImageFloatT>;
-    SmoothingFilterType::Pointer smoothing = SmoothingFilterType::New();
-    smoothing->SetTimeStep(0.125);
-    smoothing->SetNumberOfIterations(5);
-    smoothing->SetConductanceParameter(9.0);
-    smoothing->SetInput(rescale->GetOutput());
-
-
-
-
-    unsigned sigma = 5;
-    using GradientFilterType = itk::GradientMagnitudeRecursiveGaussianImageFilter<GrayImageFloatT, GrayImageFloatT>;
-    GradientFilterType::Pointer gradientMagnitude = GradientFilterType::New();
-    gradientMagnitude->SetSigma(sigma);
-    gradientMagnitude->SetInput(smoothing->GetOutput());
-
-
-
-
-    double alpha = 50;
-    double beta  = 500;
-    using SigmoidFilterType = itk::SigmoidImageFilter<GrayImageFloatT, GrayImageFloatT>;
-    SigmoidFilterType::Pointer sigmoid = SigmoidFilterType::New();
-    sigmoid->SetOutputMinimum(0.0);
-    sigmoid->SetOutputMaximum(1.0);
-    sigmoid->SetAlpha(alpha);
-    sigmoid->SetBeta(beta);
-    sigmoid->SetInput(gradientMagnitude->GetOutput());
-
-    sigmoid->Update();
-    //std::cout<<"pass"<<std::endl;
-
-
-    using FastMarchingFilterType = itk::FastMarchingImageFilter<GrayImageFloatT, GrayImageFloatT>;
-    FastMarchingFilterType::Pointer fastMarching = FastMarchingFilterType::New();
-
-
-    float propagationScaling = 1.f;
-    unsigned numberOfIterations=5;
-
-    using GeodesicActiveContourFilterType = itk::GeodesicActiveContourLevelSetImageFilter<GrayImageFloatT, GrayImageFloatT>;
-    GeodesicActiveContourFilterType::Pointer geodesicActiveContour = GeodesicActiveContourFilterType::New();
-    geodesicActiveContour->SetPropagationScaling(propagationScaling);
-    geodesicActiveContour->SetCurvatureScaling(1.0);
-    geodesicActiveContour->SetAdvectionScaling(1.0);
-    geodesicActiveContour->SetMaximumRMSError(0.02);
-    geodesicActiveContour->SetNumberOfIterations(numberOfIterations);
-    geodesicActiveContour->SetInput(fastMarching->GetOutput());
-    geodesicActiveContour->SetFeatureImage(sigmoid->GetOutput());
-
-
-
-    using ThresholdingFilterType = itk::BinaryThresholdImageFilter<GrayImageFloatT, GrayImageT>;
-    ThresholdingFilterType::Pointer thresholder = ThresholdingFilterType::New();
-    thresholder->SetLowerThreshold(-1000.0);
-    thresholder->SetUpperThreshold(0.0);
-    thresholder->SetOutsideValue(0);
-    thresholder->SetInsideValue(255);
-    thresholder->SetInput(geodesicActiveContour->GetOutput());
-
-    using NodeContainer = FastMarchingFilterType::NodeContainer;
-    using NodeType = FastMarchingFilterType::NodeType;
-
-    GrayImageFloatT::IndexType seedPosition;
-    seedPosition[0] = 200;
-    seedPosition[1] = 200;
-
-    NodeContainer::Pointer seeds = NodeContainer::New();
-    NodeType               node;
-    node.SetValue(0);
-    node.SetIndex(seedPosition);
-
-    seeds->Initialize();
-    seeds->InsertElement(0, node);
-
-    fastMarching->SetTrialPoints(seeds);
-    fastMarching->SetSpeedConstant(1.0);
-
-    if(show)
-    {
-        VTKViewer::visualize<GrayImageT>(thresholder->GetOutput() ,"Geodesic active countour");
-
-    }
-
-
-
-
-
-}
 
 
 template<typename InputImageT>
@@ -191,8 +58,9 @@ PleuraDetector<InputImageT>::EdgeDetectionCanny(GrayImageP grayImage, bool show)
 }
 
 template<typename InputImageT>
-typename PleuraDetector<InputImageT>::GrayImageP PleuraDetector<InputImageT>::ConnectedComponets(GrayImageP edgesImage, bool show)
+typename PleuraDetector<InputImageT>::LabelMapP PleuraDetector<InputImageT>::ConnectedComponets(GrayImageP edgesImage, unsigned threhold, bool show)
 {
+
 
     using ConnectedComponentImageFilterType = itk::ConnectedComponentImageFilter<GrayImageT, GrayImageT>;
     ConnectedComponentImageFilterType::Pointer connected = ConnectedComponentImageFilterType::New();
@@ -201,66 +69,143 @@ typename PleuraDetector<InputImageT>::GrayImageP PleuraDetector<InputImageT>::Co
     connected->SetBackgroundValue(Background); //black
     connected->Update();
 
+    using LabelImageToLabelMapFilterType =  itk::LabelImageToShapeLabelMapFilter<GrayImageT, LabelMapType>;
+    typename LabelImageToLabelMapFilterType::Pointer labelImageToLabelMapFilter = LabelImageToLabelMapFilterType::New();
+    labelImageToLabelMapFilter->SetInput(connected->GetOutput());
+    labelImageToLabelMapFilter->Update();
+    auto labelMap = labelImageToLabelMapFilter->GetOutput();
+
+    //Remove label objects whose size is less than a threshold
+    //performed in two phases according the itk doc
+    if(threhold > 0)
+    {
+        std::vector<unsigned> labelsToRemove;
+        for(unsigned i=1; i < labelMap->GetNumberOfLabelObjects(); ++i) //it starts in 1 because 0 is the background label
+        {
+
+            if(labelMap->GetLabelObject(i)->Size() <  threhold)
+            {
+                labelsToRemove.push_back(i);
+            }
+
+        }
+
+        for(unsigned i : labelsToRemove)
+        {
+            labelMap->RemoveLabel(i);
+        }
+    }
+
+
+
     if(show)
     {
 
-        typedef itk::LabelImageToLabelMapFilter<GrayImageT> LabelImageToLabelMapFilterType;
-        typename LabelImageToLabelMapFilterType::Pointer labelImageToLabelMapFilter = LabelImageToLabelMapFilterType::New();
-        labelImageToLabelMapFilter->SetInput(connected->GetOutput());
-        labelImageToLabelMapFilter->Update();
-
-
+        //Label-map to RGB image
         using  rgbImageT =  itk::Image<itk::RGBPixel<unsigned char>, 2>;
-        typedef itk::LabelToRGBImageFilter<GrayImageT, rgbImageT> RGBFilterType;
-        typename RGBFilterType::Pointer rgbFilter = RGBFilterType::New();
-        rgbFilter->SetInput(connected->GetOutput());
-        rgbFilter->Update();
+        typedef itk::LabelMapToRGBImageFilter<LabelMapType, rgbImageT> RGBFilterType;
+        typename RGBFilterType::Pointer labelMapToRGBFilter = RGBFilterType::New();
+        labelMapToRGBFilter->SetInput(labelMap);
+        labelMapToRGBFilter->Update();
 
-        VTKViewer::visualize<rgbImageT>(rgbFilter->GetOutput(), "Connected components");
+
+        using rgbToGrayFilterT = itk::RGBToLuminanceImageFilter<rgbImageT, GrayImageT>;
+        rgbToGrayFilterT::Pointer rgbToGrayFilter = rgbToGrayFilterT::New();
+        rgbToGrayFilter->SetInput(labelMapToRGBFilter->GetOutput());
+        rgbToGrayFilter->Update();
+
+
+        VTKViewer::visualize<GrayImageT>(rgbToGrayFilter->GetOutput(), "Connected components gray-scale");
+
+        VTKViewer::visualize<rgbImageT>(labelMapToRGBFilter->GetOutput(), "Connected components RGB");
+
+        //delete it
+        io::WriteImage<rgbImageT>(labelMapToRGBFilter->GetOutput(), "/home/oscar/components-rgb.tiff");
+        io::WriteImage<GrayImageT>(rgbToGrayFilter->GetOutput(), "/home/oscar/components-gray.tiff");
+
 
     }
 
-    IO::printOK("Connected components");
+    io::printOK("Connected components");
 
-    return connected->GetOutput();
+
+    return labelMap;
 
 }
 
 
 
 template<typename InputImageT>
-void PleuraDetector<InputImageT>::ComputeLocalFeatures(GrayImageP grayImage, GrayImageP components, unsigned radiusValue, bool show)
+typename PleuraDetector<InputImageT>::FloatImageP
+PleuraDetector<InputImageT>::ComputeFractalDimension(LabelMapP components, bool show)
 {
 
 
-    using NeighborhoodIteratorType = itk::NeighborhoodIterator<GrayImageT>;
-    NeighborhoodIteratorType::RadiusType radius;
-    radius.Fill(radiusValue);
-    itk::NeighborhoodIterator<GrayImageT>  imgIt(radius, grayImage, grayImage->GetRequestedRegion());
-    itk::ImageRegionConstIterator<GrayImageT> cIt(components, components->GetRequestedRegion());
+
+    auto outputImage = FloatImageT::New();
+    outputImage->SetRegions(inputImage->GetRequestedRegion());
+    outputImage->Allocate();
+    outputImage->Allocate(Background);
+    outputImage->FillBuffer(0.f);
 
 
-    for(; !imgIt.IsAtEnd(); ++imgIt, ++cIt)
+    using FilterType = itk::RegionOfInterestImageFilter<GrayImageT, GrayImageT>;
+
+
+
+    for (unsigned i=0; i < components->GetNumberOfLabelObjects(); ++i)
     {
 
-        if(cIt.Get() != Background)
+        auto labelObject = components->GetNthLabelObject(i);
+        auto boundigBox = labelObject->GetBoundingBox();
+
+        auto roiImage = GrayImageT::New();
+        roiImage->SetRegions(boundigBox);
+        roiImage->Allocate();
+        roiImage->FillBuffer(Background);
+
+        for(unsigned i = 0; i < labelObject->Size(); ++i)
         {
-
-
-
+            roiImage->SetPixel(labelObject->GetIndex(i), Foreground);
         }
 
+        auto fractalDimensionFilter = std::make_unique<FractalDimensionFilter<GrayImageT>>();
+        fractalDimensionFilter->SetInputImage(roiImage);
+        fractalDimensionFilter->PrintWarningsOff();
+        fractalDimensionFilter->Compute();
+        float dimension = fractalDimensionFilter->GetDimension();
+       // std::cout<<dimension<<std::endl;
+
+        if(dimension < 1.1f)
+        {
+            for(unsigned i = 0; i < labelObject->Size(); ++i)
+            {
+
+                outputImage->SetPixel(labelObject->GetIndex(i), dimension);
+            }
+        }
+
+
+    }
+
+    if(show)
+    {
+
+        using RescaleType = itk::RescaleIntensityImageFilter<FloatImageT, GrayImageT>;
+        RescaleType::Pointer rescaler = RescaleType::New();
+        rescaler->SetInput(outputImage);
+        rescaler->SetOutputMinimum(Background);
+        rescaler->SetOutputMaximum(255);
+        rescaler->Update();
+
+        VTKViewer::visualize<GrayImageT>(rescaler->GetOutput(), "Fractal dimension");
     }
 
 
 
+    io::printOK("Fractal dimension");
 
-
-
-
-
-    IO::printOK("Local features");
-
+    return outputImage;
 }
 
 
@@ -274,32 +219,26 @@ void PleuraDetector<InputImageT>::Detect()
     rgbToGrayFilter->SetInput(inputImage);
     rgbToGrayFilter->Update();
     auto grayImage = rgbToGrayFilter->GetOutput();
-/*
-    //gray to binary
-    //using FilterType = itk::MomentsThresholdImageFilter<floatImageT, grayImageT>;
-    using FilterType = itk::OtsuThresholdImageFilter<GrayImageT, GrayImageT>;
 
-
-    //using FilterType = itk::TriangleThresholdImageFilter<floatImageT, grayImageT>;
-
-
-    FilterType::Pointer thresholdFilter = FilterType::New();
-    thresholdFilter->SetInput(grayImage);
-    thresholdFilter->SetInsideValue(0);
-    thresholdFilter->SetOutsideValue(255);
-    thresholdFilter->SetNumberOfHistogramBins(400);
-    thresholdFilter->Update(); // To compute threshold
-    auto binaryImage = thresholdFilter->GetOutput();
-
-*/
 
     //VTKViewer::visualize<GrayImageT>(grayImage);
 
     //GeodesicActiveCountour(grayImage, true);
     auto edges = EdgeDetectionCanny(grayImage, false);
-    auto components = ConnectedComponets(edges, true);
-    ComputeLocalFeatures(grayImage,components, 3);
+    auto components = ConnectedComponets(edges, 50,  false);
 
+    auto fractalDim = ComputeFractalDimension(components, true);
+
+/*
+    auto fractalDimensionFilter = std::make_unique<FractalDimensionFilter<GrayImageT>>();
+    fractalDimensionFilter->SetInputImage(edges);
+    fractalDimensionFilter->SetUnitTileLenght(100);
+    fractalDimensionFilter->Compute();
+    std::cout<<fractalDimensionFilter->GetDimension()<<std::endl;
+*/
+
+
+    io::printOK("Detecting pleura");
 
 
 
