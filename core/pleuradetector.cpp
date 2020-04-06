@@ -115,7 +115,7 @@ typename PleuraDetector<InputImageT>::LabelMapP PleuraDetector<InputImageT>::Con
         rgbToGrayFilter->Update();
 
 
-        VTKViewer::visualize<GrayImageT>(rgbToGrayFilter->GetOutput(), "Connected components gray-scale");
+        //VTKViewer::visualize<GrayImageT>(rgbToGrayFilter->GetOutput(), "Connected components gray-scale");
 
         VTKViewer::visualize<rgbImageT>(labelMapToRGBFilter->GetOutput(), "Connected components RGB");
 
@@ -267,6 +267,53 @@ PleuraDetector<InputImageT>::ComputeRoundness(LabelMapP components, float thresh
 }
 
 
+template<typename InputImageT>
+typename PleuraDetector<InputImageT>::GrayImageP
+PleuraDetector<InputImageT>::HistogramEqualization(GrayImageP grayImage, float alpha, float beta, unsigned radiusSize, bool show)
+{
+
+    using AdaptiveHistogramEqualizationImageFilterType = itk::AdaptiveHistogramEqualizationImageFilter<GrayImageT>;
+    AdaptiveHistogramEqualizationImageFilterType::Pointer adaptiveHistogramEqualizationImageFilter = AdaptiveHistogramEqualizationImageFilterType::New();
+    adaptiveHistogramEqualizationImageFilter->SetAlpha(alpha);
+    adaptiveHistogramEqualizationImageFilter->SetBeta(beta);
+    AdaptiveHistogramEqualizationImageFilterType::ImageSizeType radius;
+    radius.Fill(radiusSize);
+    adaptiveHistogramEqualizationImageFilter->SetRadius(radius);
+
+    adaptiveHistogramEqualizationImageFilter->SetInput(grayImage);
+
+    //adaptiveHistogramEqualizationImageFilter->Update();
+
+
+
+    using RescaleType = itk::RescaleIntensityImageFilter<GrayImageT, GrayImageT>;
+    RescaleType::Pointer rescaler = RescaleType::New();
+    rescaler->SetInput(adaptiveHistogramEqualizationImageFilter->GetOutput());
+    rescaler->SetOutputMinimum(Background);
+    rescaler->SetOutputMaximum(255);
+    rescaler->Update();
+
+
+    auto outputImage = rescaler->GetOutput();
+
+
+    if(show)
+    {
+
+
+        VTKViewer::visualize<GrayImageT>(outputImage, "Adaptive Histogram Equalization");
+    }
+
+
+
+    io::printOK("Adaptive Histogram Equalization");
+
+
+
+    return outputImage;
+
+}
+
 
 template<typename InputImageT>
 void PleuraDetector<InputImageT>::Detect()
@@ -279,6 +326,9 @@ void PleuraDetector<InputImageT>::Detect()
     rgbToGrayFilter->Update();
     auto grayImage = rgbToGrayFilter->GetOutput();
 
+
+    auto eqGrayImage = HistogramEqualization(grayImage, 1, 1, 10, true);
+    //TODO test more the histogram.....
 
     //VTKViewer::visualize<GrayImageT>(grayImage);
 

@@ -4,7 +4,6 @@
 #include <itkImage.h>
 #include <itkRGBPixel.h>
 #include <itkRGBToLuminanceImageFilter.h>
-#include <itkVotingBinaryIterativeHoleFillingImageFilter.h>
 #include <itkOtsuThresholdImageFilter.h>
 #include <itkSigmoidImageFilter.h>
 #include <itkCastImageFilter.h>
@@ -13,6 +12,9 @@
 #include <itkConnectedComponentImageFilter.h>
 #include <itkLabelImageToLabelMapFilter.h>
 #include <itkLabelMapToRGBImageFilter.h>
+#include <itkAdaptiveHistogramEqualizationImageFilter.h>
+
+
 
 #include <itkAttributeOpeningLabelMapFilter.h>
 
@@ -69,10 +71,9 @@ private:
 
 
     //Auxiliary functions
-    GrayImageP FillHoles(GrayImageP grayImage, bool show=false); //nope
-    void GeodesicActiveCountour(GrayImageP grayImage, bool show=false); //nope
 
 
+    GrayImageP  HistogramEqualization(GrayImageP grayImage, float alpha=1, float beta=0, unsigned radiusSize=5, bool show=false);
     GrayImageP  EdgeDetectionCanny(GrayImageP grayImage, bool show=false);
     LabelMapP   ConnectedComponets(GrayImageP grayImage, unsigned threhold = 0,  bool show=false);
     FloatImageP ComputeFractalDimension(LabelMapP components,  float threshold, bool show=false);
