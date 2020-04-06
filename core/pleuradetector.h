@@ -13,14 +13,14 @@
 #include <itkConnectedComponentImageFilter.h>
 #include <itkLabelImageToLabelMapFilter.h>
 #include <itkLabelMapToRGBImageFilter.h>
-#include <itkNeighborhoodIterator.h>
+
 #include <itkAttributeOpeningLabelMapFilter.h>
-#include <itkScalarImageToTextureFeaturesFilter.h>
+
 
 #include <itkLabelImageToShapeLabelMapFilter.h>
 #include <itkShapeLabelObject.h>
 #include <itkRegionOfInterestImageFilter.h>
-#include <itkPasteImageFilter.h>
+#include <itkImageRegionIteratorWithIndex.h>
 
 
 //local includes
@@ -75,7 +75,8 @@ private:
 
     GrayImageP  EdgeDetectionCanny(GrayImageP grayImage, bool show=false);
     LabelMapP   ConnectedComponets(GrayImageP grayImage, unsigned threhold = 0,  bool show=false);
-    FloatImageP ComputeFractalDimension(LabelMapP components, bool show=false);
+    FloatImageP ComputeFractalDimension(LabelMapP components,  float threshold, bool show=false);
+    FloatImageP ComputeRoundness(LabelMapP components, float threshold, bool show=false);
 
 
 };

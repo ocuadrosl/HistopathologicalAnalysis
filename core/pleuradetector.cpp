@@ -35,7 +35,7 @@ PleuraDetector<InputImageT>::EdgeDetectionCanny(GrayImageP grayImage, bool show)
     using FilterType = itk::CannyEdgeDetectionImageFilter<GrayImageFloatT, GrayImageFloatT>;
     FilterType::Pointer filter = FilterType::New();
     filter->SetInput(toFloatFilter->GetOutput());
-    filter->SetVariance(5);
+    filter->SetVariance(3);
     filter->SetLowerThreshold(0);
     filter->SetUpperThreshold(5);
 
@@ -137,7 +137,7 @@ typename PleuraDetector<InputImageT>::LabelMapP PleuraDetector<InputImageT>::Con
 
 template<typename InputImageT>
 typename PleuraDetector<InputImageT>::FloatImageP
-PleuraDetector<InputImageT>::ComputeFractalDimension(LabelMapP components, bool show)
+PleuraDetector<InputImageT>::ComputeFractalDimension(LabelMapP components, float threshold, bool show)
 {
 
 
@@ -174,9 +174,9 @@ PleuraDetector<InputImageT>::ComputeFractalDimension(LabelMapP components, bool 
         fractalDimensionFilter->PrintWarningsOff();
         fractalDimensionFilter->Compute();
         float dimension = fractalDimensionFilter->GetDimension();
-       // std::cout<<dimension<<std::endl;
+        // std::cout<<dimension<<std::endl;
 
-        if(dimension < 1.1f)
+        if(dimension < threshold)
         {
             for(unsigned i = 0; i < labelObject->Size(); ++i)
             {
@@ -209,6 +209,65 @@ PleuraDetector<InputImageT>::ComputeFractalDimension(LabelMapP components, bool 
 }
 
 
+
+
+
+
+template<typename InputImageT>
+typename PleuraDetector<InputImageT>::FloatImageP
+PleuraDetector<InputImageT>::ComputeRoundness(LabelMapP components, float threshold, bool show)
+{
+
+    auto outputImage = FloatImageT::New();
+    outputImage->SetRegions(inputImage->GetRequestedRegion());
+    outputImage->Allocate();
+    outputImage->Allocate(Background);
+    outputImage->FillBuffer(0.f);
+
+    for (unsigned i=0; i < components->GetNumberOfLabelObjects(); ++i)
+    {
+
+        auto labelObject = components->GetNthLabelObject(i);
+
+        float roundness = static_cast<float>(labelObject->GetRoundness());
+
+        if(roundness < threshold)
+        {
+            for(unsigned i = 0; i < labelObject->Size(); ++i)
+            {
+
+                outputImage->SetPixel(labelObject->GetIndex(i), roundness);
+            }
+        }
+
+
+    }
+
+    if(show)
+    {
+
+        using RescaleType = itk::RescaleIntensityImageFilter<FloatImageT, GrayImageT>;
+        RescaleType::Pointer rescaler = RescaleType::New();
+        rescaler->SetInput(outputImage);
+        rescaler->SetOutputMinimum(Background);
+        rescaler->SetOutputMaximum(255);
+        rescaler->Update();
+
+        VTKViewer::visualize<GrayImageT>(rescaler->GetOutput(), "Roundness");
+    }
+
+
+
+    io::printOK("Roundness");
+
+    return outputImage;
+
+
+
+}
+
+
+
 template<typename InputImageT>
 void PleuraDetector<InputImageT>::Detect()
 {
@@ -225,11 +284,13 @@ void PleuraDetector<InputImageT>::Detect()
 
     //GeodesicActiveCountour(grayImage, true);
     auto edges = EdgeDetectionCanny(grayImage, false);
-    auto components = ConnectedComponets(edges, 50,  false);
+    auto components = ConnectedComponets(edges, 50,  true);
 
-    auto fractalDim = ComputeFractalDimension(components, true);
+    auto fractalDim = ComputeFractalDimension(components, 1.1 ,true);
 
-/*
+    //ComputeRoundness(components, 0.15,  true);
+
+    /*
     auto fractalDimensionFilter = std::make_unique<FractalDimensionFilter<GrayImageT>>();
     fractalDimensionFilter->SetInputImage(edges);
     fractalDimensionFilter->SetUnitTileLenght(100);
