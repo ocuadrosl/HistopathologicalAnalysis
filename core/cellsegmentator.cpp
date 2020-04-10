@@ -39,7 +39,7 @@ void CellSegmentator<rgbImageT>::CreateImageB(bool show)
     std::unique_ptr<ExtractChannelFilterT> extractChannelFilter(new ExtractChannelFilterT());
 
     extractChannelFilter->setImputImage(xyzToLabFilter->getOutput());
-    extractChannelFilter->extractChannel(0);
+    extractChannelFilter->extractChannel(2);
 
     bChannel = extractChannelFilter->getOutputImage();
 

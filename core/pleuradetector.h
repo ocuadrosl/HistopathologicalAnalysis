@@ -13,6 +13,8 @@
 #include <itkLabelImageToLabelMapFilter.h>
 #include <itkLabelMapToRGBImageFilter.h>
 #include <itkAdaptiveHistogramEqualizationImageFilter.h>
+#include <itkOtsuThresholdImageFilter.h>
+#include <itkMinimumMaximumImageCalculator.h>
 
 
 
@@ -30,13 +32,16 @@
 #include "../util/vtkviewer.h"
 #include "../util/inputOutput.h"
 #include "../util/fractaldimensionfilter.h"
+#include "../util/extractchannelfilter.h"
+
+#include "../util/colorconverterfilter.h"
 
 
-template<typename InputImageT>
+template<typename RGBImageT>
 class PleuraDetector
 {
 
-    using ImageP  =  typename InputImageT::Pointer;
+    using RGBImageP  =  typename RGBImageT::Pointer;
 
     using GrayImageT = itk::Image<unsigned, 2>;
     using GrayImageP = GrayImageT::Pointer;
@@ -58,8 +63,9 @@ class PleuraDetector
 
 
 public:
+
     PleuraDetector();
-    void SetInputImage(ImageP inputImage);
+    void SetInputImage(RGBImageP InputImage);
     void Detect();
 
 
@@ -67,17 +73,16 @@ public:
 
 private:
 
-    ImageP inputImage;
+    RGBImageP InputImage;
 
 
     //Auxiliary functions
-
-
     GrayImageP  HistogramEqualization(GrayImageP grayImage, float alpha=1, float beta=0, unsigned radiusSize=5, bool show=false);
     GrayImageP  EdgeDetectionCanny(GrayImageP grayImage, bool show=false);
     LabelMapP   ConnectedComponets(GrayImageP grayImage, unsigned threhold = 0,  bool show=false);
     FloatImageP ComputeFractalDimension(LabelMapP components,  float threshold, bool show=false);
     FloatImageP ComputeRoundness(LabelMapP components, float threshold, bool show=false);
+    RGBImageP   RemoveBackground(float lThreshold=90.f, float aThreshold = 5.f, float bThresold = 5.f, bool show=false);
 
 
 };
@@ -85,7 +90,7 @@ private:
 using rgbImageU = itk::Image<itk::RGBPixel<unsigned>, 2>;
 template class PleuraDetector<rgbImageU>;
 
-using rgbImageUChar = itk::Image<itk::RGBPixel<unsigned char>, 2>;
-template class PleuraDetector<rgbImageUChar>;
+//using rgbImageUChar = itk::Image<itk::RGBPixel<unsigned char>, 2>;
+//template class PleuraDetector<rgbImageUChar>;
 
 #endif // PLEURADETECTION_H

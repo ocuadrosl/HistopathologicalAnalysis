@@ -8,10 +8,10 @@ PleuraDetector<InputImageT>::PleuraDetector()
 
 
 template<typename InputImageT>
-void PleuraDetector<InputImageT>::SetInputImage(ImageP inputImage)
+void PleuraDetector<InputImageT>::SetInputImage(RGBImageP inputImage)
 {
 
-    this->inputImage = inputImage;
+    this->InputImage = inputImage;
 
 }
 
@@ -35,7 +35,7 @@ PleuraDetector<InputImageT>::EdgeDetectionCanny(GrayImageP grayImage, bool show)
     using FilterType = itk::CannyEdgeDetectionImageFilter<GrayImageFloatT, GrayImageFloatT>;
     FilterType::Pointer filter = FilterType::New();
     filter->SetInput(toFloatFilter->GetOutput());
-    filter->SetVariance(3);
+    filter->SetVariance(1);
     filter->SetLowerThreshold(0);
     filter->SetUpperThreshold(5);
 
@@ -143,7 +143,7 @@ PleuraDetector<InputImageT>::ComputeFractalDimension(LabelMapP components, float
 
 
     auto outputImage = FloatImageT::New();
-    outputImage->SetRegions(inputImage->GetRequestedRegion());
+    outputImage->SetRegions(InputImage->GetRequestedRegion());
     outputImage->Allocate();
     outputImage->Allocate(Background);
     outputImage->FillBuffer(0.f);
@@ -219,7 +219,7 @@ PleuraDetector<InputImageT>::ComputeRoundness(LabelMapP components, float thresh
 {
 
     auto outputImage = FloatImageT::New();
-    outputImage->SetRegions(inputImage->GetRequestedRegion());
+    outputImage->SetRegions(InputImage->GetRequestedRegion());
     outputImage->Allocate();
     outputImage->Allocate(Background);
     outputImage->FillBuffer(0.f);
@@ -274,27 +274,29 @@ PleuraDetector<InputImageT>::HistogramEqualization(GrayImageP grayImage, float a
 
     using AdaptiveHistogramEqualizationImageFilterType = itk::AdaptiveHistogramEqualizationImageFilter<GrayImageT>;
     AdaptiveHistogramEqualizationImageFilterType::Pointer adaptiveHistogramEqualizationImageFilter = AdaptiveHistogramEqualizationImageFilterType::New();
+
     adaptiveHistogramEqualizationImageFilter->SetAlpha(alpha);
     adaptiveHistogramEqualizationImageFilter->SetBeta(beta);
+
     AdaptiveHistogramEqualizationImageFilterType::ImageSizeType radius;
     radius.Fill(radiusSize);
     adaptiveHistogramEqualizationImageFilter->SetRadius(radius);
 
     adaptiveHistogramEqualizationImageFilter->SetInput(grayImage);
 
-    //adaptiveHistogramEqualizationImageFilter->Update();
+    adaptiveHistogramEqualizationImageFilter->Update();
 
 
 
-    using RescaleType = itk::RescaleIntensityImageFilter<GrayImageT, GrayImageT>;
+   /* using RescaleType = itk::RescaleIntensityImageFilter<GrayImageT, GrayImageT>;
     RescaleType::Pointer rescaler = RescaleType::New();
     rescaler->SetInput(adaptiveHistogramEqualizationImageFilter->GetOutput());
     rescaler->SetOutputMinimum(Background);
     rescaler->SetOutputMaximum(255);
     rescaler->Update();
+*/
 
-
-    auto outputImage = rescaler->GetOutput();
+    auto outputImage = adaptiveHistogramEqualizationImageFilter->GetOutput();
 
 
     if(show)
@@ -314,45 +316,119 @@ PleuraDetector<InputImageT>::HistogramEqualization(GrayImageP grayImage, float a
 
 }
 
+template<typename RGBImageT>
+typename PleuraDetector<RGBImageT>::RGBImageP
+PleuraDetector<RGBImageT>::RemoveBackground(float lThreshold, float aThreshold, float bThresold, bool show)
+{
+
+
+    //creating output image,
+    auto outputImage = RGBImageT::New();
+    outputImage->SetRegions(InputImage->GetRequestedRegion());
+    outputImage->Allocate();
+
+
+    //RGB to Lab
+    using labImageT = itk::Image<itk::RGBPixel<float>, 2>;
+
+    //RGB to XYZ
+    using rgbToXyzFilterT = ColorConverterFilter<RGBImageT, labImageT>;
+    auto rgbToXyzFilter = std::make_unique<rgbToXyzFilterT>();
+    rgbToXyzFilter->setInput(InputImage);
+    rgbToXyzFilter->rgbToXyz();
+
+
+    //XYZ to LAB
+    using xyzToLabFilterT = ColorConverterFilter<labImageT, labImageT>;
+    auto xyzToLabFilter = std::make_unique<xyzToLabFilterT>();
+    xyzToLabFilter->setInput(rgbToXyzFilter->getOutput());
+    xyzToLabFilter->xyzToLab();
+
+    auto labImage = xyzToLabFilter->getOutput();
+
+    //computing max luminance value
+    //Extracting B channel
+    using ExtractChannelFilterT = ExtractChannelFilter<labImageT, FloatImageT>;
+    std::unique_ptr<ExtractChannelFilterT> extractChannelFilter(new ExtractChannelFilterT());
+
+    extractChannelFilter->setImputImage(xyzToLabFilter->getOutput());
+    extractChannelFilter->extractChannel(0);
+
+    auto lChannel = extractChannelFilter->getOutputImage();
+    using ImageCalculatorFilterType = itk::MinimumMaximumImageCalculator<FloatImageT>;
+
+    typename ImageCalculatorFilterType::Pointer imageCalculatorFilter = ImageCalculatorFilterType::New();
+    imageCalculatorFilter->SetImage(lChannel);
+    imageCalculatorFilter->Compute();
+    float maxLuminance = imageCalculatorFilter->GetMaximum();
+    float minLuminance = imageCalculatorFilter->GetMinimum();
+
+
+    //Min max interpolation lambda
+    auto minMax = [minLuminance, maxLuminance](float value)
+    {
+        return  ( 100.f * ( value - minLuminance) ) / (maxLuminance - minLuminance) ;
+    };
+
+
+    itk::ImageRegionConstIterator<RGBImageT> inputIt(InputImage, InputImage->GetRequestedRegion());
+    itk::ImageRegionIterator<RGBImageT> outputIt(outputImage, outputImage->GetRequestedRegion());
+    itk::ImageRegionIterator<labImageT> labIt(labImage, labImage->GetRequestedRegion());
+
+    typename RGBImageT::PixelType white;
+    white.Fill(255);
+
+    for(; !inputIt.IsAtEnd(); ++inputIt, ++labIt, ++outputIt)
+    {
+
+        auto labPixel = labIt.Get();
+
+        if(minMax(labPixel[0]) > lThreshold && labPixel[1] < aThreshold &&  labPixel[2] < bThresold)
+        {
+            outputIt.Set(white);
+        }
+        else
+        {
+            outputIt.Set(inputIt.Get());
+        }
+
+    }
+
+    if(show)
+    {
+
+
+        VTKViewer::visualize<RGBImageT>(outputImage, "Remove Background");
+    }
+
+
+    return outputImage;
+
+
+}
 
 template<typename InputImageT>
 void PleuraDetector<InputImageT>::Detect()
 {
 
+    auto rgbImage = RemoveBackground(90, 5,5, false);
+
     //rgb to gray
     using rgbToGrayFilterType = itk::RGBToLuminanceImageFilter<InputImageT, GrayImageT>;
-    typename rgbToGrayFilterType::Pointer rgbToGrayFilter = rgbToGrayFilterType::New();
-    rgbToGrayFilter->SetInput(inputImage);
+    auto rgbToGrayFilter = rgbToGrayFilterType::New();
+    rgbToGrayFilter->SetInput(rgbImage);
     rgbToGrayFilter->Update();
     auto grayImage = rgbToGrayFilter->GetOutput();
 
+    auto eqGrayImage = HistogramEqualization(grayImage, 1, 1, 5, false);
+    auto edges       = EdgeDetectionCanny(eqGrayImage, true);
+    auto components  = ConnectedComponets(edges, 50,  false);
 
-    auto eqGrayImage = HistogramEqualization(grayImage, 1, 1, 10, true);
-    //TODO test more the histogram.....
-
-    //VTKViewer::visualize<GrayImageT>(grayImage);
-
-    //GeodesicActiveCountour(grayImage, true);
-    auto edges = EdgeDetectionCanny(grayImage, false);
-    auto components = ConnectedComponets(edges, 50,  true);
-
-    auto fractalDim = ComputeFractalDimension(components, 1.1 ,true);
+    //auto fractalDim = ComputeFractalDimension(components, 1.1 ,true);
 
     //ComputeRoundness(components, 0.15,  true);
 
-    /*
-    auto fractalDimensionFilter = std::make_unique<FractalDimensionFilter<GrayImageT>>();
-    fractalDimensionFilter->SetInputImage(edges);
-    fractalDimensionFilter->SetUnitTileLenght(100);
-    fractalDimensionFilter->Compute();
-    std::cout<<fractalDimensionFilter->GetDimension()<<std::endl;
-*/
-
 
     io::printOK("Detecting pleura");
-
-
-
-
 
 }

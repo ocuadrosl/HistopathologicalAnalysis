@@ -51,12 +51,13 @@ inline outputType minMax(inputType inputValue, inputType orgMin, inputType orgMa
 
 }
 
+
+
 /*
 template args fast versions
 double
 
 */
-
 template< int orgMin, int  orgMax, int newMin, int newMax >
 double minMax(double inputValue)
 {
