@@ -12,6 +12,7 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt5 COMPONENTS Widgets REQUIRED)
 find_package(VTK REQUIRED)
 find_package(ITK REQUIRED)
+find_package(dlib REQUIRED)
 
 include(${ITK_USE_FILE})
 
@@ -47,3 +48,4 @@ add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} Qt5::Widgets)
 target_link_libraries(${PROJECT_NAME} ${VTK_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} ${ITK_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${dlib_LIBRARIES})

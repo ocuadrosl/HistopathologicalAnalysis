@@ -1,6 +1,8 @@
 #ifndef PLEURADETECTOR_H
 #define PLEURADETECTOR_H
 
+
+//ITK includes
 #include <itkImage.h>
 #include <itkRGBPixel.h>
 #include <itkRGBToLuminanceImageFilter.h>
@@ -15,16 +17,18 @@
 #include <itkAdaptiveHistogramEqualizationImageFilter.h>
 #include <itkOtsuThresholdImageFilter.h>
 #include <itkMinimumMaximumImageCalculator.h>
-
-
-
+#include <itkScalarImageToTextureFeaturesFilter.h>
+#include <itkConstNeighborhoodIterator.h>
 #include <itkAttributeOpeningLabelMapFilter.h>
-
-
 #include <itkLabelImageToShapeLabelMapFilter.h>
 #include <itkShapeLabelObject.h>
 #include <itkRegionOfInterestImageFilter.h>
 #include <itkImageRegionIteratorWithIndex.h>
+
+
+//Dlib includes
+#include <dlib/array2d.h>
+#include <dlib/image_transforms.h>
 
 
 //local includes
@@ -35,6 +39,8 @@
 #include "../util/extractchannelfilter.h"
 
 #include "../util/colorconverterfilter.h"
+
+#include "../util/imageframeworktypeconverter.h"
 
 
 template<typename RGBImageT>
@@ -50,16 +56,20 @@ class PleuraDetector
     const GrayImageT::PixelType Background = 0;
     const GrayImageT::PixelType Foreground = 255;
 
+    //shape label map
     using LabelType = unsigned;
     using ShapeLabelObjectType = itk::ShapeLabelObject<LabelType, 2>;
     using LabelMapType = itk::LabelMap<ShapeLabelObjectType>;
     using LabelMapP = LabelMapType::Pointer;
 
 
-
+    //float type image
     using FloatImageT = itk::Image<float,2>;
     using FloatImageP = FloatImageT::Pointer;
 
+    //texture
+    using TextureFilterType = itk::Statistics::ScalarImageToTextureFeaturesFilter<GrayImageT>;
+    using FeatureVector = TextureFilterType::FeatureValueVector;
 
 
 public:
@@ -83,6 +93,16 @@ private:
     FloatImageP ComputeFractalDimension(LabelMapP components,  float threshold, bool show=false);
     FloatImageP ComputeRoundness(LabelMapP components, float threshold, bool show=false);
     RGBImageP   RemoveBackground(float lThreshold=90.f, float aThreshold = 5.f, float bThresold = 5.f, bool show=false);
+    FloatImageP RayFeatures(GrayImageP grayImage, GrayImageP edges, unsigned raysSize, bool show=false);
+
+    FeatureVector *ComputeTexture(GrayImageP grayImage, GrayImageP edges, unsigned radius=5);
+
+
+
+
+    GrayImageP GrayToBinary(GrayImageP grayImage,  bool show=false); //simple threshold assuming background = zero
+
+
 
 
 };
