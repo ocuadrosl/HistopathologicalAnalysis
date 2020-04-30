@@ -126,7 +126,7 @@ void CellBinarizationFilter<rgbImageT>::histogramEqualization()
 
     std::cout<<imageCalculatorF->GetMinimum()<< ","<<imageCalculatorF->GetMaximum()<<std::endl;
 
-    Math::MinMax<unsigned, unsigned> minMax(imageCalculatorF->GetMinimum(), imageCalculatorF->GetMaximum(), 0, 255);
+    math::MinMax<unsigned, unsigned> minMax(imageCalculatorF->GetMinimum(), imageCalculatorF->GetMaximum(), 0, 255);
 
     while(!itB.IsAtEnd())
     {

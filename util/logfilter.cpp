@@ -105,7 +105,7 @@ void LoGFilter<inputImageT, outputImageT>::createKernel(bool show)
         for(float y = nLimit ; y <= pLimit; ++y)
         {
             //std::cout<<x<<" "<<y<<std::endl;
-            logVal = Math::LoG<float>(x, y, sigma);
+            logVal = math::LoG<float>(x, y, sigma);
             kernel->SetPixel(index, logVal);
             //std::cout<<logVal<<" ";
             index[1]+=1;

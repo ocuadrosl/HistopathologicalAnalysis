@@ -51,9 +51,9 @@ void RescaleRGBImageFilter<inputPixelType, outputPixelType>::rescaleAuto()
     rgbOutputPixelType  outputPixel;
 
     //min-max template function objects
-    Math::MinMax<inputPixelType, outputPixelType> minMax0(minInputValue[0], maxInputValue[0], 0, 255);
-    Math::MinMax<inputPixelType, outputPixelType> minMax1(minInputValue[1], maxInputValue[1], 0, 255);
-    Math::MinMax<inputPixelType, outputPixelType> minMax2(minInputValue[2], maxInputValue[2], 0, 255);
+    math::MinMax<inputPixelType, outputPixelType> minMax0(minInputValue[0], maxInputValue[0], 0, 255);
+    math::MinMax<inputPixelType, outputPixelType> minMax1(minInputValue[1], maxInputValue[1], 0, 255);
+    math::MinMax<inputPixelType, outputPixelType> minMax2(minInputValue[2], maxInputValue[2], 0, 255);
 
     //rescaling
     while ( !inputIt.IsAtEnd() )
@@ -93,9 +93,9 @@ void RescaleRGBImageFilter<inputPixelType, outputPixelType>::rescale()
     rgbOutputPixelType  outputPixel;
 
     //min-max template function objects
-    Math::MinMax<inputPixelType, outputPixelType> minMax0(minInputValue[0], maxInputValue[0], minOutputValue[0], maxOutputValue[0]);
-    Math::MinMax<inputPixelType, outputPixelType> minMax1(minInputValue[1], maxInputValue[1], minOutputValue[1], maxOutputValue[1]);
-    Math::MinMax<inputPixelType, outputPixelType> minMax2(minInputValue[2], maxInputValue[2], minOutputValue[2], maxOutputValue[2]);
+    math::MinMax<inputPixelType, outputPixelType> minMax0(minInputValue[0], maxInputValue[0], minOutputValue[0], maxOutputValue[0]);
+    math::MinMax<inputPixelType, outputPixelType> minMax1(minInputValue[1], maxInputValue[1], minOutputValue[1], maxOutputValue[1]);
+    math::MinMax<inputPixelType, outputPixelType> minMax2(minInputValue[2], maxInputValue[2], minOutputValue[2], maxOutputValue[2]);
 
     //rescaling
     while ( !inputIt.IsAtEnd() )

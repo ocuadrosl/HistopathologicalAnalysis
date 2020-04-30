@@ -1,6 +1,7 @@
 #ifndef PLEURADETECTOR_H
 #define PLEURADETECTOR_H
 
+#include <numeric>
 
 //ITK includes
 #include <itkImage.h>
@@ -24,11 +25,13 @@
 #include <itkShapeLabelObject.h>
 #include <itkRegionOfInterestImageFilter.h>
 #include <itkImageRegionIteratorWithIndex.h>
+#include <itkSmoothingRecursiveGaussianImageFilter.h>
 
 
 //Dlib includes
 #include <dlib/array2d.h>
 #include <dlib/image_transforms.h>
+
 
 
 //local includes
@@ -37,10 +40,9 @@
 #include "../util/inputOutput.h"
 #include "../util/fractaldimensionfilter.h"
 #include "../util/extractchannelfilter.h"
-
 #include "../util/colorconverterfilter.h"
-
 #include "../util/imageframeworktypeconverter.h"
+#include "../util/ImageOperations.h"
 
 
 template<typename RGBImageT>
@@ -93,9 +95,11 @@ private:
     FloatImageP ComputeFractalDimension(LabelMapP components,  float threshold, bool show=false);
     FloatImageP ComputeRoundness(LabelMapP components, float threshold, bool show=false);
     RGBImageP   RemoveBackground(float lThreshold=90.f, float aThreshold = 5.f, float bThresold = 5.f, bool show=false);
-    FloatImageP RayFeatures(GrayImageP grayImage, GrayImageP edges, unsigned raysSize, bool show=false);
 
-    FeatureVector *ComputeTexture(GrayImageP grayImage, GrayImageP edges, unsigned radius=5);
+
+    FloatImageP RayFeatures(GrayImageP edges, LabelMapP components, unsigned raysSize, bool show=false);
+
+    void ComputeTexture(GrayImageP grayImage, GrayImageP edges, const unsigned neighborhoodSize = 5);
 
 
 

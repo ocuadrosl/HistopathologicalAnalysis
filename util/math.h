@@ -7,10 +7,8 @@
 #include <vector>
 #include <algorithm>
 
-namespace Math
+namespace math
 {
-
-
 
 
 

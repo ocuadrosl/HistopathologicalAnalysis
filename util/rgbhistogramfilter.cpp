@@ -148,9 +148,9 @@ void RGBHistogramFilter<rgbImageT>::computeHistogram(bool normalized)
 
 
     //Function objects Min-max function
-    Math::MinMax<> minMaxR(minPossibleValues[0], maxPossibleValues[0], 0, nBinsRed  );
-    Math::MinMax<> minMaxG(minPossibleValues[1], maxPossibleValues[1], 0, nBinsGreen);
-    Math::MinMax<> minMaxB(minPossibleValues[2], maxPossibleValues[2], 0, nBinsBlue );
+    math::MinMax<> minMaxR(minPossibleValues[0], maxPossibleValues[0], 0, nBinsRed  );
+    math::MinMax<> minMaxG(minPossibleValues[1], maxPossibleValues[1], 0, nBinsGreen);
+    math::MinMax<> minMaxB(minPossibleValues[2], maxPossibleValues[2], 0, nBinsBlue );
 
 
     itk::ImageRegionConstIterator<rgbImageT> it(inputImage,  inputImage->GetRequestedRegion());

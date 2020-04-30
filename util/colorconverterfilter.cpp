@@ -43,9 +43,9 @@ void ColorConverterFilter<inputImageT, outputImageT>::rgbToHsv()
     outputPixelT pixelFloat;
 
     //template function alias
-    constexpr auto  max = Math::max<outputPixelT>;
-    constexpr auto  min = Math::min<outputPixelT>;
-    constexpr auto  mod = Math::mod<outputPixelCompT>;
+    constexpr auto  max = math::max<outputPixelT>;
+    constexpr auto  min = math::min<outputPixelT>;
+    constexpr auto  mod = math::mod<outputPixelCompT>;
 
 
     auto hsvPixel = outputIt.Get();
@@ -129,7 +129,7 @@ void ColorConverterFilter<inputImageT, outputImageT>::hsvToRgb()
         h = hsv[0]/60;
 
 
-        x = c * (1 - std::abs(Math::mod<>(h, 2.0) - 1));
+        x = c * (1 - std::abs(math::mod<>(h, 2.0) - 1));
 
 
         if(h >=0 && h <= 1)
@@ -215,9 +215,9 @@ void ColorConverterFilter<inputImageT, outputImageT>::rgbToHsl()
         outputPixelT rgb;
 
         //template function alias
-        constexpr auto  max = Math::max<outputPixelT>;
-        constexpr auto  min = Math::min<outputPixelT>;
-        constexpr auto  mod = Math::mod<outputPixelCompT>;
+        constexpr auto  max = math::max<outputPixelT>;
+        constexpr auto  min = math::min<outputPixelT>;
+        constexpr auto  mod = math::mod<outputPixelCompT>;
 
 
         outputPixelT hslPixel = outputIt.Get();

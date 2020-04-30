@@ -23,12 +23,88 @@
 
 #include <itkViewImage.h>
 
+
+
+
+
+//vtk includes
+#include <vtkPlot.h>
+#include <vtkVersion.h>
+#include <vtkRenderer.h>
+#include <vtkRenderWindow.h>
+#include <vtkSmartPointer.h>
+#include <vtkChartXY.h>
+#include <vtkPlot.h>
+#include <vtkTable.h>
+#include <vtkIntArray.h>
+#include <vtkContextView.h>
+#include <vtkContextScene.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkAutoInit.h>
+
+VTK_MODULE_INIT(vtkRenderingContextOpenGL2)
+
+VTK_MODULE_INIT(vtkRenderingOpenGL2)
+
+VTK_MODULE_INIT(vtkInteractionStyle)
+
+
+
+
 namespace VTKViewer
 {
 
 
-    //using pixelT = typename imageT::PixelType;
-    //using imageP = typename imageT::Pointer;
+
+template <typename vectorT>
+void PlotBar(const vectorT& data, unsigned size)
+{
+
+
+    vtkSmartPointer<vtkContextView> view = vtkSmartPointer<vtkContextView>::New();
+
+    view->GetRenderer()->SetBackground(1.0, 1.0, 1.0);
+    view->GetRenderWindow()->SetSize(400, 300);
+    vtkSmartPointer<vtkChartXY> chart = vtkSmartPointer<vtkChartXY>::New();
+    view->GetScene()->AddItem(chart);
+
+    vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
+
+
+    vtkSmartPointer<vtkIntArray>  arrMonth = vtkSmartPointer<vtkIntArray>::New();
+    arrMonth->SetName("Month");
+    table->AddColumn(arrMonth);
+
+    vtkSmartPointer<vtkIntArray>  arr2008 = vtkSmartPointer<vtkIntArray>::New();
+    arr2008->SetName("2008");
+    table->AddColumn(arr2008);
+    table->SetNumberOfRows(size);
+
+    for (int i = 0; i < size; i++)
+    {
+        table->SetValue(i,0,i+1);
+
+        //std::cout<<data[i]<<std::endl;
+        table->SetValue(i,1,data[i]);
+
+    }
+    vtkPlot *line = chart->AddPlot(vtkChart::BAR);
+
+    line = chart->AddPlot(vtkChart::BAR);
+    line->SetInputData(table, 0, 1);
+    line->SetColor(0, 255, 0, 255);
+
+
+    //Finally render the scene and compare the image to a reference image
+    view->GetRenderWindow()->SetMultiSamples(0);
+    view->GetInteractor()->Initialize();
+    view->GetInteractor()->Start();
+
+
+}
+
+
+
 
 
 template<typename imageT, unsigned imageDim=2>

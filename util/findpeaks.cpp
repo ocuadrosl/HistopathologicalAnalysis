@@ -21,7 +21,7 @@ void FindPeaks<type>::find()
 
 
     vectorF dx;
-    Math::diff<float>(data, dx);
+    math::diff<float>(data, dx);
 
 
     std::replace(dx.begin(), dx.end(), 0.0, -EPS);
@@ -29,7 +29,7 @@ void FindPeaks<type>::find()
     vectorF dx_1(dx.begin()  , dx.end()-1);
     vectorF dx_2(dx.begin()+1, dx.end()  );
     vectorF dx_3;
-    Math::vectorProduct<float>(dx_1, dx_2, dx_3);
+    math::vectorProduct<float>(dx_1, dx_2, dx_3);
 
 
     vectorU indices;
@@ -61,7 +61,7 @@ void FindPeaks<type>::find()
 
         vectorF subVector(x.begin(), x.begin() + 3);
         vectorF diff;
-        Math::diff<float>(subVector, diff);
+        math::diff<float>(subVector, diff);
 
 
         std::vector<int> singDx;

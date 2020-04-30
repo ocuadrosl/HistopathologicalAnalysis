@@ -192,8 +192,8 @@ void HEStainFilter:: colorEnhancement(bool showResult)
 
     rgbPixelD hsvPixel;
 
-    Math::MinMax<> minMaxS(minHsv[1], maxHsv[1], 0, 1.0);
-    Math::MinMax<> minMaxV(minHsv[2], maxHsv[2], 0, 1.0);
+    math::MinMax<> minMaxS(minHsv[1], maxHsv[1], 0, 1.0);
+    math::MinMax<> minMaxV(minHsv[2], maxHsv[2], 0, 1.0);
 
     while(!hsvIt.IsAtEnd())
     {

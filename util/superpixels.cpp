@@ -82,8 +82,8 @@ inline bool SuperPixels<imageT>::costFunction(unsigned cLabel, unsigned nLabel, 
     float cost1 = 0.f;
     float cost2 = 0.f;
 
-    const auto sedColor = Math::squaredEuclideanDistance<labPixelT>;
-    const auto sedIndex = Math::squaredEuclideanDistance<labIndexT, 2>;
+    const auto sedColor = math::squaredEuclideanDistance<labPixelT>;
+    const auto sedIndex = math::squaredEuclideanDistance<labIndexT, 2>;
 
     cost1 = lambda1 * sedColor(cPixel, cSPMean) + lambda2 * sedIndex(cIndex, cSPCent);
     cost2 = lambda1 * sedColor(cPixel, nSPMean) + lambda2 * sedIndex(cIndex, nSPCent);
@@ -325,8 +325,8 @@ void SuperPixels<imageT>::initRegularGrid()
     unsigned spWidth =  (size[0]-1)/sideLength;
     unsigned spHeight = (size[1]-1)/sideLength;
 
-    Math::MinMax<unsigned, unsigned> minMaxW(0, size[0]-1, 0, spWidth);
-    Math::MinMax<unsigned, unsigned> minMaxH(0, size[1]-1, 0, spHeight);
+    math::MinMax<unsigned, unsigned> minMaxW(0, size[0]-1, 0, spWidth);
+    math::MinMax<unsigned, unsigned> minMaxH(0, size[1]-1, 0, spHeight);
 
 
     unsigned w, h;
