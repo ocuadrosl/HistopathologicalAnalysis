@@ -21,7 +21,7 @@ void PleuraDetector<InputImageT>::SetInputImage(RGBImageP inputImage)
 
 template<typename InputImageT>
 typename PleuraDetector<InputImageT>::GrayImageP
-PleuraDetector<InputImageT>::EdgeDetectionCanny(GrayImageP grayImage, bool show)
+PleuraDetector<InputImageT>::EdgeDetectionCanny(GrayImageP grayImage, float variance, bool show)
 {
 
     using GrayImageFloatT = itk::Image<float,2>;
@@ -35,7 +35,7 @@ PleuraDetector<InputImageT>::EdgeDetectionCanny(GrayImageP grayImage, bool show)
     using FilterType = itk::CannyEdgeDetectionImageFilter<GrayImageFloatT, GrayImageFloatT>;
     FilterType::Pointer filter = FilterType::New();
     filter->SetInput(toFloatFilter->GetOutput());
-    filter->SetVariance(1);
+    filter->SetVariance(variance);
     filter->SetLowerThreshold(0);
     filter->SetUpperThreshold(5);
 
@@ -58,7 +58,7 @@ PleuraDetector<InputImageT>::EdgeDetectionCanny(GrayImageP grayImage, bool show)
 }
 
 template<typename InputImageT>
-typename PleuraDetector<InputImageT>::LabelMapP PleuraDetector<InputImageT>::ConnectedComponets(GrayImageP edgesImage, unsigned threhold, bool show)
+typename PleuraDetector<InputImageT>::LabelMapP PleuraDetector<InputImageT>::ConnectedComponets(GrayImageP edgesImage, unsigned threhold, unsigned background, bool show)
 {
 
 
@@ -66,7 +66,7 @@ typename PleuraDetector<InputImageT>::LabelMapP PleuraDetector<InputImageT>::Con
     ConnectedComponentImageFilterType::Pointer connected = ConnectedComponentImageFilterType::New();
     connected->SetInput(edgesImage);
     connected->FullyConnectedOn();
-    connected->SetBackgroundValue(Background); //black
+    connected->SetBackgroundValue(background); //black
     connected->Update();
 
     using LabelImageToLabelMapFilterType =  itk::LabelImageToShapeLabelMapFilter<GrayImageT, LabelMapType>;
@@ -195,7 +195,7 @@ PleuraDetector<InputImageT>::ComputeFractalDimension(LabelMapP components, float
         RescaleType::Pointer rescaler = RescaleType::New();
         rescaler->SetInput(outputImage);
         rescaler->SetOutputMinimum(Background);
-        rescaler->SetOutputMaximum(255);
+        rescaler->SetOutputMaximum(Foreground);
         rescaler->Update();
 
         VTKViewer::visualize<GrayImageT>(rescaler->GetOutput(), "Fractal dimension");
@@ -318,7 +318,7 @@ PleuraDetector<InputImageT>::HistogramEqualization(GrayImageP grayImage, float a
 
 template<typename RGBImageT>
 typename PleuraDetector<RGBImageT>::RGBImageP
-PleuraDetector<RGBImageT>::RemoveBackground(float lThreshold, float aThreshold, float bThresold, bool show)
+PleuraDetector<RGBImageT>::CleanBackground(float lThreshold, float aThreshold, float bThresold, bool show)
 {
 
 
@@ -411,7 +411,7 @@ PleuraDetector<RGBImageT>::RemoveBackground(float lThreshold, float aThreshold, 
 
 template<typename RGBImageT>
 typename PleuraDetector<RGBImageT>::FloatImageP
-PleuraDetector<RGBImageT>::RayFeatures(GrayImageP edges, LabelMapP components, unsigned raysSize, bool show)
+PleuraDetector<RGBImageT>::RayFeatures(GrayImageP edges, unsigned raysSize, bool show)
 {
 
 
@@ -436,7 +436,7 @@ PleuraDetector<RGBImageT>::RayFeatures(GrayImageP edges, LabelMapP components, u
         (*it)[1]  = (*(it-1))[1] + north;
         (*it)[2]  = (*(it-1))[2] + southWest;
 
-        std::cout<<(*it)[2]<<std::endl;
+        //std::cout<<(*it)[2]<<std::endl;
     }
 
 
@@ -449,33 +449,40 @@ PleuraDetector<RGBImageT>::RayFeatures(GrayImageP edges, LabelMapP components, u
 
     for ( ;!eIt.IsAtEnd(); ++eIt, ++gIt, ++oIt)
     {
-        auto pixel = eIt.Get();
-       // offsetT centerOffset = {0, 0};
 
-        if(pixel == Foreground)
+        if(eIt.Get() == Foreground)
         {
-            std::vector<unsigned> distance(3,0);
+            std::vector<unsigned> distance(3,raysSize);
             std::vector<bool> distanceFlags(3, false);
             for (unsigned  i=1;  i < rayOffsets.size(); ++i)
             {
-                //const offsetT& offset = rayOffsets[i][0];
+
 
                 if(gIt.GetPixel(rayOffsets[i][0]) == Foreground && distanceFlags[0] == false)
                 {
-
                   distance[0] = i;
                   distanceFlags[0] = true;
+                }
 
-                 // std::cout<<rayOffsets[i][0]<<std::endl;
+                if(gIt.GetPixel(rayOffsets[i][1]) == Foreground && distanceFlags[1] == false)
+                {
+                  distance[1] = i;
+                  distanceFlags[1] = true;
+                }
 
+                if(gIt.GetPixel(rayOffsets[i][2]) == Foreground && distanceFlags[2] == false)
+                {
+                  distance[2] = i;
+                  distanceFlags[2] = true;
                 }
 
 
             }
 
-            //std::cout<<distance[0]<<std::endl;
-             oIt.Set(distance[0]);
-
+            if(*std::max_element(distance.begin(), distance.end())>=raysSize)
+            {
+             oIt.Set(raysSize);
+            }
 
         }
 
@@ -532,6 +539,8 @@ PleuraDetector<RGBImageT>::GrayToBinary(GrayImageP grayImage, bool show)
         VTKViewer::visualize<GrayImageT>(binaryImage, "Gray to Binary");
     }
 
+
+    io::printOK("Ray features");
 
     return binaryImage;
 
@@ -597,7 +606,7 @@ void PleuraDetector<InputImageT>::ComputeTexture(GrayImageP grayImage, GrayImage
             //std::cout<<mean<<std::endl;
            // if(mean > 2.1f)
             {
-                outputImage[index[1]][index[0]] = mean*255;
+                outputImage[index[1]][index[0]] = mean;
             }
 
 
@@ -621,14 +630,83 @@ void PleuraDetector<InputImageT>::ComputeTexture(GrayImageP grayImage, GrayImage
 
 }
 
+
+template<typename InputImageT>
+typename PleuraDetector<InputImageT>::GrayImageP PleuraDetector<InputImageT>::ExtractBoundaries(GrayImageP binaryImage, bool show)
+{
+
+    //Connecting background
+    ConnectBackground(binaryImage);
+
+    //Detecting background
+    using ConnectedFilterType = itk::ConnectedThresholdImageFilter<GrayImageT, GrayImageT>;
+    ConnectedFilterType::Pointer connectedThreshold = ConnectedFilterType::New();
+    connectedThreshold->SetInput(binaryImage);
+    connectedThreshold->SetLower(Background);
+    connectedThreshold->SetUpper(Background);
+    connectedThreshold->SetSeed({0,0}); //TODO define it
+    connectedThreshold->SetReplaceValue(Foreground);
+
+    connectedThreshold->Update();
+
+
+
+    using binaryContourImageFilterType = itk::BinaryContourImageFilter<GrayImageT, GrayImageT>;
+
+    binaryContourImageFilterType::Pointer binaryContourFilter = binaryContourImageFilterType::New();
+    binaryContourFilter->SetInput(connectedThreshold->GetOutput());
+    binaryContourFilter->SetBackgroundValue(Background);
+    binaryContourFilter->SetForegroundValue(Foreground);
+    binaryContourFilter->FullyConnectedOn();
+    binaryContourFilter->Update();
+
+
+
+    if(show)
+    {
+
+        VTKViewer::visualize<GrayImageT>(binaryContourFilter->GetOutput(), "Boundaries");
+    }
+
+
+    return binaryContourFilter->GetOutput();
+
+
+    io::printOK("Extract boundaries");
+
+
+
+}
+
+template<typename InputImageT>
+void PleuraDetector<InputImageT>:: ConnectBackground(GrayImageP& grayImage)
+{
+
+    const auto upperIndex = grayImage->GetRequestedRegion().GetUpperIndex();
+
+    for (unsigned col=0; col <= upperIndex[0]; ++col)
+    {
+        grayImage->SetPixel({col,0}, Background);
+        grayImage->SetPixel({col,upperIndex[1]}, Background);
+    }
+
+
+    for (unsigned row=0; row <= upperIndex[1]; ++row)
+    {
+        grayImage->SetPixel({0,row}, Background);
+        grayImage->SetPixel({upperIndex[0], row}, Background);
+    }
+
+
+}
+
+
 template<typename InputImageT>
 void PleuraDetector<InputImageT>::Detect()
 {
 
-    auto rgbImage = RemoveBackground(90, 5,5, false);
-
-
-
+    //pre-processing
+    auto rgbImage = CleanBackground(90, 5,5, false);
 
     //rgb to gray
     using rgbToGrayFilterType = itk::RGBToLuminanceImageFilter<InputImageT, GrayImageT>;
@@ -636,19 +714,27 @@ void PleuraDetector<InputImageT>::Detect()
     rgbToGrayFilter->SetInput(rgbImage);
     rgbToGrayFilter->Update();
 
-
-
     auto grayImage = rgbToGrayFilter->GetOutput();
 
-
-
     auto eqGrayImage = HistogramEqualization(grayImage, 1, 1, 5, false);
+
+    //binary
+    auto binaryImage = GrayToBinary(eqGrayImage, false);
+    //boundaries
+    auto boundaries = ExtractBoundaries(binaryImage, true);
+
+
 
     //io::WriteImage<GrayImageT>(eqGrayImage, "/home/oscar/gray.png");
 
 
-    auto binaryImage = GrayToBinary(eqGrayImage, false);
+    //auto binaryImage = GrayToBinary(eqGrayImage, true);
+    //auto background  = ConnectedComponets(binaryImage, 0, Foreground,  true);
 
+
+
+
+/*
     using moothFilterType = itk::SmoothingRecursiveGaussianImageFilter<GrayImageT, GrayImageT>;
     moothFilterType::Pointer smoothFilter = moothFilterType::New();
     smoothFilter->SetInput(binaryImage);
@@ -658,15 +744,21 @@ void PleuraDetector<InputImageT>::Detect()
 
    // VTKViewer::visualize<GrayImageT>(smoothImage, "Gray to Binary");
 
-    auto components  = ConnectedComponets(smoothImage, 0,  false);
+  // auto components  = ConnectedComponets(smoothImage, 0,  false);
 
-    auto edges       = EdgeDetectionCanny(eqGrayImage, false);
+
+
+
+    ExtractBoundaries(smoothImage, true);
+*/
+    //auto edges = EdgeDetectionCanny(eqGrayImage, 5, false);
+    auto componentsEdges  = ConnectedComponets(boundaries, 50,  Background, true);
 
     //ComputeTexture(grayImage, edges,  21);
 
-    RayFeatures(edges, components, 10, true);
+    //RayFeatures(edges, 30, true);
 
-    //auto fractalDim = ComputeFractalDimension(components, 1.1 ,true);
+    //auto fractalDim = ComputeFractalDimension(componentsEdges, 1.1 ,true);
 
     //ComputeRoundness(components, 0.15,  true);
 

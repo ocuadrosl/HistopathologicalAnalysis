@@ -26,6 +26,8 @@
 #include <itkRegionOfInterestImageFilter.h>
 #include <itkImageRegionIteratorWithIndex.h>
 #include <itkSmoothingRecursiveGaussianImageFilter.h>
+#include <itkBinaryContourImageFilter.h>
+#include <itkConnectedThresholdImageFilter.h>
 
 
 //Dlib includes
@@ -90,21 +92,28 @@ private:
 
     //Auxiliary functions
     GrayImageP  HistogramEqualization(GrayImageP grayImage, float alpha=1, float beta=0, unsigned radiusSize=5, bool show=false);
-    GrayImageP  EdgeDetectionCanny(GrayImageP grayImage, bool show=false);
-    LabelMapP   ConnectedComponets(GrayImageP grayImage, unsigned threhold = 0,  bool show=false);
+    GrayImageP  EdgeDetectionCanny(GrayImageP grayImage, float variance=5, bool show=false);
+    LabelMapP   ConnectedComponets(GrayImageP grayImage, unsigned threhold = 0, unsigned background = 0, bool show=false);
     FloatImageP ComputeFractalDimension(LabelMapP components,  float threshold, bool show=false);
-    FloatImageP ComputeRoundness(LabelMapP components, float threshold, bool show=false);
-    RGBImageP   RemoveBackground(float lThreshold=90.f, float aThreshold = 5.f, float bThresold = 5.f, bool show=false);
+    FloatImageP ComputeRoundness(LabelMapP components, float threshold,  bool show=false);
+    RGBImageP   CleanBackground(float lThreshold=90.f, float aThreshold = 5.f, float bThresold = 5.f, bool show=false);
 
 
-    FloatImageP RayFeatures(GrayImageP edges, LabelMapP components, unsigned raysSize, bool show=false);
+
+    FloatImageP RayFeatures(GrayImageP edges, unsigned raysSize, bool show=false);
 
     void ComputeTexture(GrayImageP grayImage, GrayImageP edges, const unsigned neighborhoodSize = 5);
 
 
+    GrayImageP ExtractBoundaries(GrayImageP binaryImage, bool show=false);
+
 
 
     GrayImageP GrayToBinary(GrayImageP grayImage,  bool show=false); //simple threshold assuming background = zero
+
+    void ConnectBackground(GrayImageP& grayImage);
+
+
 
 
 
