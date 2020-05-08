@@ -149,6 +149,7 @@ PleuraDetector<InputImageT>::ComputeFractalDimension(LabelMapP components, float
     outputImage->FillBuffer(0.f);
 
 
+
     //using FilterType = itk::RegionOfInterestImageFilter<GrayImageT, GrayImageT>;
 
 
@@ -158,6 +159,7 @@ PleuraDetector<InputImageT>::ComputeFractalDimension(LabelMapP components, float
 
         auto labelObject = components->GetNthLabelObject(i);
         auto boundigBox = labelObject->GetBoundingBox();
+
 
         auto roiImage = GrayImageT::New();
         roiImage->SetRegions(boundigBox);
@@ -288,7 +290,7 @@ PleuraDetector<InputImageT>::HistogramEqualization(GrayImageP grayImage, float a
 
 
 
-   /* using RescaleType = itk::RescaleIntensityImageFilter<GrayImageT, GrayImageT>;
+    /* using RescaleType = itk::RescaleIntensityImageFilter<GrayImageT, GrayImageT>;
     RescaleType::Pointer rescaler = RescaleType::New();
     rescaler->SetInput(adaptiveHistogramEqualizationImageFilter->GetOutput());
     rescaler->SetOutputMinimum(Background);
@@ -347,7 +349,7 @@ PleuraDetector<RGBImageT>::CleanBackground(float lThreshold, float aThreshold, f
     auto labImage = xyzToLabFilter->getOutput();
 
     //computing max luminance value
-    //Extracting B channel
+    //Extracting L channel
     using ExtractChannelFilterT = ExtractChannelFilter<labImageT, FloatImageT>;
     std::unique_ptr<ExtractChannelFilterT> extractChannelFilter(new ExtractChannelFilterT());
 
@@ -383,9 +385,10 @@ PleuraDetector<RGBImageT>::CleanBackground(float lThreshold, float aThreshold, f
 
         auto labPixel = labIt.Get();
 
-        if(minMax(labPixel[0]) > lThreshold && labPixel[1] < aThreshold &&  labPixel[2] < bThresold)
+        if(minMax(labPixel[0]) > lThreshold  &&  labPixel[1] < aThreshold &&  labPixel[2] < bThresold)
         {
             outputIt.Set(white);
+
         }
         else
         {
@@ -398,7 +401,7 @@ PleuraDetector<RGBImageT>::CleanBackground(float lThreshold, float aThreshold, f
     {
 
 
-        VTKViewer::visualize<RGBImageT>(outputImage, "Remove Background");
+        VTKViewer::visualize<RGBImageT>(outputImage, "Clean Background");
     }
 
 
@@ -460,20 +463,20 @@ PleuraDetector<RGBImageT>::RayFeatures(GrayImageP edges, unsigned raysSize, bool
 
                 if(gIt.GetPixel(rayOffsets[i][0]) == Foreground && distanceFlags[0] == false)
                 {
-                  distance[0] = i;
-                  distanceFlags[0] = true;
+                    distance[0] = i;
+                    distanceFlags[0] = true;
                 }
 
                 if(gIt.GetPixel(rayOffsets[i][1]) == Foreground && distanceFlags[1] == false)
                 {
-                  distance[1] = i;
-                  distanceFlags[1] = true;
+                    distance[1] = i;
+                    distanceFlags[1] = true;
                 }
 
                 if(gIt.GetPixel(rayOffsets[i][2]) == Foreground && distanceFlags[2] == false)
                 {
-                  distance[2] = i;
-                  distanceFlags[2] = true;
+                    distance[2] = i;
+                    distanceFlags[2] = true;
                 }
 
 
@@ -481,7 +484,7 @@ PleuraDetector<RGBImageT>::RayFeatures(GrayImageP edges, unsigned raysSize, bool
 
             if(*std::max_element(distance.begin(), distance.end())>=raysSize)
             {
-             oIt.Set(raysSize);
+                oIt.Set(raysSize);
             }
 
         }
@@ -540,7 +543,7 @@ PleuraDetector<RGBImageT>::GrayToBinary(GrayImageP grayImage, bool show)
     }
 
 
-    io::printOK("Ray features");
+    io::printOK("Simple gray to binary");
 
     return binaryImage;
 
@@ -549,7 +552,7 @@ PleuraDetector<RGBImageT>::GrayToBinary(GrayImageP grayImage, bool show)
 
 
 template<typename InputImageT>
-void PleuraDetector<InputImageT>::ComputeTexture(GrayImageP grayImage, GrayImageP edges , const unsigned neighborhoodSize)
+void PleuraDetector<InputImageT>::ComputeLBP(GrayImageP grayImage, GrayImageP edges ,  LBPHistogramsT& lbpHistograms, const unsigned neighborhoodSize)
 {
 
 
@@ -566,8 +569,8 @@ void PleuraDetector<InputImageT>::ComputeTexture(GrayImageP grayImage, GrayImage
     dlib::make_uniform_lbp_image(dlibGrayImage, lbpImage);
 
     //
-    dlib::image_window my_window(lbpImage, "LBP");
-    my_window.wait_until_closed();
+    // dlib::image_window my_window(lbpImage, "LBP");
+    // my_window.wait_until_closed();
 
 
     dlib::array2d<float> outputImage;
@@ -584,31 +587,47 @@ void PleuraDetector<InputImageT>::ComputeTexture(GrayImageP grayImage, GrayImage
     const auto ExtractNeighborhood = util::ExtractNeighborhood<lbpImageT, GrayImageT::IndexType>;
 
 
-    dlib::matrix<unsigned long> hist;
+    dlib::matrix<unsigned long> lbpHistogramLocal;
+    LBPHistogramT lbpHistogram;
 
-    for (;!eIt.IsAtEnd();  ++eIt)
+
+
+    std::vector<GrayImageT::IndexType> centers;
+    ComputeCenters(edges, neighborhoodSize, centers);
+
+
+    ofstream file ("/home/oscar/lbp.txt");
+
+
+    //for (;!eIt.IsAtEnd();  ++eIt)
+    for(auto it = centers.begin(); it != centers.end(); ++it)
     {
 
-        if(eIt.Get() == Foreground)
+
+        //if(eIt.Get() == Foreground)
         {
-            auto index = eIt.GetIndex();
+            //auto index = eIt.GetIndex();
+            auto index = (*it);
             ExtractNeighborhood(lbpImage, index, neighborhoodSize, neighborhood);
 
-            dlib::get_histogram(neighborhood, hist, 59);
+            // dlib::image_window my_window2(neighborhood, "LBP");
+            //my_window2.wait_until_closed();
 
-            //std::vector<unsigned> h(hist.begin(), hist.end());
+            dlib::get_histogram(neighborhood, lbpHistogramLocal, 59);
 
-            //std::cout<<static_cast<float>(std::accumulate(hist.begin(), hist.end(), 0)) / hist.size()<<std::endl;
-            //std::cout<<hist<<std::endl;
-            //VTKViewer::PlotBar<std::vector<unsigned>>( h, h.size());
 
-            float mean = static_cast<float>(std::accumulate(hist.begin(), hist.end(), 0)) / hist.size();
-            //std::cout<<mean<<std::endl;
-           // if(mean > 2.1f)
+            auto it = lbpHistogramLocal.begin();
+            auto it2 = lbpHistogram.begin();
+            for(; it != lbpHistogramLocal.end()-1; ++it, ++it2)
             {
-                outputImage[index[1]][index[0]] = mean;
-            }
 
+                (*it2) = std::sqrt(*it);
+                file<<std::sqrt(*it)<<",";
+            }
+            (*it2) = std::sqrt(*it);
+            file<<std::sqrt(*it)<<std::endl;
+
+            lbpHistograms.push_back(lbpHistogram);
 
         }
 
@@ -621,8 +640,8 @@ void PleuraDetector<InputImageT>::ComputeTexture(GrayImageP grayImage, GrayImage
     io::printOK("Local Binary Pattern");
 
 
-    dlib::image_window my_window2(outputImage, "LBP");
-    my_window2.wait_until_closed();
+    // dlib::image_window my_window2(outputImage, "LBP");
+    // my_window2.wait_until_closed();
 
     /*std::cout<<histograms.size()<<std::endl;
     VTKViewer::PlotBar<std::vector<int>>( histograms, histograms.size());
@@ -702,11 +721,119 @@ void PleuraDetector<InputImageT>:: ConnectBackground(GrayImageP& grayImage)
 
 
 template<typename InputImageT>
+void PleuraDetector<InputImageT>::SpectralClustering(LBPHistogramsT& lbpHistograms, bool show)
+{
+
+    using kernelT = dlib::radial_basis_kernel<LBPHistogramT>;
+
+    using kernelT = dlib::radial_basis_kernel<LBPHistogramT>;
+
+    dlib::kcentroid<kernelT> kc(kernelT(0.1), 0.01, 8);
+
+    dlib::kkmeans<kernelT> test(kc);
+
+    std::vector<LBPHistogramT> initial_centers;
+
+    LBPHistogramT m;
+    dlib::rand rnd;
+
+    test.set_number_of_centers(2);
+
+    dlib::pick_initial_centers(2, initial_centers, lbpHistograms, test.get_kernel());
+
+    test.train(lbpHistograms,initial_centers);
+
+
+    std::vector<unsigned long> assignments = dlib::spectral_cluster(kernelT(0.1), lbpHistograms, 2);
+    //cout <<dlib::mat(assignments) << endl;
+
+
+    io::printOK("Spectral Clustering");
+
+}
+
+
+template<typename InputImageT>
+void PleuraDetector<InputImageT>::ComputeCenters(GrayImageP boundaries, unsigned neigborhoodSize, std::vector<GrayImageT::IndexType>& centers)
+{
+
+
+    const auto size = boundaries->GetRequestedRegion().GetSize();
+
+    unsigned cols = size[0]/neigborhoodSize;
+    unsigned rows = size[1]/neigborhoodSize;
+
+
+
+
+
+    unsigned radius = neigborhoodSize/2;
+
+    math::MinMax<unsigned, unsigned> minMaxRows(0, rows, 0+radius, size[1]-radius);
+    math::MinMax<unsigned, unsigned> minMaxCols(0, cols, 0+radius, size[0]-radius);
+
+
+
+
+    GrayImageT::IndexType center;
+
+    GrayImageP neighborhood;
+
+    auto isBackGround = [](itk::ImageRegionIterator<GrayImageT> nIt)
+    {
+
+        for (nIt.GoToBegin(); !nIt.IsAtEnd(); ++nIt)
+        {
+            if(nIt.Get()!=0)
+            {
+                return false;
+            }
+
+        }
+
+        return true;
+
+    };
+
+    const auto ExtractNeighborhood = util::ExtractNeighborhoodITK<GrayImageT>;
+    for(unsigned row = 0; row < rows ; ++row)
+    {
+        center[1] = minMaxRows(row);
+
+        for(unsigned col = 0; col < cols ; ++col)
+        {
+
+            center[0] = minMaxCols(col);
+
+            ExtractNeighborhood(boundaries, center, neigborhoodSize, neighborhood);
+
+            itk::ImageRegionIterator<GrayImageT> nIt(neighborhood, neighborhood->GetRequestedRegion());
+            if(isBackGround(nIt)==false)
+            {
+                centers.push_back(center);
+                // std::cout<<center<<std::endl;
+                //VTKViewer::visualize<GrayImageT>(neighborhood, "ROI");
+
+            }
+
+
+
+        }
+
+    }
+
+
+    io::printOK("Compute Centers");
+
+}
+
+
+template<typename InputImageT>
 void PleuraDetector<InputImageT>::Detect()
 {
 
     //pre-processing
-    auto rgbImage = CleanBackground(90, 5,5, false);
+    auto rgbImage = CleanBackground(86, 5,5, false); //90
 
     //rgb to gray
     using rgbToGrayFilterType = itk::RGBToLuminanceImageFilter<InputImageT, GrayImageT>;
@@ -721,9 +848,7 @@ void PleuraDetector<InputImageT>::Detect()
     //binary
     auto binaryImage = GrayToBinary(eqGrayImage, false);
     //boundaries
-    auto boundaries = ExtractBoundaries(binaryImage, true);
-
-
+    auto boundaries = ExtractBoundaries(binaryImage, false);
 
     //io::WriteImage<GrayImageT>(eqGrayImage, "/home/oscar/gray.png");
 
@@ -734,7 +859,7 @@ void PleuraDetector<InputImageT>::Detect()
 
 
 
-/*
+    /*
     using moothFilterType = itk::SmoothingRecursiveGaussianImageFilter<GrayImageT, GrayImageT>;
     moothFilterType::Pointer smoothFilter = moothFilterType::New();
     smoothFilter->SetInput(binaryImage);
@@ -754,7 +879,11 @@ void PleuraDetector<InputImageT>::Detect()
     //auto edges = EdgeDetectionCanny(eqGrayImage, 5, false);
     auto componentsEdges  = ConnectedComponets(boundaries, 50,  Background, true);
 
-    //ComputeTexture(grayImage, edges,  21);
+    LBPHistogramsT lbpHistograms;
+
+    ComputeLBP(grayImage, boundaries, lbpHistograms ,51);
+
+    SpectralClustering(lbpHistograms, true);
 
     //RayFeatures(edges, 30, true);
 

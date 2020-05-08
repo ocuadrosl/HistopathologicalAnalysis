@@ -49,4 +49,5 @@ add_executable(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} Qt5::Widgets)
 target_link_libraries(${PROJECT_NAME} ${VTK_LIBRARIES})
 target_link_libraries(${PROJECT_NAME} ${ITK_LIBRARIES})
-target_link_libraries(${PROJECT_NAME} ${dlib_LIBRARIES})
+#target_link_libraries(${PROJECT_NAME} ${dlib_LIBRARIES}) #deprecated
+target_link_libraries(${PROJECT_NAME} dlib::dlib)

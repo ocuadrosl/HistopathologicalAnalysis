@@ -33,7 +33,8 @@
 //Dlib includes
 #include <dlib/array2d.h>
 #include <dlib/image_transforms.h>
-
+#include <dlib/clustering.h>
+#include <dlib/rand.h>
 
 
 //local includes
@@ -75,6 +76,9 @@ class PleuraDetector
     using TextureFilterType = itk::Statistics::ScalarImageToTextureFeaturesFilter<GrayImageT>;
     using FeatureVector = TextureFilterType::FeatureValueVector;
 
+    using LBPHistogramT  = dlib::matrix<float,59,1>;
+    using LBPHistogramsT =  std::vector<LBPHistogramT>;
+
 
 public:
 
@@ -102,7 +106,7 @@ private:
 
     FloatImageP RayFeatures(GrayImageP edges, unsigned raysSize, bool show=false);
 
-    void ComputeTexture(GrayImageP grayImage, GrayImageP edges, const unsigned neighborhoodSize = 5);
+    void ComputeLBP(GrayImageP grayImage, GrayImageP edges, LBPHistogramsT& lbpHistograms, const unsigned neighborhoodSize = 5);
 
 
     GrayImageP ExtractBoundaries(GrayImageP binaryImage, bool show=false);
@@ -112,6 +116,14 @@ private:
     GrayImageP GrayToBinary(GrayImageP grayImage,  bool show=false); //simple threshold assuming background = zero
 
     void ConnectBackground(GrayImageP& grayImage);
+
+    void ComputeGradients(GrayImageP binaryImage, bool show=false);
+
+
+    void SpectralClustering(LBPHistogramsT& lbpHistograms, bool show=false);
+
+
+    void ComputeCenters(GrayImageP boundaries, unsigned neigborhoodSize, std::vector<GrayImageT::IndexType>& centers);
 
 
 
