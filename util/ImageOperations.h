@@ -6,10 +6,64 @@
 //Dlib includes
 #include <dlib/array2d.h>
 #include <dlib/image_transforms.h>
+#include <itkImage.h>
+#include <itkRGBPixel.h>
+#include <itkRGBToLuminanceImageFilter.h>
+#include <itkLabelMapToRGBImageFilter.h>
+#include <itkBinaryThresholdImageFilter.h>
+#include <itkRescaleIntensityImageFilter.h>
 
+#include "vtkviewer.h"
 
 namespace util
 {
+
+
+
+template <typename LabelMapT,  typename GrayImageT>
+inline typename GrayImageT::Pointer LabelMapToBinaryImage(const typename LabelMapT::Pointer& labelMap,  unsigned insideValue=255, unsigned outsideValue=0, bool show=false)
+{
+
+
+    //Label-map to RGB image
+    using  rgbImageT =  itk::Image<itk::RGBPixel<unsigned char>, 2>;
+    typedef itk::LabelMapToRGBImageFilter<LabelMapT, rgbImageT> RGBFilterType;
+    typename RGBFilterType::Pointer labelMapToRGBFilter = RGBFilterType::New();
+    labelMapToRGBFilter->SetInput(labelMap);
+    labelMapToRGBFilter->Update();
+
+
+    using rgbToGrayFilterT = itk::RGBToLuminanceImageFilter<rgbImageT, GrayImageT>;
+    typename rgbToGrayFilterT::Pointer rgbToGrayFilter = rgbToGrayFilterT::New();
+    rgbToGrayFilter->SetInput(labelMapToRGBFilter->GetOutput());
+    rgbToGrayFilter->Update();
+
+
+    using FilterType = itk::BinaryThresholdImageFilter<GrayImageT, GrayImageT>;
+    typename FilterType::Pointer filter = FilterType::New();
+    filter->SetInput(rgbToGrayFilter->GetOutput());
+    filter->SetLowerThreshold(0);
+    filter->SetUpperThreshold(1); //all values greater than black->0
+    filter->SetOutsideValue(outsideValue);
+    filter->SetInsideValue(insideValue);
+    filter->Update();
+
+    if(show)
+    {
+
+        using RescaleType = itk::RescaleIntensityImageFilter<GrayImageT, GrayImageT>;
+        typename RescaleType::Pointer rescaler = RescaleType::New();
+        rescaler->SetInput(filter->GetOutput());
+        rescaler->SetOutputMinimum(0);
+        rescaler->SetOutputMaximum(255);
+        rescaler->Update();
+
+        VTKViewer::visualize<GrayImageT>(rescaler->GetOutput(), "Label Map to Gray Image");
+    }
+
+    return filter->GetOutput();
+
+}
 
 template <typename ImageT>
 inline unsigned ExtractNeighborhoodITK(const typename ImageT::Pointer& inputImage,

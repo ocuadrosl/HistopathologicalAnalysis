@@ -28,7 +28,8 @@
 #include <itkSmoothingRecursiveGaussianImageFilter.h>
 #include <itkBinaryContourImageFilter.h>
 #include <itkConnectedThresholdImageFilter.h>
-
+#include <itkBinaryThinningImageFilter.h>
+#include <itkImageDuplicator.h>
 
 //Dlib includes
 #include <dlib/array2d.h>
@@ -80,6 +81,9 @@ class PleuraDetector
     using LBPHistogramsT =  std::vector<LBPHistogramT>;
 
 
+    using SCAssignments = std::vector<unsigned long>; // Spectral cluster assignments
+
+
 public:
 
     PleuraDetector();
@@ -106,7 +110,7 @@ private:
 
     FloatImageP RayFeatures(GrayImageP edges, unsigned raysSize, bool show=false);
 
-    void ComputeLBP(GrayImageP grayImage, GrayImageP edges, LBPHistogramsT& lbpHistograms, const unsigned neighborhoodSize = 5);
+    void ComputeLBP(GrayImageP grayImage, GrayImageP edges, const std::vector<GrayImageT::IndexType>& centers, const unsigned neighborhoodSize, LBPHistogramsT& lbpHistograms);
 
 
     GrayImageP ExtractBoundaries(GrayImageP binaryImage, bool show=false);
@@ -120,12 +124,14 @@ private:
     void ComputeGradients(GrayImageP binaryImage, bool show=false);
 
 
-    void SpectralClustering(LBPHistogramsT& lbpHistograms, bool show=false);
+    void SpectralClustering(LBPHistogramsT& lbpHistograms, SCAssignments& assignments, bool show=false);
 
 
     void ComputeCenters(GrayImageP boundaries, unsigned neigborhoodSize, std::vector<GrayImageT::IndexType>& centers);
+    void ComputeCentersOld(GrayImageP boundaries, unsigned neigborhoodSize, std::vector<GrayImageT::IndexType>& centers);
 
 
+    void ShowAssignments(const SCAssignments& assignments, const std::vector<GrayImageT::IndexType>& centers);
 
 
 
