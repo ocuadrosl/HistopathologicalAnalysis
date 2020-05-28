@@ -600,9 +600,6 @@ void PleuraDetector<InputImageT>::ComputeLBP(GrayImageP grayImage, GrayImageP ed
 
 
 
-
-
-
     ofstream file ("/home/oscar/lbp.txt");
 
 
@@ -623,9 +620,9 @@ void PleuraDetector<InputImageT>::ComputeLBP(GrayImageP grayImage, GrayImageP ed
             dlib::get_histogram(neighborhood, lbpHistogramLocal, 59);
 
 
-            auto it = lbpHistogramLocal.begin();
+            auto it = lbpHistogramLocal.begin()+1;
             auto it2 = lbpHistogram.begin();
-            for(; it != lbpHistogramLocal.end()-1; ++it, ++it2)
+            for(; it != lbpHistogramLocal.end()-2; ++it, ++it2)
             {
 
                 (*it2) = std::sqrt(*it);
@@ -634,7 +631,17 @@ void PleuraDetector<InputImageT>::ComputeLBP(GrayImageP grayImage, GrayImageP ed
             (*it2) = std::sqrt(*it);
             file<<std::sqrt(*it)<<std::endl;
 
+            //dlib::remove_row(lbpHistogram, 0);
+
             lbpHistograms.push_back(lbpHistogram);
+
+            //auto hist = dlib::remove_row(lbpHistogram, 0);
+
+            std::cout<<lbpHistogram.size()<<std::endl;
+            //std::cout<<std::endl;
+
+
+            //VTKViewer::PlotBar<std::vector<long>>(std::vector<long>(hist.begin(), hist.end()), 58);
 
         }
 
@@ -961,10 +968,10 @@ void PleuraDetector<InputImageT>::Detect()
 
     auto thinBoundaries = rescaler->GetOutput();
 
-    VTKViewer::visualize<GrayImageT>(thinBoundaries, "Thin boundaries");
+    //VTKViewer::visualize<GrayImageT>(thinBoundaries, "Thin boundaries");
 
 
-    unsigned neighborhoodSize = 51;
+    unsigned neighborhoodSize = 21;
     std::vector<GrayImageT::IndexType> centers;
     ComputeCenters(thinBoundaries, neighborhoodSize, centers);
 

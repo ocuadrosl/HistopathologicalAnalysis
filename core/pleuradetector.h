@@ -77,7 +77,7 @@ class PleuraDetector
     using TextureFilterType = itk::Statistics::ScalarImageToTextureFeaturesFilter<GrayImageT>;
     using FeatureVector = TextureFilterType::FeatureValueVector;
 
-    using LBPHistogramT  = dlib::matrix<float,59,1>;
+    using LBPHistogramT  = dlib::matrix<float, 58, 1>;
     using LBPHistogramsT =  std::vector<LBPHistogramT>;
 
 
