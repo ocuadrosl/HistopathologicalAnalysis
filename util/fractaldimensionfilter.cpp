@@ -180,8 +180,15 @@ void FractalDimensionFilter<ImageT>::Compute()
         auto tiles1 = CountTiles(*(it-1)); //large tiles
         auto tiles2 = CountTiles(*(it)); //small tiles
 
-        dimensions.push_back(fractalDim(tiles1, currentScale, tiles2, currentScale*scale));
-
+        if(tiles1 == 0 || tiles2 == 0)
+        {
+            //std::cout<<"zero here"<<std::endl;
+            dimensions.push_back(0.f);
+        }
+        else
+        {
+            dimensions.push_back(fractalDim(tiles1, currentScale, tiles2, currentScale*scale));
+        }
         currentScale*=scale;
 
     }

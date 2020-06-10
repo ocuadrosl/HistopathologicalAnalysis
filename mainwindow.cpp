@@ -83,10 +83,11 @@ void MainWindow::PleuraDetection(const std::string& dirPath, const std::string& 
     using pleuraDetectorT = PleuraDetector<rgbImageT>;
     std::unique_ptr<pleuraDetectorT>  pleuraDetector(new pleuraDetectorT());
     pleuraDetector->SetInputImage(inputImage);
+    pleuraDetector->SetImageName(dirPath, fileName);
     pleuraDetector->Detect();
-    //pleuraDetector->setNames(dirPath, fileName);
 
-    //pleuraDetector->findCells();
+
+
 
 }
 

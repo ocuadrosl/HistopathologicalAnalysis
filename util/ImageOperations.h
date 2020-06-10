@@ -69,7 +69,7 @@ template <typename ImageT>
 inline unsigned ExtractNeighborhoodITK(const typename ImageT::Pointer& inputImage,
                                        const typename ImageT::IndexType& centerIndex,
                                        const unsigned& neighborhoodSize,
-                                       typename ImageT::Pointer& roi)
+                                       typename ImageT::Pointer& neighbohood)
 {
 
 
@@ -102,11 +102,11 @@ inline unsigned ExtractNeighborhoodITK(const typename ImageT::Pointer& inputImag
     unsigned imageColEnd = (colum + neighSizeCenter >= imageColSize) ? imageColSize :  colum + neighSizeCenter+1;
 
 
-    roi =  ImageT::New();
+    neighbohood =  ImageT::New();
     typename ImageT::RegionType region;
     region.SetSize({imageRowEnd - imageRowBegin, imageColEnd - imageColBegin});
-    roi->SetRegions(region);
-    roi->Allocate();
+    neighbohood->SetRegions(region);
+    neighbohood->Allocate();
 
     //slow version reimplement it using iterators
     unsigned roiR=0;
@@ -115,7 +115,7 @@ inline unsigned ExtractNeighborhoodITK(const typename ImageT::Pointer& inputImag
         unsigned roiC=0;
         for(unsigned c=imageColBegin; c < imageColEnd; ++c)
         {
-            roi->SetPixel({roiC++, roiR}, inputImage->GetPixel({c,r}));
+            neighbohood->SetPixel({roiC++, roiR}, inputImage->GetPixel({c,r}));
 
         }
         ++roiR;

@@ -83,6 +83,10 @@ class PleuraDetector
 
     using SCAssignments = std::vector<unsigned long>; // Spectral cluster assignments
 
+    //ITK index vector
+
+    using IndexVector = std::vector<GrayImageT::IndexType>;
+
 
 public:
 
@@ -90,12 +94,17 @@ public:
     void SetInputImage(RGBImageP InputImage);
     void Detect();
 
+    void SetImageName(const std::string& dirPath, const std::string& fileName);
+
 
 
 
 private:
 
     RGBImageP InputImage;
+
+    std::string ImageName = "";
+    std::string ImageDirPath   = "";
 
 
     //Auxiliary functions
@@ -119,19 +128,22 @@ private:
 
     GrayImageP GrayToBinary(GrayImageP grayImage,  bool show=false); //simple threshold assuming background = zero
 
+    GrayImageP ThinningBoundaries(GrayImageP boundaries, bool show=false);
+
+
     void ConnectBackground(GrayImageP& grayImage);
 
     void ComputeGradients(GrayImageP binaryImage, bool show=false);
 
+    void SpectralClustering(LBPHistogramsT& lbpHistograms, SCAssignments& assignments);
 
-    void SpectralClustering(LBPHistogramsT& lbpHistograms, SCAssignments& assignments, bool show=false);
-
-
-    void ComputeCenters(GrayImageP boundaries, unsigned neigborhoodSize, std::vector<GrayImageT::IndexType>& centers);
-    void ComputeCentersOld(GrayImageP boundaries, unsigned neigborhoodSize, std::vector<GrayImageT::IndexType>& centers);
-
+    void ComputeCenters(GrayImageP boundaries, unsigned neigborhoodSize, std::vector<GrayImageT::IndexType>& centers, GrayImageP grayImage);
 
     void ShowAssignments(const SCAssignments& assignments, const std::vector<GrayImageT::IndexType>& centers);
+
+    void ComputeFractalDimensionCenters(GrayImageP boundaries, unsigned neigborhoodSize, const IndexVector& centers, bool show=false); // put a better name
+
+
 
 
 
