@@ -865,11 +865,10 @@ void PleuraDetector<InputImageT>::ComputeFractalDimensionCenters(GrayImageP boun
     for(auto it = centers.begin(); it != centers.end(); ++it) //fails here...
     {
 
-        std::cout<<*it<<std::endl;
 
         GrayImageP neighborhood;
         extractNeighborhood(boundaries, *it, neigborhoodSize, neighborhood);
-/*
+
 
         auto fractalDimensionFilter = std::make_unique<FractalDimensionFilter<GrayImageT>>();
         fractalDimensionFilter->SetInputImage(neighborhood);
@@ -881,15 +880,15 @@ void PleuraDetector<InputImageT>::ComputeFractalDimensionCenters(GrayImageP boun
         if(std::isnan(dimension))
         {
 
+            std::cerr<<"nan"<<std::endl;
             // VTKViewer::visualize<GrayImageT>(neighborhood, "Fractal dimension");
         }
 
 
         outputImage->SetPixel(*it, dimension);
-        std::cout<<neighborhood->GetRequestedRegion().GetSize()<<std::endl;
-        std::cout<<dimension<<" dim"<<std::endl;
+        //std::cout<<neighborhood->GetRequestedRegion().GetSize()<<std::endl;
 
-*/
+
 
     }
 
@@ -944,8 +943,8 @@ typename PleuraDetector<InputImageT>::GrayImageP PleuraDetector<InputImageT>::Th
     }
 
 
-    //this is temporary, delete it
-    io::WriteImage<GrayImageT>(thinBoundaries, "/home/oscar/data/biopsy/tiff/dataset_1/"+ImageName+"_boundaries.tiff");
+    //this is temporary, delete it, I use this during the ground truth creation...
+    io::WriteImage<GrayImageT>(thinBoundaries, "/home/oscar/data/biopsy/tiff/test/boundaries/"+ImageName+"_boundaries.tiff");
 
 
     io::printOK("Thinning Boundaries");
@@ -1022,12 +1021,9 @@ void PleuraDetector<InputImageT>::Detect()
     auto thinBoundaries = ThinningBoundaries(boundaries, false);
 
 
-    return;
-
     unsigned neighborhoodSize = 101;
     std::vector<GrayImageT::IndexType> centers;
     ComputeCenters(thinBoundaries, neighborhoodSize, centers, grayImage);
-
 
     ComputeFractalDimensionCenters(thinBoundaries, neighborhoodSize, centers, true);
 

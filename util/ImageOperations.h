@@ -102,20 +102,25 @@ inline unsigned ExtractNeighborhoodITK(const typename ImageT::Pointer& inputImag
     unsigned imageColEnd = (colum + neighSizeCenter >= imageColSize) ? imageColSize :  colum + neighSizeCenter+1;
 
 
+
+    //std::cout<<imageColEnd<<" -> "<<imageRowEnd<<std::endl;
+
+
     neighbohood =  ImageT::New();
     typename ImageT::RegionType region;
-    region.SetSize({imageRowEnd - imageRowBegin, imageColEnd - imageColBegin});
+    region.SetSize({imageColEnd - imageColBegin, imageRowEnd - imageRowBegin});
     neighbohood->SetRegions(region);
     neighbohood->Allocate();
+
 
     //slow version reimplement it using iterators
     unsigned roiR=0;
     for(unsigned r = imageRowBegin; r < imageRowEnd ; ++r)
     {
         unsigned roiC=0;
-        for(unsigned c=imageColBegin; c < imageColEnd; ++c)
+        for(unsigned c = imageColBegin; c < imageColEnd; ++c)
         {
-            neighbohood->SetPixel({roiC++, roiR}, inputImage->GetPixel({c,r}));
+            neighbohood->SetPixel({roiC++, roiR}, inputImage->GetPixel( {c, r} ));
 
         }
         ++roiR;
