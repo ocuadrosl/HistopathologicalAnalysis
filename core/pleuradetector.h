@@ -30,6 +30,7 @@
 #include <itkConnectedThresholdImageFilter.h>
 #include <itkBinaryThinningImageFilter.h>
 #include <itkImageDuplicator.h>
+#include <itkAddImageFilter.h>
 
 //Dlib includes
 #include <dlib/array2d.h>
@@ -141,7 +142,16 @@ private:
 
     void ShowAssignments(const SCAssignments& assignments, const std::vector<GrayImageT::IndexType>& centers);
 
-    void ComputeFractalDimensionCenters(GrayImageP boundaries, unsigned neigborhoodSize, const IndexVector& centers, bool show=false); // put a better name
+    void ComputeFractalDimensionCenters(GrayImageP boundaries, unsigned neigborhoodSize, const IndexVector& centers, std::vector<float>& output, bool show=false); // put a better name
+
+
+    //methods for testing
+    void WriteCSVFile(const std::string& fileName, const IndexVector& centers, unsigned neighborhoodSize, const std::vector<float>& fractalDimension, const LBPHistogramsT& LBPHistograms);
+    void ReadCSVFile (const std::string& fileName, IndexVector& centers); //TODO add fractal dimension and LBP histograms
+    void ReadAssignmentsFile(const std::string& fileName, std::vector<unsigned>& assignments);
+    void DrawAssignments(IndexVector& centers, unsigned neighborhoodSize, std::vector<unsigned>& assignments);
+
+
 
 
 

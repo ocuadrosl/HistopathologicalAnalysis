@@ -12,11 +12,14 @@
 #include <itkLabelMapToRGBImageFilter.h>
 #include <itkBinaryThresholdImageFilter.h>
 #include <itkRescaleIntensityImageFilter.h>
+#include <itkImageDuplicator.h>
 
 #include "vtkviewer.h"
 
 namespace util
 {
+
+
 
 
 
@@ -62,6 +65,29 @@ inline typename GrayImageT::Pointer LabelMapToBinaryImage(const typename LabelMa
     }
 
     return filter->GetOutput();
+
+}
+
+
+
+template <typename ImageT>
+inline  void PaintRegion(typename ImageT::Pointer& image,
+                         typename ImageT::RegionType& region,
+                         const typename ImageT::PixelType& color)
+{
+
+
+    itk::ImageRegionIterator<ImageT>  it(image, region); //output it
+
+
+    for(it; !it.IsAtEnd(); ++it)
+    {
+
+        it.Set(color);
+
+    }
+
+
 
 }
 
@@ -113,7 +139,7 @@ inline unsigned ExtractNeighborhoodITK(const typename ImageT::Pointer& inputImag
     neighbohood->Allocate();
 
 
-    //slow version reimplement it using iterators
+    //this is a slow version reimplement it using iterators
     unsigned roiR=0;
     for(unsigned r = imageRowBegin; r < imageRowEnd ; ++r)
     {

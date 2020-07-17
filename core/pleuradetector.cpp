@@ -405,7 +405,6 @@ PleuraDetector<RGBImageT>::CleanBackground(float lThreshold, float aThreshold, f
     if(show)
     {
 
-
         VTKViewer::visualize<RGBImageT>(outputImage, "Clean Background");
     }
 
@@ -852,8 +851,13 @@ template<typename InputImageT>
 void PleuraDetector<InputImageT>::ComputeFractalDimensionCenters(GrayImageP boundaries,
                                                                  unsigned neigborhoodSize,
                                                                  const IndexVector& centers,
+                                                                 std::vector<float>& output,
                                                                  bool show)
 {
+
+
+    output.resize(centers.size());
+
     auto outputImage = FloatImageT::New();
     outputImage->SetRegions(InputImage->GetRequestedRegion());
     outputImage->Allocate();
@@ -862,7 +866,8 @@ void PleuraDetector<InputImageT>::ComputeFractalDimensionCenters(GrayImageP boun
 
     const auto extractNeighborhood = util::ExtractNeighborhoodITK<GrayImageT>;
 
-    for(auto it = centers.begin(); it != centers.end(); ++it) //fails here...
+    auto outIt = output.begin();
+    for(auto it = centers.begin(); it != centers.end(); ++it, ++outIt) //fails here...
     {
 
 
@@ -874,18 +879,19 @@ void PleuraDetector<InputImageT>::ComputeFractalDimensionCenters(GrayImageP boun
         fractalDimensionFilter->SetInputImage(neighborhood);
         fractalDimensionFilter->PrintWarningsOff();
         fractalDimensionFilter->Compute();
-        float dimension = fractalDimensionFilter->GetDimension();
+        (*outIt) = fractalDimensionFilter->GetDimension();
 
 
+        /*
         if(std::isnan(dimension))
         {
 
             std::cerr<<"nan"<<std::endl;
             // VTKViewer::visualize<GrayImageT>(neighborhood, "Fractal dimension");
         }
+*/
 
-
-        outputImage->SetPixel(*it, dimension);
+        outputImage->SetPixel(*it,  (*outIt));
         //std::cout<<neighborhood->GetRequestedRegion().GetSize()<<std::endl;
 
 
@@ -893,7 +899,6 @@ void PleuraDetector<InputImageT>::ComputeFractalDimensionCenters(GrayImageP boun
     }
 
 
-    std::cout<<"exit"<<std::endl;
     if(show)
     {
 
@@ -968,8 +973,193 @@ void PleuraDetector<InputImageT>::SetImageName(const std::string& dirPath, const
 }
 
 template<typename InputImageT>
+void PleuraDetector<InputImageT>:: WriteCSVFile(const std::string& fileName,
+                                                const IndexVector& centers,
+                                                unsigned neighborhoodSize,
+                                                const std::vector<float>& fractalDimension,
+                                                const LBPHistogramsT& LBPHistograms)
+{
+
+
+
+    std::ofstream csvFile(fileName);
+
+    //writting header
+
+    csvFile<<"c,r,ns,fd,";
+    unsigned i=1;
+    for (auto it = (*LBPHistograms.begin()).begin() ; it != (*LBPHistograms.begin()).end()  ; ++it)
+    {
+
+        csvFile<<"blp_"+ std::to_string(i++)+",";
+
+
+    }
+
+    csvFile<<std::endl;
+
+    auto fdIt  = fractalDimension.begin();
+    auto lbpIt = LBPHistograms.begin();
+    auto cIt   = centers.begin();
+
+
+    for (;fdIt != fractalDimension.end(); ++fdIt, ++lbpIt, ++cIt)
+    {
+
+        csvFile<< (*cIt)[0] <<","<<(*cIt)[1]<<","<<neighborhoodSize<<","<<*fdIt<<",";
+        for (auto it = (*lbpIt).begin() ; it != (*lbpIt).end(); ++it)
+        {
+
+            csvFile<<(*it)<<",";
+
+        }
+        csvFile<<std::endl;
+
+
+    }
+
+
+    io::printOK("Writing CSV file");
+
+
+}
+
+
+
+template<typename InputImageT>
+void PleuraDetector<InputImageT>::ReadAssignmentsFile(const std::string& fileName, std::vector<unsigned>& assignments)
+{
+
+    std::ifstream classFile(fileName);
+
+
+    std::string line;
+    if (classFile.is_open())
+    {
+        while ( getline (classFile,line) )
+        {
+            assignments.push_back(std::stoi(line));
+            //std::cout<<std::stoi(line)<<std::endl;
+        }
+
+        classFile.close();
+    }
+
+
+}
+
+
+template<typename InputImageT>
+void PleuraDetector<InputImageT>::ReadCSVFile(const std::string& fileName, IndexVector& centers)
+{
+
+
+    std::ifstream csvFile(fileName);
+
+
+    std::string line;
+    std::string value;
+
+    GrayImageT::IndexType index;
+
+    if (csvFile.is_open())
+    {
+        getline (csvFile, line); // header
+        while ( getline (csvFile, line))
+        {
+
+            std::istringstream fLine(line);
+
+            getline (fLine, value, ',');
+            index[0] = std::stoi(value);
+            //std::cout<<value<<", ";
+            getline (fLine, value, ',');
+            index[1] = std::stoi(value);
+            //std::cout<<value<<std::endl;
+            centers.push_back(index);
+
+            //TODO read fractal dimension and LBP histograms
+        }
+
+        csvFile.close();
+    }
+
+
+}
+
+
+template<typename InputImageT>
+void PleuraDetector<InputImageT>:: DrawAssignments(IndexVector& centers, unsigned neighborhoodSize, std::vector<unsigned>& assignments)
+{
+
+
+    using DuplicatorType = itk::ImageDuplicator<InputImageT>;
+    typename DuplicatorType::Pointer duplicator = DuplicatorType::New();
+    duplicator->SetInputImage(InputImage);
+    duplicator->Update();
+
+    RGBImageP outputImage  =  duplicator->GetOutput();;
+
+    using AddImageFilterType = itk::AddImageFilter<InputImageT, InputImageT>;
+
+    const auto extractNeighborhood = util::ExtractNeighborhoodITK<InputImageT>;
+
+    typename InputImageT::PixelType pleura, other;
+    pleura.Set(0,0,0);
+    other.Set(255,0,0);
+
+    auto cIt = centers.begin();
+    auto assIt  =  assignments.begin();
+    auto imgRegion = InputImage->GetRequestedRegion();
+    for (; cIt != centers.end(); ++cIt, ++assIt)
+    {
+
+        RGBImageP neighborhood;
+
+        extractNeighborhood(InputImage, *cIt, neighborhoodSize, neighborhood);
+
+        auto region = neighborhood->GetRequestedRegion();
+
+        auto index = *cIt;
+        index[0] = ((*cIt)[0] - neighborhoodSize/2 < 0)? 0 : (*cIt)[0] - neighborhoodSize/2;
+        index[1] = ((*cIt)[1] - neighborhoodSize/2 < 0)? 0 : (*cIt)[1] - neighborhoodSize/2;
+
+        region.SetIndex(index);
+
+        util::PaintRegion<InputImageT>(outputImage, region, (*assIt==1)? pleura: other);
+
+    }
+
+
+
+    if(1)
+    {
+        VTKViewer::visualize<InputImageT>(outputImage, "Assignments");
+
+    }
+
+
+}
+
+
+template<typename InputImageT>
 void PleuraDetector<InputImageT>::Detect()
 {
+
+
+
+    //tmp
+    std::vector<unsigned> assignments;
+    ReadAssignmentsFile("/home/oscar/tmp/Classification_1.csv", assignments);
+    IndexVector centers2;
+    ReadCSVFile("/home/oscar/tmp/pleura.csv", centers2);
+
+    DrawAssignments(centers2, 51, assignments);
+
+
+
+    return;
+
 
 
     //pre-processing
@@ -1021,24 +1211,32 @@ void PleuraDetector<InputImageT>::Detect()
     auto thinBoundaries = ThinningBoundaries(boundaries, false);
 
 
-    unsigned neighborhoodSize = 101;
+    unsigned neighborhoodSize = 51;
     std::vector<GrayImageT::IndexType> centers;
     ComputeCenters(thinBoundaries, neighborhoodSize, centers, grayImage);
 
-    ComputeFractalDimensionCenters(thinBoundaries, neighborhoodSize, centers, true);
+    std::vector<float> fractalDimentions;
+    ComputeFractalDimensionCenters(thinBoundaries, neighborhoodSize, centers, fractalDimentions, false);
 
 
-
-    return;
+   // return;
 
     LBPHistogramsT lbpHistograms;
     ComputeLBP(grayImage, thinBoundaries, centers, neighborhoodSize, lbpHistograms);
 
+
+    WriteCSVFile("/home/oscar/tmp/pleura.csv", centers, neighborhoodSize ,fractalDimentions, lbpHistograms);
+
+
+
+
+
+    /*
     std::vector<unsigned long> assignments;
     SpectralClustering(lbpHistograms, assignments);
 
     ShowAssignments(assignments, centers);
-
+    */
 
 
     io::printOK("Detecting pleura");
