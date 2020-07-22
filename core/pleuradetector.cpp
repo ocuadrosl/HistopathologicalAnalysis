@@ -977,7 +977,8 @@ void PleuraDetector<InputImageT>:: WriteCSVFile(const std::string& fileName,
                                                 const IndexVector& centers,
                                                 unsigned neighborhoodSize,
                                                 const std::vector<float>& fractalDimension,
-                                                const LBPHistogramsT& LBPHistograms)
+                                                const LBPHistogramsT& LBPHistograms,
+                                                const CooccurrenceFeatures& cooccurrenceFeatures)
 {
 
 
@@ -996,14 +997,26 @@ void PleuraDetector<InputImageT>:: WriteCSVFile(const std::string& fileName,
 
     }
 
+    i=1;
+    for (auto it = (*cooccurrenceFeatures.begin()).begin() ; it != (*cooccurrenceFeatures.begin()).end()  ; ++it)
+    {
+
+        csvFile<<"coo_"+ std::to_string(i++)+",";
+
+
+    }
+
+
+
     csvFile<<std::endl;
 
     auto fdIt  = fractalDimension.begin();
     auto lbpIt = LBPHistograms.begin();
     auto cIt   = centers.begin();
+    auto cooIt = cooccurrenceFeatures.begin();
 
 
-    for (;fdIt != fractalDimension.end(); ++fdIt, ++lbpIt, ++cIt)
+    for (;fdIt != fractalDimension.end(); ++fdIt, ++lbpIt, ++cIt, ++cooIt)
     {
 
         csvFile<< (*cIt)[0] <<","<<(*cIt)[1]<<","<<neighborhoodSize<<","<<*fdIt<<",";
@@ -1013,6 +1026,14 @@ void PleuraDetector<InputImageT>:: WriteCSVFile(const std::string& fileName,
             csvFile<<(*it)<<",";
 
         }
+        for (auto it = (*cooIt).begin() ; it != (*cooIt).end(); ++it)
+        {
+
+            csvFile<<(*it)<<",";
+
+        }
+
+
         csvFile<<std::endl;
 
 
@@ -1104,9 +1125,7 @@ void PleuraDetector<InputImageT>:: DrawAssignments(IndexVector& centers, unsigne
 
     const auto extractNeighborhood = util::ExtractNeighborhoodITK<InputImageT>;
 
-    typename InputImageT::PixelType pleura, other;
-    pleura.Set(0,0,0);
-    other.Set(255,0,0);
+    typename InputImageT::PixelType color;
 
     auto cIt = centers.begin();
     auto assIt  =  assignments.begin();
@@ -1126,7 +1145,33 @@ void PleuraDetector<InputImageT>:: DrawAssignments(IndexVector& centers, unsigne
 
         region.SetIndex(index);
 
-        util::PaintRegion<InputImageT>(outputImage, region, (*assIt==1)? pleura: other);
+
+
+        if(*assIt==0)
+        {
+            color.Set(0,0,0);
+        }
+        else if(*assIt==1)
+        {
+            color.Set(255,0,0);
+        }
+        else if(*assIt==2)
+        {
+            color.Set(0,255,0);
+        }
+        else if(*assIt==3)
+        {
+            color.Set(0,0,255);
+        }
+        else
+        {
+            color.Set(255,255,255);
+        }
+
+
+        util::PaintRegion<InputImageT>(outputImage, region, color);
+
+
 
     }
 
@@ -1142,15 +1187,87 @@ void PleuraDetector<InputImageT>:: DrawAssignments(IndexVector& centers, unsigne
 }
 
 
+
+template<typename InputImageT>
+void PleuraDetector<InputImageT>::ComputeCooccurrenceMatrices(GrayImageP image,
+                                                              unsigned neigborhoodSize,
+                                                              const IndexVector& centers,
+                                                              std::vector<std::vector<float>>& features)
+{
+
+    /*
+        //See
+        //https://itk.org/Doxygen/html/classitk_1_1Statistics_1_1HistogramToTextureFeaturesFilter.html
+        //https://itk.org/Doxygen/html/classitk_1_1Statistics_1_1ScalarImageToCooccurrenceMatrixFilter.html#ae1c2899a24c24cd8e02e999d7f6d2e0d
+
+    */
+/*
+    using floatImageT = itk::Image<float, 2>;
+    using castFilterType = itk::CastImageFilter<GrayImageT,floatImageT>;
+    castFilterType::Pointer castFilter = castFilterType::New();
+    castFilter->SetInput(image);
+    castFilter->Update();
+    auto floatImage = castFilter->GetOutput();
+*/
+
+    features.resize(centers.size());
+
+    using ScalarImageToCooccurrenceMatrixFilter =  itk::Statistics::ScalarImageToCooccurrenceMatrixFilter<GrayImageT>;
+
+    using offsetT = GrayImageT::OffsetType;
+    offsetT offset = {-1,1};
+
+    using histogramT =  ScalarImageToCooccurrenceMatrixFilter::HistogramType;
+
+    using  histToFeaturesT = itk::Statistics::HistogramToTextureFeaturesFilter<histogramT>;
+
+
+    const auto extractNeighborhood = util::ExtractNeighborhoodITK<GrayImageT>;
+
+    auto fIt = features.begin();
+    for(auto it = centers.begin(); it != centers.end(); ++it, ++fIt) //fails here...
+    {
+
+        GrayImageT::Pointer neighborhood;
+        extractNeighborhood(image, *it, neigborhoodSize, neighborhood);
+
+
+        ScalarImageToCooccurrenceMatrixFilter::Pointer scalarImageToCooccurrenceMatrixFilter = ScalarImageToCooccurrenceMatrixFilter::New();
+
+        scalarImageToCooccurrenceMatrixFilter->SetInput(neighborhood);
+        scalarImageToCooccurrenceMatrixFilter->SetOffset(offset);
+        scalarImageToCooccurrenceMatrixFilter->Update();
+
+
+        histToFeaturesT::Pointer features =  histToFeaturesT::New();
+        features->SetInput(scalarImageToCooccurrenceMatrixFilter->GetOutput());
+        features->Update();
+        (*fIt).push_back(features->GetEnergy());
+        (*fIt).push_back(features->GetEntropy());
+        (*fIt).push_back(features->GetCorrelation());
+        (*fIt).push_back(features->GetInertia());
+
+
+    }
+
+
+    io::printOK("Co-occurrence Matrix features");
+
+
+}
+
+
+
+
 template<typename InputImageT>
 void PleuraDetector<InputImageT>::Detect()
 {
 
 
-
+/*
     //tmp
     std::vector<unsigned> assignments;
-    ReadAssignmentsFile("/home/oscar/tmp/Classification_1.csv", assignments);
+    ReadAssignmentsFile("/home/oscar/tmp/retesterapido/labels_5.csv", assignments);
     IndexVector centers2;
     ReadCSVFile("/home/oscar/tmp/pleura.csv", centers2);
 
@@ -1160,7 +1277,7 @@ void PleuraDetector<InputImageT>::Detect()
 
     return;
 
-
+*/
 
     //pre-processing
     auto rgbImage = CleanBackground(86, 5,5, false); //90
@@ -1187,8 +1304,6 @@ void PleuraDetector<InputImageT>::Detect()
     //auto background  = ConnectedComponets(binaryImage, 0, Foreground,  true);
 
 
-
-
     /*
     using moothFilterType = itk::SmoothingRecursiveGaussianImageFilter<GrayImageT, GrayImageT>;
     moothFilterType::Pointer smoothFilter = moothFilterType::New();
@@ -1211,7 +1326,10 @@ void PleuraDetector<InputImageT>::Detect()
     auto thinBoundaries = ThinningBoundaries(boundaries, false);
 
 
-    unsigned neighborhoodSize = 51;
+
+    //Computinf features from here
+
+    unsigned neighborhoodSize = 101;
     std::vector<GrayImageT::IndexType> centers;
     ComputeCenters(thinBoundaries, neighborhoodSize, centers, grayImage);
 
@@ -1221,11 +1339,17 @@ void PleuraDetector<InputImageT>::Detect()
 
    // return;
 
+    //Co-occurrence matrix.
+    std::vector<std::vector<float>> cooFeatures;
+    ComputeCooccurrenceMatrices(grayImage, neighborhoodSize, centers, cooFeatures);
+
+
+
     LBPHistogramsT lbpHistograms;
     ComputeLBP(grayImage, thinBoundaries, centers, neighborhoodSize, lbpHistograms);
 
 
-    WriteCSVFile("/home/oscar/tmp/pleura.csv", centers, neighborhoodSize ,fractalDimentions, lbpHistograms);
+    WriteCSVFile("/home/oscar/tmp/pleura.csv", centers, neighborhoodSize ,fractalDimentions, lbpHistograms, cooFeatures);
 
 
 

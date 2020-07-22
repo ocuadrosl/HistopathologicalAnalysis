@@ -535,8 +535,8 @@ void CellSegmentator<rgbImageT>::findCells()
 
     io::printWait("Image: "+imageName);
 
-    CreateImageB(true);
-    Threshold(true);
+    CreateImageB(false);
+    Threshold(false);
     ComputeSuperPixels(true);
     binaryToSuperPixels(dirPath+"/"+imageName+"_result") ;
     GaussianBlur();

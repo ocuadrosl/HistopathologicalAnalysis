@@ -31,6 +31,7 @@
 #include <itkBinaryThinningImageFilter.h>
 #include <itkImageDuplicator.h>
 #include <itkAddImageFilter.h>
+#include <itkScalarImageToCooccurrenceMatrixFilter.h>
 
 //Dlib includes
 #include <dlib/array2d.h>
@@ -88,6 +89,8 @@ class PleuraDetector
 
     using IndexVector = std::vector<GrayImageT::IndexType>;
 
+    using  CooccurrenceFeatures = std::vector<std::vector<float>>;
+
 
 public:
 
@@ -144,9 +147,17 @@ private:
 
     void ComputeFractalDimensionCenters(GrayImageP boundaries, unsigned neigborhoodSize, const IndexVector& centers, std::vector<float>& output, bool show=false); // put a better name
 
+    void ComputeCooccurrenceMatrices(GrayImageP boundaries, unsigned neigborhoodSize, const IndexVector& centers, CooccurrenceFeatures& features);
+
 
     //methods for testing
-    void WriteCSVFile(const std::string& fileName, const IndexVector& centers, unsigned neighborhoodSize, const std::vector<float>& fractalDimension, const LBPHistogramsT& LBPHistograms);
+    void WriteCSVFile(const std::string& fileName,
+                      const IndexVector& centers,
+                      unsigned neighborhoodSize,
+                      const std::vector<float>& fractalDimension,
+                      const LBPHistogramsT& LBPHistograms,
+                      const CooccurrenceFeatures& cooccurrenceFeatures);
+
     void ReadCSVFile (const std::string& fileName, IndexVector& centers); //TODO add fractal dimension and LBP histograms
     void ReadAssignmentsFile(const std::string& fileName, std::vector<unsigned>& assignments);
     void DrawAssignments(IndexVector& centers, unsigned neighborhoodSize, std::vector<unsigned>& assignments);
