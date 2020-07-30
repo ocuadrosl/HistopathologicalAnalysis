@@ -32,6 +32,7 @@
 #include <itkImageDuplicator.h>
 #include <itkAddImageFilter.h>
 #include <itkScalarImageToCooccurrenceMatrixFilter.h>
+#include <itkVectorContainer.h>
 
 //Dlib includes
 #include <dlib/array2d.h>
@@ -99,6 +100,8 @@ public:
     void Detect();
 
     void SetImageName(const std::string& dirPath, const std::string& fileName);
+    void SetLabelImage(RGBImageP InputImage);
+    void SetCSVFileName(std::string csvFileName);
 
 
 
@@ -107,8 +110,11 @@ private:
 
     RGBImageP InputImage;
 
+    RGBImageP LabelImage;
+
     std::string ImageName = "";
     std::string ImageDirPath   = "";
+    std::string CSVFilename = "";
 
 
     //Auxiliary functions
@@ -141,13 +147,22 @@ private:
 
     void SpectralClustering(LBPHistogramsT& lbpHistograms, SCAssignments& assignments);
 
-    void ComputeCenters(GrayImageP boundaries, unsigned neigborhoodSize, std::vector<GrayImageT::IndexType>& centers, GrayImageP grayImage);
+    void ComputeCenters(GrayImageP boundaries, unsigned neigborhoodSize, std::vector<GrayImageT::IndexType>& centers);
 
     void ShowAssignments(const SCAssignments& assignments, const std::vector<GrayImageT::IndexType>& centers);
 
-    void ComputeFractalDimensionCenters(GrayImageP boundaries, unsigned neigborhoodSize, const IndexVector& centers, std::vector<float>& output, bool show=false); // put a better name
+    void ComputeFractalDimensionCenters(GrayImageP boundaries,
+                                        unsigned neigborhoodSize,
+                                        const IndexVector& centers,
+                                        std::vector<float>& output,
+                                        bool show=false); // put a better name
 
-    void ComputeCooccurrenceMatrices(GrayImageP boundaries, unsigned neigborhoodSize, const IndexVector& centers, CooccurrenceFeatures& features);
+    void ComputeCooccurrenceMatrices(GrayImageP boundaries,
+                                     unsigned neigborhoodSize,
+                                     const IndexVector& centers,
+                                     CooccurrenceFeatures& features);
+
+
 
 
     //methods for testing
@@ -156,11 +171,17 @@ private:
                       unsigned neighborhoodSize,
                       const std::vector<float>& fractalDimension,
                       const LBPHistogramsT& LBPHistograms,
-                      const CooccurrenceFeatures& cooccurrenceFeatures);
+                      const CooccurrenceFeatures& cooccurrenceFeatures,
+                      const std::vector<unsigned>& labels);
 
     void ReadCSVFile (const std::string& fileName, IndexVector& centers); //TODO add fractal dimension and LBP histograms
     void ReadAssignmentsFile(const std::string& fileName, std::vector<unsigned>& assignments);
     void DrawAssignments(IndexVector& centers, unsigned neighborhoodSize, std::vector<unsigned>& assignments);
+
+    void MatchCentersWithLabels(const IndexVector& centers, std::vector<unsigned>& labels);
+
+
+
 
 
 

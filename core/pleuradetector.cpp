@@ -15,8 +15,13 @@ void PleuraDetector<InputImageT>::SetInputImage(RGBImageP inputImage)
 
 }
 
+template<typename InputImageT>
+void PleuraDetector<InputImageT>::SetLabelImage(RGBImageP labelImage)
+{
 
+    this->LabelImage = labelImage;
 
+}
 
 
 template<typename InputImageT>
@@ -771,8 +776,7 @@ void PleuraDetector<InputImageT>::SpectralClustering(LBPHistogramsT& lbpHistogra
 template<typename InputImageT>
 void PleuraDetector<InputImageT>::ComputeCenters(GrayImageP boundaries,
                                                  unsigned neigborhoodSize,
-                                                 std::vector<GrayImageT::IndexType>& centers,
-                                                 GrayImageP grayImage)
+                                                 std::vector<GrayImageT::IndexType>& centers)
 {
 
     auto tmpImage = GrayImageT::New();
@@ -978,7 +982,8 @@ void PleuraDetector<InputImageT>:: WriteCSVFile(const std::string& fileName,
                                                 unsigned neighborhoodSize,
                                                 const std::vector<float>& fractalDimension,
                                                 const LBPHistogramsT& LBPHistograms,
-                                                const CooccurrenceFeatures& cooccurrenceFeatures)
+                                                const CooccurrenceFeatures& cooccurrenceFeatures,
+                                                const std::vector<unsigned>& labels)
 {
 
 
@@ -1006,7 +1011,7 @@ void PleuraDetector<InputImageT>:: WriteCSVFile(const std::string& fileName,
 
     }
 
-
+    csvFile<<"label";
 
     csvFile<<std::endl;
 
@@ -1014,9 +1019,10 @@ void PleuraDetector<InputImageT>:: WriteCSVFile(const std::string& fileName,
     auto lbpIt = LBPHistograms.begin();
     auto cIt   = centers.begin();
     auto cooIt = cooccurrenceFeatures.begin();
+    auto lIt = labels.begin();
 
 
-    for (;fdIt != fractalDimension.end(); ++fdIt, ++lbpIt, ++cIt, ++cooIt)
+    for (;fdIt != fractalDimension.end(); ++fdIt, ++lbpIt, ++cIt, ++cooIt, ++lIt)
     {
 
         csvFile<< (*cIt)[0] <<","<<(*cIt)[1]<<","<<neighborhoodSize<<","<<*fdIt<<",";
@@ -1033,7 +1039,7 @@ void PleuraDetector<InputImageT>:: WriteCSVFile(const std::string& fileName,
 
         }
 
-
+        csvFile<<*lIt;
         csvFile<<std::endl;
 
 
@@ -1159,14 +1165,14 @@ void PleuraDetector<InputImageT>:: DrawAssignments(IndexVector& centers, unsigne
         {
             color.Set(0,255,0);
         }
-        else if(*assIt==3)
+        /*else if(*assIt==3)
         {
             color.Set(0,0,255);
         }
         else
         {
             color.Set(255,255,255);
-        }
+        }*/
 
 
         util::PaintRegion<InputImageT>(outputImage, region, color);
@@ -1214,10 +1220,22 @@ void PleuraDetector<InputImageT>::ComputeCooccurrenceMatrices(GrayImageP image,
 
     using ScalarImageToCooccurrenceMatrixFilter =  itk::Statistics::ScalarImageToCooccurrenceMatrixFilter<GrayImageT>;
 
-    using offsetT = GrayImageT::OffsetType;
-    offsetT offset = {-1,1};
 
     using histogramT =  ScalarImageToCooccurrenceMatrixFilter::HistogramType;
+    using offsetVectorT = itk::VectorContainer<unsigned char, ScalarImageToCooccurrenceMatrixFilter::OffsetType>;
+
+    //using offsetT = GrayImageT::OffsetType;
+    //offsetT offset = {-1,1};
+
+    offsetVectorT::Pointer offsets = offsetVectorT::New();
+   // offsets->reserve(2);
+
+    offsets->push_back({-1,1});
+    offsets->push_back({1,1});
+    offsets->push_back({1,-1});
+
+
+
 
     using  histToFeaturesT = itk::Statistics::HistogramToTextureFeaturesFilter<histogramT>;
 
@@ -1225,7 +1243,7 @@ void PleuraDetector<InputImageT>::ComputeCooccurrenceMatrices(GrayImageP image,
     const auto extractNeighborhood = util::ExtractNeighborhoodITK<GrayImageT>;
 
     auto fIt = features.begin();
-    for(auto it = centers.begin(); it != centers.end(); ++it, ++fIt) //fails here...
+    for(auto it = centers.begin(); it != centers.end(); ++it, ++fIt)
     {
 
         GrayImageT::Pointer neighborhood;
@@ -1235,13 +1253,18 @@ void PleuraDetector<InputImageT>::ComputeCooccurrenceMatrices(GrayImageP image,
         ScalarImageToCooccurrenceMatrixFilter::Pointer scalarImageToCooccurrenceMatrixFilter = ScalarImageToCooccurrenceMatrixFilter::New();
 
         scalarImageToCooccurrenceMatrixFilter->SetInput(neighborhood);
-        scalarImageToCooccurrenceMatrixFilter->SetOffset(offset);
+        scalarImageToCooccurrenceMatrixFilter->SetOffsets(offsets);
+        scalarImageToCooccurrenceMatrixFilter->SetNumberOfBinsPerAxis(16);
+        scalarImageToCooccurrenceMatrixFilter->SetPixelValueMinMax(0,255);
+
+
         scalarImageToCooccurrenceMatrixFilter->Update();
 
 
         histToFeaturesT::Pointer features =  histToFeaturesT::New();
         features->SetInput(scalarImageToCooccurrenceMatrixFilter->GetOutput());
         features->Update();
+
         (*fIt).push_back(features->GetEnergy());
         (*fIt).push_back(features->GetEntropy());
         (*fIt).push_back(features->GetCorrelation());
@@ -1258,20 +1281,59 @@ void PleuraDetector<InputImageT>::ComputeCooccurrenceMatrices(GrayImageP image,
 
 
 
+template<typename InputImageT>
+void PleuraDetector<InputImageT>::MatchCentersWithLabels(const IndexVector& centers, std::vector<unsigned>& labels)
+{
+
+
+    //1 = pleura
+    //2 = not pleura
+    labels = std::vector<unsigned>(centers.size(), 0);
+
+
+    typename InputImageT::PixelType greenColor;
+    greenColor.Set(0,255,0);
+
+    auto lIt = labels.begin();
+    for (auto cIt = centers.begin(); cIt != centers.end() ; ++cIt, ++lIt)
+    {
+
+        (*lIt) = ( LabelImage->GetPixel(*cIt) == greenColor)? 1 : 2;
+
+    }
+
+
+    io::printOK("Match Centers with Labels");
+
+
+}
+
+
+template<typename InputImageT>
+void PleuraDetector<InputImageT>::SetCSVFileName(std::string csvFileName)
+{
+
+
+    this->CSVFilename = csvFileName;
+
+}
 
 template<typename InputImageT>
 void PleuraDetector<InputImageT>::Detect()
 {
 
 
+
+
 /*
+
     //tmp
     std::vector<unsigned> assignments;
-    ReadAssignmentsFile("/home/oscar/tmp/retesterapido/labels_5.csv", assignments);
+    ReadAssignmentsFile("/home/oscar/tmp/output_3.csv", assignments);
     IndexVector centers2;
     ReadCSVFile("/home/oscar/tmp/pleura.csv", centers2);
 
-    DrawAssignments(centers2, 51, assignments);
+    DrawAssignments(centers2, 101, assignments);
 
 
 
@@ -1288,7 +1350,17 @@ void PleuraDetector<InputImageT>::Detect()
     rgbToGrayFilter->SetInput(rgbImage);
     rgbToGrayFilter->Update();
 
-    auto grayImage = rgbToGrayFilter->GetOutput();
+
+
+
+    using RescaleType = itk::RescaleIntensityImageFilter<GrayImageT, GrayImageT>;
+    RescaleType::Pointer rescaler = RescaleType::New();
+    rescaler->SetInput(rgbToGrayFilter->GetOutput());
+    rescaler->SetOutputMinimum(Background);
+    rescaler->SetOutputMaximum(255);
+    rescaler->Update();
+    auto grayImage = rescaler->GetOutput();
+
 
     auto eqGrayImage = HistogramEqualization(grayImage, 1, 1, 5, false);
 
@@ -1327,11 +1399,16 @@ void PleuraDetector<InputImageT>::Detect()
 
 
 
-    //Computinf features from here
+    //Computing features from here
 
-    unsigned neighborhoodSize = 101;
+    unsigned neighborhoodSize = 51;
     std::vector<GrayImageT::IndexType> centers;
-    ComputeCenters(thinBoundaries, neighborhoodSize, centers, grayImage);
+    ComputeCenters(thinBoundaries, neighborhoodSize, centers);
+
+
+    std::vector<unsigned> labels;
+    MatchCentersWithLabels(centers, labels);
+
 
     std::vector<float> fractalDimentions;
     ComputeFractalDimensionCenters(thinBoundaries, neighborhoodSize, centers, fractalDimentions, false);
@@ -1349,7 +1426,7 @@ void PleuraDetector<InputImageT>::Detect()
     ComputeLBP(grayImage, thinBoundaries, centers, neighborhoodSize, lbpHistograms);
 
 
-    WriteCSVFile("/home/oscar/tmp/pleura.csv", centers, neighborhoodSize ,fractalDimentions, lbpHistograms, cooFeatures);
+    WriteCSVFile(CSVFilename, centers, neighborhoodSize ,fractalDimentions, lbpHistograms, cooFeatures, labels);
 
 
 
@@ -1366,3 +1443,4 @@ void PleuraDetector<InputImageT>::Detect()
     io::printOK("Detecting pleura");
 
 }
+

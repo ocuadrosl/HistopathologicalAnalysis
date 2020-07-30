@@ -13,15 +13,13 @@ import numpy as np
 
 
 #data directory must be organized into directories as:
-#boundaries
-#ground_truth
-#images
-#labels
+#boundaries -> computed using the c++ implementation
+#ground_truth -> this is the output directory
+#images -> input images go here
+#labels -> made by specialists, labels must be RGB green (0,255,0) 
 
 datasetPath="/home/oscar/data/biopsy/tiff/test"
 
-
-#for loop here
 
 for fileName in listdir(datasetPath+"/images"):
     
@@ -57,9 +55,7 @@ for fileName in listdir(datasetPath+"/images"):
     except:
         print("ERROR")
     
-    
-    
-    
+       
     
     
     
