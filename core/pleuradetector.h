@@ -39,6 +39,7 @@
 #include <dlib/image_transforms.h>
 #include <dlib/clustering.h>
 #include <dlib/rand.h>
+#include <dlib/svm.h>
 
 
 //local includes
@@ -51,6 +52,7 @@
 #include "../util/imageframeworktypeconverter.h"
 #include "../util/ImageOperations.h"
 
+#include <fstream>
 
 template<typename RGBImageT>
 class PleuraDetector
@@ -91,6 +93,10 @@ class PleuraDetector
     using IndexVector = std::vector<GrayImageT::IndexType>;
 
     using  CooccurrenceFeatures = std::vector<std::vector<float>>;
+
+
+
+    using SampleT = dlib::matrix<double>; //1+58+4 ,1  fractal=1, LBP=58, Co-ocorrence=4
 
 
 public:
@@ -172,13 +178,31 @@ private:
                       const std::vector<float>& fractalDimension,
                       const LBPHistogramsT& LBPHistograms,
                       const CooccurrenceFeatures& cooccurrenceFeatures,
-                      const std::vector<unsigned>& labels);
+                      const std::vector<float>& labels,
+                      bool writeHeader=true);
 
-    void ReadCSVFile (const std::string& fileName, IndexVector& centers); //TODO add fractal dimension and LBP histograms
+
+
+
+    void FeaturesToDLibMatrix(const std::vector<float>& fractalDimension,
+                              const LBPHistogramsT& LBPHistograms,
+                              const CooccurrenceFeatures& cooccurrenceFeatures,
+                              std::vector<SampleT>& samples);
+
+
+    void ReadCSVFile (const std::string& fileName,
+                      std::vector<SampleT>& samples,
+                      unsigned samplesIndexBegin,
+                      unsigned samplesIndexEnd,
+                      std::vector<float>& labels,
+                      unsigned labelsIndex); //TODO add fractal dimension and LBP histograms
+
     void ReadAssignmentsFile(const std::string& fileName, std::vector<unsigned>& assignments);
     void DrawAssignments(IndexVector& centers, unsigned neighborhoodSize, std::vector<unsigned>& assignments);
 
-    void MatchCentersWithLabels(const IndexVector& centers, std::vector<unsigned>& labels);
+    void MatchCentersWithLabels(const IndexVector& centers, std::vector<float>& labels);
+
+    void KRRTrainer( std::vector<SampleT>& samples, const std::vector<double>& labels);
 
 
 

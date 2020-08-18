@@ -983,38 +983,42 @@ void PleuraDetector<InputImageT>:: WriteCSVFile(const std::string& fileName,
                                                 const std::vector<float>& fractalDimension,
                                                 const LBPHistogramsT& LBPHistograms,
                                                 const CooccurrenceFeatures& cooccurrenceFeatures,
-                                                const std::vector<unsigned>& labels)
+                                                const std::vector<float>& labels,
+                                                bool writeHeader)
 {
-
 
 
     std::ofstream csvFile(fileName);
 
-    //writting header
-
-    csvFile<<"c,r,ns,fd,";
-    unsigned i=1;
-    for (auto it = (*LBPHistograms.begin()).begin() ; it != (*LBPHistograms.begin()).end()  ; ++it)
+    if(writeHeader)
     {
+        //writting header
 
-        csvFile<<"blp_"+ std::to_string(i++)+",";
+        csvFile<<"c,r,ns,fd,";
+        unsigned i=1;
+        for (auto it = (*LBPHistograms.begin()).begin() ; it != (*LBPHistograms.begin()).end()  ; ++it)
+        {
+
+            csvFile<<"blp_"+ std::to_string(i++)+",";
+
+
+        }
+
+        i=1;
+        for (auto it = (*cooccurrenceFeatures.begin()).begin() ; it != (*cooccurrenceFeatures.begin()).end()  ; ++it)
+        {
+
+            csvFile<<"coo_"+ std::to_string(i++)+",";
+
+
+        }
+
+        csvFile<<"label";
+
+        csvFile<<std::endl;
 
 
     }
-
-    i=1;
-    for (auto it = (*cooccurrenceFeatures.begin()).begin() ; it != (*cooccurrenceFeatures.begin()).end()  ; ++it)
-    {
-
-        csvFile<<"coo_"+ std::to_string(i++)+",";
-
-
-    }
-
-    csvFile<<"label";
-
-    csvFile<<std::endl;
-
     auto fdIt  = fractalDimension.begin();
     auto lbpIt = LBPHistograms.begin();
     auto cIt   = centers.begin();
@@ -1077,7 +1081,12 @@ void PleuraDetector<InputImageT>::ReadAssignmentsFile(const std::string& fileNam
 
 
 template<typename InputImageT>
-void PleuraDetector<InputImageT>::ReadCSVFile(const std::string& fileName, IndexVector& centers)
+void PleuraDetector<InputImageT>::ReadCSVFile(const std::string& fileName,
+                                              std::vector<SampleT>& samples,
+                                              unsigned samplesIndexBegin,
+                                              unsigned samplesIndexEnd,
+                                              std::vector<float>& labels,
+                                              unsigned labelsIndex)
 {
 
 
@@ -1087,31 +1096,51 @@ void PleuraDetector<InputImageT>::ReadCSVFile(const std::string& fileName, Index
     std::string line;
     std::string value;
 
-    GrayImageT::IndexType index;
+    unsigned sampleSize = samplesIndexEnd - samplesIndexBegin + 1;
 
     if (csvFile.is_open())
     {
-        getline (csvFile, line); // header
-        while ( getline (csvFile, line))
+        std::getline (csvFile, line); // header
+
+        while ( std::getline (csvFile, line))
         {
+            std::istringstream istLine(line);
 
-            std::istringstream fLine(line);
+            //std::cout<<line<<std::endl;
+            for (unsigned index=0; std::getline(istLine, value, ','); ++index)
+            {
 
-            getline (fLine, value, ',');
-            index[0] = std::stoi(value);
-            //std::cout<<value<<", ";
-            getline (fLine, value, ',');
-            index[1] = std::stoi(value);
-            //std::cout<<value<<std::endl;
-            centers.push_back(index);
+                //verify label
+                if(index == labelsIndex)
+                {
+                    labels.push_back(std::stof(value));
+                    //std::cout<<std::stof(value)<<std::endl;
+                }
 
-            //TODO read fractal dimension and LBP histograms
+                if(index == samplesIndexBegin)
+                {
+                    SampleT  sample(sampleSize,1);
+                    sample(0) = std::stof(value); // first index already got
+                    for (unsigned sIndex=1; sIndex < sampleSize ; ++sIndex)
+                    {
+                        std::getline(istLine, value, ',');
+                        sample(sIndex) = std::stof(value);
+                        ++index;
+                    }
+
+                    samples.push_back(sample);
+                    //std::cout<<sample<<std::endl;
+                }
+            }
+
         }
 
         csvFile.close();
     }
 
 
+
+    io::printOK("Read CSV samples");
 }
 
 
@@ -1207,7 +1236,7 @@ void PleuraDetector<InputImageT>::ComputeCooccurrenceMatrices(GrayImageP image,
         //https://itk.org/Doxygen/html/classitk_1_1Statistics_1_1ScalarImageToCooccurrenceMatrixFilter.html#ae1c2899a24c24cd8e02e999d7f6d2e0d
 
     */
-/*
+    /*
     using floatImageT = itk::Image<float, 2>;
     using castFilterType = itk::CastImageFilter<GrayImageT,floatImageT>;
     castFilterType::Pointer castFilter = castFilterType::New();
@@ -1228,7 +1257,7 @@ void PleuraDetector<InputImageT>::ComputeCooccurrenceMatrices(GrayImageP image,
     //offsetT offset = {-1,1};
 
     offsetVectorT::Pointer offsets = offsetVectorT::New();
-   // offsets->reserve(2);
+    // offsets->reserve(2);
 
     offsets->push_back({-1,1});
     offsets->push_back({1,1});
@@ -1282,13 +1311,13 @@ void PleuraDetector<InputImageT>::ComputeCooccurrenceMatrices(GrayImageP image,
 
 
 template<typename InputImageT>
-void PleuraDetector<InputImageT>::MatchCentersWithLabels(const IndexVector& centers, std::vector<unsigned>& labels)
+void PleuraDetector<InputImageT>::MatchCentersWithLabels(const IndexVector& centers, std::vector<float>& labels)
 {
 
 
     //1 = pleura
     //2 = not pleura
-    labels = std::vector<unsigned>(centers.size(), 0);
+    labels = std::vector<float>(centers.size(), 0);
 
 
     typename InputImageT::PixelType greenColor;
@@ -1298,7 +1327,7 @@ void PleuraDetector<InputImageT>::MatchCentersWithLabels(const IndexVector& cent
     for (auto cIt = centers.begin(); cIt != centers.end() ; ++cIt, ++lIt)
     {
 
-        (*lIt) = ( LabelImage->GetPixel(*cIt) == greenColor)? 1 : 2;
+        (*lIt) = ( LabelImage->GetPixel(*cIt) == greenColor)? +1 : -1;
 
     }
 
@@ -1318,28 +1347,152 @@ void PleuraDetector<InputImageT>::SetCSVFileName(std::string csvFileName)
 
 }
 
+
+/*
+Add all features in a DLib matrix
+
+*/
+
+template<typename InputImageT>
+void PleuraDetector<InputImageT>::FeaturesToDLibMatrix(const std::vector<float>& fractalDimension,
+                                                       const LBPHistogramsT& LBPHistograms,
+                                                       const CooccurrenceFeatures& cooccurrenceFeatures,
+                                                       std::vector<SampleT>& samples)
+{
+
+
+    samples = std::vector<SampleT>(fractalDimension.size(), SampleT(4,1));
+
+    auto fIt = samples.begin();
+    auto fdIt  = fractalDimension.begin();
+    auto lbpIt = LBPHistograms.begin();
+    auto cooIt = cooccurrenceFeatures.begin();
+
+
+
+    for (;fdIt != fractalDimension.end(); ++fdIt, ++lbpIt, ++cooIt, ++fIt)
+    {
+
+        //auto sIt = fIt->begin();
+
+        //(*sIt) = *fdIt; //+1, +59
+
+        //std::copy( lbpIt->begin(), lbpIt->end(), sIt);
+
+        std::copy( cooIt->begin(), cooIt->end(), fIt->begin());
+
+       // std::cout<<*fIt<<std::endl;
+
+
+    }
+
+
+
+    io::printOK("Features to DLib Matrix");
+
+}
+
+
+
+
+
+template<typename InputImageT>
+void PleuraDetector<InputImageT>::KRRTrainer( std::vector<SampleT>& samples, const std::vector<double>& labels)
+{
+
+
+    using kernelT = dlib::radial_basis_kernel<SampleT>;
+
+    dlib::vector_normalizer<SampleT> normalizer;
+    normalizer.train(samples);
+
+
+    for ( auto it = samples.begin(); it != samples.end(); ++it)
+    {
+        (*it) = normalizer(*it);
+
+    }
+
+
+
+    dlib::krr_trainer<kernelT> trainer;
+
+    trainer.use_classification_loss_for_loo_cv();
+
+
+    for (double gamma = 0.000001; gamma <= 1; gamma *= 5)
+    {
+        // tell the trainer the parameters we want to use
+        trainer.set_kernel(kernelT(gamma));
+
+        // loo_values will contain the LOO predictions for each sample.  In the case
+        // of perfect prediction it will end up being a copy of labels.
+        std::vector<double> loo_values;
+        trainer.train(samples, labels, loo_values);
+
+        // Print gamma and the fraction of samples correctly classified during LOO cross-validation.
+        const double classification_accuracy = dlib::mean_sign_agreement(labels, loo_values);
+        cout << "gamma: " << gamma << "     LOO accuracy: " << classification_accuracy << endl;
+    }
+
+
+
+    trainer.set_kernel(kernelT(0.390625));
+    using decFunctT = dlib::decision_function<kernelT>;
+    using functT = dlib::normalized_function<decFunctT>;
+
+    functT learned_function;
+    learned_function.normalizer = normalizer;  // save normalization information
+    learned_function.function = trainer.train(samples, labels); // perform the actual training and save the results
+
+
+    // print out the number of basis vectors in the resulting decision function
+    //std::cout << "\nnumber of basis vectors in our learned_function is " << learned_function.function.basis_vectors.size() << std::endl;
+
+
+    dlib::serialize("/home/oscar/function.dat")<<learned_function;
+
+
+    functT learned_function2;
+    dlib::deserialize("/home/oscar/function.dat")>>learned_function2;
+
+    std::cout << "\nnumber of basis vectors in our learned_function is " << learned_function2.function.basis_vectors.size() << std::endl;
+
+
+    io::printOK("Kernel Ridge Classification");
+
+
+
+
+
+}
+
 template<typename InputImageT>
 void PleuraDetector<InputImageT>::Detect()
 {
 
 
 
-
 /*
+
 
     //tmp
     std::vector<unsigned> assignments;
-    ReadAssignmentsFile("/home/oscar/tmp/output_3.csv", assignments);
-    IndexVector centers2;
-    ReadCSVFile("/home/oscar/tmp/pleura.csv", centers2);
+    //ReadAssignmentsFile("/home/oscar/tmp/output_3.csv", assignments);
+    std::vector<float> labels2;
+    std::vector<SampleT> samplesTmp;
+    ReadCSVFile(CSVFilename, samplesTmp, 62, 65, labels2, 66);
 
-    DrawAssignments(centers2, 101, assignments);
+
+
+
+    //DrawAssignments(centers2, 101, assignments);
 
 
 
     return;
-
 */
+
 
     //pre-processing
     auto rgbImage = CleanBackground(86, 5,5, false); //90
@@ -1406,7 +1559,7 @@ void PleuraDetector<InputImageT>::Detect()
     ComputeCenters(thinBoundaries, neighborhoodSize, centers);
 
 
-    std::vector<unsigned> labels;
+    std::vector<float> labels;
     MatchCentersWithLabels(centers, labels);
 
 
@@ -1414,7 +1567,7 @@ void PleuraDetector<InputImageT>::Detect()
     ComputeFractalDimensionCenters(thinBoundaries, neighborhoodSize, centers, fractalDimentions, false);
 
 
-   // return;
+    // return;
 
     //Co-occurrence matrix.
     std::vector<std::vector<float>> cooFeatures;
@@ -1426,9 +1579,14 @@ void PleuraDetector<InputImageT>::Detect()
     ComputeLBP(grayImage, thinBoundaries, centers, neighborhoodSize, lbpHistograms);
 
 
-    WriteCSVFile(CSVFilename, centers, neighborhoodSize ,fractalDimentions, lbpHistograms, cooFeatures, labels);
+    WriteCSVFile(CSVFilename, centers, neighborhoodSize ,fractalDimentions, lbpHistograms, cooFeatures, labels, false);
+
+    std::vector<SampleT> samples;
+    FeaturesToDLibMatrix(fractalDimentions,lbpHistograms, cooFeatures, samples);
 
 
+    std::vector<double> labelsDouble(labels.begin(), labels.end());
+    KRRTrainer(samples, labelsDouble);
 
 
 

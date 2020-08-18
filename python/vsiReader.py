@@ -7,7 +7,7 @@ from bioformats import log4j
 from bioformats.omexml import OMEXML
 import numpy as np
 import cv2 as cv2
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 
 
 def minMax(inputValue, orgMin, orgMax, newMin, newMax):
