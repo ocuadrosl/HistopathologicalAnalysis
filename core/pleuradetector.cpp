@@ -300,15 +300,16 @@ PleuraDetector<InputImageT>::HistogramEqualization(GrayImageP grayImage, float a
 
 
 
-    /* using RescaleType = itk::RescaleIntensityImageFilter<GrayImageT, GrayImageT>;
+    using RescaleType = itk::RescaleIntensityImageFilter<GrayImageT, GrayImageT>;
     RescaleType::Pointer rescaler = RescaleType::New();
     rescaler->SetInput(adaptiveHistogramEqualizationImageFilter->GetOutput());
     rescaler->SetOutputMinimum(Background);
-    rescaler->SetOutputMaximum(255);
+    rescaler->SetOutputMaximum(Foreground);
     rescaler->Update();
-*/
 
-    auto outputImage = adaptiveHistogramEqualizationImageFilter->GetOutput();
+
+    auto outputImage = rescaler->GetOutput();
+    //auto outputImage = adaptiveHistogramEqualizationImageFilter->GetOutput();
 
 
     if(show)
@@ -330,13 +331,13 @@ PleuraDetector<InputImageT>::HistogramEqualization(GrayImageP grayImage, float a
 
 template<typename RGBImageT>
 typename PleuraDetector<RGBImageT>::RGBImageP
-PleuraDetector<RGBImageT>::CleanBackground(float lThreshold, float aThreshold, float bThresold, bool show)
+PleuraDetector<RGBImageT>::CleanBackground(RGBImageP inputImage, float lThreshold, float aThreshold, float bThresold, bool show)
 {
 
 
     //creating output image,
     auto outputImage = RGBImageT::New();
-    outputImage->SetRegions(InputImage->GetRequestedRegion());
+    outputImage->SetRegions(inputImage->GetRequestedRegion());
     outputImage->Allocate();
 
 
@@ -346,7 +347,7 @@ PleuraDetector<RGBImageT>::CleanBackground(float lThreshold, float aThreshold, f
     //RGB to XYZ
     using rgbToXyzFilterT = ColorConverterFilter<RGBImageT, labImageT>;
     auto rgbToXyzFilter = std::make_unique<rgbToXyzFilterT>();
-    rgbToXyzFilter->setInput(InputImage);
+    rgbToXyzFilter->setInput(inputImage);
     rgbToXyzFilter->rgbToXyz();
 
 
@@ -383,7 +384,7 @@ PleuraDetector<RGBImageT>::CleanBackground(float lThreshold, float aThreshold, f
     };
 
 
-    itk::ImageRegionConstIterator<RGBImageT> inputIt(InputImage, InputImage->GetRequestedRegion());
+    itk::ImageRegionConstIterator<RGBImageT> inputIt(inputImage, inputImage->GetRequestedRegion());
     itk::ImageRegionIterator<RGBImageT> outputIt(outputImage, outputImage->GetRequestedRegion());
     itk::ImageRegionIterator<labImageT> labIt(labImage, labImage->GetRequestedRegion());
 
@@ -527,7 +528,6 @@ typename PleuraDetector<RGBImageT>::GrayImageP
 PleuraDetector<RGBImageT>::GrayToBinary(GrayImageP grayImage, bool show)
 {
 
-
     auto binaryImage = GrayImageT::New();
     binaryImage->SetRegions(grayImage->GetRequestedRegion());
     binaryImage->Allocate();
@@ -540,6 +540,8 @@ PleuraDetector<RGBImageT>::GrayToBinary(GrayImageP grayImage, bool show)
     for(; !gIt.IsAtEnd(); ++gIt, ++bIt)
     {
 
+
+        //std::cout<<gIt.Get()<<std::endl;
         bIt.Set( (gIt.Get() == Foreground )? Background : Foreground );
 
     }
@@ -563,7 +565,6 @@ PleuraDetector<RGBImageT>::GrayToBinary(GrayImageP grayImage, bool show)
 template<typename InputImageT>
 void PleuraDetector<InputImageT>::ComputeLBP(GrayImageP grayImage, GrayImageP edges,
                                              const std::vector<GrayImageT::IndexType>& centers,
-                                             const unsigned neighborhoodSize,
                                              LBPHistogramsT& lbpHistograms)
 {
 
@@ -616,7 +617,7 @@ void PleuraDetector<InputImageT>::ComputeLBP(GrayImageP grayImage, GrayImageP ed
         {
             //auto index = eIt.GetIndex();
             auto index = (*it);
-            ExtractNeighborhood(lbpImage, index, neighborhoodSize, neighborhood);
+            ExtractNeighborhood(lbpImage, index, NeighborhoodSize, neighborhood);
 
             //dlib::image_window my_window2(neighborhood, "LBP");
             //my_window2.wait_until_closed();
@@ -671,6 +672,8 @@ void PleuraDetector<InputImageT>::ComputeLBP(GrayImageP grayImage, GrayImageP ed
 template<typename InputImageT>
 typename PleuraDetector<InputImageT>::GrayImageP PleuraDetector<InputImageT>::ExtractBoundaries(GrayImageP binaryImage, bool show)
 {
+
+
 
     //Connecting background
     ConnectBackground(binaryImage);
@@ -774,9 +777,7 @@ void PleuraDetector<InputImageT>::SpectralClustering(LBPHistogramsT& lbpHistogra
 
 
 template<typename InputImageT>
-void PleuraDetector<InputImageT>::ComputeCenters(GrayImageP boundaries,
-                                                 unsigned neigborhoodSize,
-                                                 std::vector<GrayImageT::IndexType>& centers)
+void PleuraDetector<InputImageT>::ComputeCenters(GrayImageP boundaries,  std::vector<GrayImageT::IndexType>& centers)
 {
 
     auto tmpImage = GrayImageT::New();
@@ -785,7 +786,7 @@ void PleuraDetector<InputImageT>::ComputeCenters(GrayImageP boundaries,
     tmpImage->FillBuffer(100);
 
     itk::NeighborhoodIterator<GrayImageT>::RadiusType radius;
-    radius.Fill(neigborhoodSize/2);
+    radius.Fill(NeighborhoodSize/2);
 
     itk::NeighborhoodIterator<GrayImageT> it(radius, boundaries, boundaries->GetRequestedRegion());
 
@@ -853,7 +854,6 @@ void PleuraDetector<InputImageT>:: ShowAssignments(const SCAssignments& assignme
 
 template<typename InputImageT>
 void PleuraDetector<InputImageT>::ComputeFractalDimensionCenters(GrayImageP boundaries,
-                                                                 unsigned neigborhoodSize,
                                                                  const IndexVector& centers,
                                                                  std::vector<float>& output,
                                                                  bool show)
@@ -876,7 +876,7 @@ void PleuraDetector<InputImageT>::ComputeFractalDimensionCenters(GrayImageP boun
 
 
         GrayImageP neighborhood;
-        extractNeighborhood(boundaries, *it, neigborhoodSize, neighborhood);
+        extractNeighborhood(boundaries, *it, NeighborhoodSize, neighborhood);
 
 
         auto fractalDimensionFilter = std::make_unique<FractalDimensionFilter<GrayImageT>>();
@@ -979,7 +979,6 @@ void PleuraDetector<InputImageT>::SetImageName(const std::string& dirPath, const
 template<typename InputImageT>
 void PleuraDetector<InputImageT>:: WriteCSVFile(const std::string& fileName,
                                                 const IndexVector& centers,
-                                                unsigned neighborhoodSize,
                                                 const std::vector<float>& fractalDimension,
                                                 const LBPHistogramsT& LBPHistograms,
                                                 const CooccurrenceFeatures& cooccurrenceFeatures,
@@ -1029,20 +1028,23 @@ void PleuraDetector<InputImageT>:: WriteCSVFile(const std::string& fileName,
     for (;fdIt != fractalDimension.end(); ++fdIt, ++lbpIt, ++cIt, ++cooIt, ++lIt)
     {
 
-        csvFile<< (*cIt)[0] <<","<<(*cIt)[1]<<","<<neighborhoodSize<<","<<*fdIt<<",";
+        csvFile<< (*cIt)[0] <<","<<(*cIt)[1]<<","<<NeighborhoodSize<<","<<*fdIt<<",";
+
         for (auto it = (*lbpIt).begin() ; it != (*lbpIt).end(); ++it)
         {
 
             csvFile<<(*it)<<",";
 
         }
+
+        /*
         for (auto it = (*cooIt).begin() ; it != (*cooIt).end(); ++it)
         {
 
             csvFile<<(*it)<<",";
 
         }
-
+*/
         csvFile<<*lIt;
         csvFile<<std::endl;
 
@@ -1225,7 +1227,6 @@ void PleuraDetector<InputImageT>:: DrawAssignments(IndexVector& centers, unsigne
 
 template<typename InputImageT>
 void PleuraDetector<InputImageT>::ComputeCooccurrenceMatrices(GrayImageP image,
-                                                              unsigned neigborhoodSize,
                                                               const IndexVector& centers,
                                                               std::vector<std::vector<float>>& features)
 {
@@ -1276,7 +1277,7 @@ void PleuraDetector<InputImageT>::ComputeCooccurrenceMatrices(GrayImageP image,
     {
 
         GrayImageT::Pointer neighborhood;
-        extractNeighborhood(image, *it, neigborhoodSize, neighborhood);
+        extractNeighborhood(image, *it, NeighborhoodSize, neighborhood);
 
 
         ScalarImageToCooccurrenceMatrixFilter::Pointer scalarImageToCooccurrenceMatrixFilter = ScalarImageToCooccurrenceMatrixFilter::New();
@@ -1361,7 +1362,8 @@ void PleuraDetector<InputImageT>::FeaturesToDLibMatrix(const std::vector<float>&
 {
 
 
-    samples = std::vector<SampleT>(fractalDimension.size(), SampleT(4,1));
+    samples = std::vector<SampleT>(fractalDimension.size(), SampleT(4,1)); //coocorrence matrix
+    //samples = std::vector<SampleT>(fractalDimension.size(), SampleT(58,1)); // LBP
 
     auto fIt = samples.begin();
     auto fdIt  = fractalDimension.begin();
@@ -1377,11 +1379,11 @@ void PleuraDetector<InputImageT>::FeaturesToDLibMatrix(const std::vector<float>&
 
         //(*sIt) = *fdIt; //+1, +59
 
-        //std::copy( lbpIt->begin(), lbpIt->end(), sIt);
+        //std::copy( lbpIt->begin(), lbpIt->end(), fIt->begin());
 
         std::copy( cooIt->begin(), cooIt->end(), fIt->begin());
 
-       // std::cout<<*fIt<<std::endl;
+        std::cout<<*fIt<<std::endl;
 
 
     }
@@ -1437,7 +1439,7 @@ void PleuraDetector<InputImageT>::KRRTrainer( std::vector<SampleT>& samples, con
 
 
 
-    trainer.set_kernel(kernelT(0.390625));
+    trainer.set_kernel(kernelT(0.015625));
     using decFunctT = dlib::decision_function<kernelT>;
     using functT = dlib::normalized_function<decFunctT>;
 
@@ -1467,6 +1469,56 @@ void PleuraDetector<InputImageT>::KRRTrainer( std::vector<SampleT>& samples, con
 
 }
 
+/*
+five processes are performed here:
+cleaning the background,
+convert to gray-scale,
+rescale the instensity to [0-255]
+histogram equalization
+convert to binary
+*/
+template<typename InputImageT>
+typename PleuraDetector<InputImageT>::GrayImageP PleuraDetector<InputImageT>::RGBToGray(RGBImageP inputImage)
+{
+
+    auto rgbImage = CleanBackground(inputImage, 70, 5,5, false); //90
+
+    //rgb to gray
+    using rgbToGrayFilterType = itk::RGBToLuminanceImageFilter<InputImageT, GrayImageT>;
+    auto rgbToGrayFilter = rgbToGrayFilterType::New();
+    rgbToGrayFilter->SetInput(rgbImage);
+    rgbToGrayFilter->Update();
+
+    using RescaleType = itk::RescaleIntensityImageFilter<GrayImageT, GrayImageT>;
+    RescaleType::Pointer rescaler = RescaleType::New();
+    rescaler->SetInput(rgbToGrayFilter->GetOutput());
+    rescaler->SetOutputMinimum(Background);
+    rescaler->SetOutputMaximum(Foreground);
+    rescaler->Update();
+
+    return HistogramEqualization(rescaler->GetOutput(), 1, 1, 5, false);
+
+
+}
+
+
+template<typename InputImageT>
+void PleuraDetector<InputImageT>::SetNeighborhoodSize(unsigned neighborhoodSize)
+{
+    //Only odd size is allowed
+
+    if(neighborhoodSize % 2 == 1)
+        this->NeighborhoodSize = neighborhoodSize;
+    else
+    {
+        std::cout<<"Neighborhood Size must be odd using: "<<neighborhoodSize+1<<std::endl;
+       this->NeighborhoodSize = neighborhoodSize;
+    }
+
+}
+
+
+
 template<typename InputImageT>
 void PleuraDetector<InputImageT>::Detect()
 {
@@ -1493,60 +1545,12 @@ void PleuraDetector<InputImageT>::Detect()
     return;
 */
 
+    auto grayImage = RGBToGray(InputImage);
 
-    //pre-processing
-    auto rgbImage = CleanBackground(86, 5,5, false); //90
+    auto binaryImage = GrayToBinary(grayImage, false);
 
-    //rgb to gray
-    using rgbToGrayFilterType = itk::RGBToLuminanceImageFilter<InputImageT, GrayImageT>;
-    auto rgbToGrayFilter = rgbToGrayFilterType::New();
-    rgbToGrayFilter->SetInput(rgbImage);
-    rgbToGrayFilter->Update();
-
-
-
-
-    using RescaleType = itk::RescaleIntensityImageFilter<GrayImageT, GrayImageT>;
-    RescaleType::Pointer rescaler = RescaleType::New();
-    rescaler->SetInput(rgbToGrayFilter->GetOutput());
-    rescaler->SetOutputMinimum(Background);
-    rescaler->SetOutputMaximum(255);
-    rescaler->Update();
-    auto grayImage = rescaler->GetOutput();
-
-
-    auto eqGrayImage = HistogramEqualization(grayImage, 1, 1, 5, false);
-
-    //binary
-    auto binaryImage = GrayToBinary(eqGrayImage, false);
     //boundaries
     auto boundaries = ExtractBoundaries(binaryImage, false);
-
-    //io::WriteImage<GrayImageT>(eqGrayImage, "/home/oscar/gray.png");
-
-
-    //auto binaryImage = GrayToBinary(eqGrayImage, true);
-    //auto background  = ConnectedComponets(binaryImage, 0, Foreground,  true);
-
-
-    /*
-    using moothFilterType = itk::SmoothingRecursiveGaussianImageFilter<GrayImageT, GrayImageT>;
-    moothFilterType::Pointer smoothFilter = moothFilterType::New();
-    smoothFilter->SetInput(binaryImage);
-    smoothFilter->SetSigma(1);
-    smoothFilter->Update();
-    auto smoothImage = smoothFilter->GetOutput();
-
-   // VTKViewer::visualize<GrayImageT>(smoothImage, "Gray to Binary");
-
-  // auto components  = ConnectedComponets(smoothImage, 0,  false);
-
-
-
-
-    ExtractBoundaries(smoothImage, true);
-*/
-    //auto edges = EdgeDetectionCanny(eqGrayImage, 5, false);
 
     auto thinBoundaries = ThinningBoundaries(boundaries, false);
 
@@ -1554,9 +1558,8 @@ void PleuraDetector<InputImageT>::Detect()
 
     //Computing features from here
 
-    unsigned neighborhoodSize = 51;
     std::vector<GrayImageT::IndexType> centers;
-    ComputeCenters(thinBoundaries, neighborhoodSize, centers);
+    ComputeCenters(thinBoundaries,  centers);
 
 
     std::vector<float> labels;
@@ -1564,22 +1567,22 @@ void PleuraDetector<InputImageT>::Detect()
 
 
     std::vector<float> fractalDimentions;
-    ComputeFractalDimensionCenters(thinBoundaries, neighborhoodSize, centers, fractalDimentions, false);
+    ComputeFractalDimensionCenters(thinBoundaries,  centers, fractalDimentions, false);
 
 
     // return;
 
     //Co-occurrence matrix.
     std::vector<std::vector<float>> cooFeatures;
-    ComputeCooccurrenceMatrices(grayImage, neighborhoodSize, centers, cooFeatures);
+    ComputeCooccurrenceMatrices(grayImage,  centers, cooFeatures);
 
 
 
     LBPHistogramsT lbpHistograms;
-    ComputeLBP(grayImage, thinBoundaries, centers, neighborhoodSize, lbpHistograms);
+    ComputeLBP(grayImage, thinBoundaries, centers,  lbpHistograms);
 
 
-    WriteCSVFile(CSVFilename, centers, neighborhoodSize ,fractalDimentions, lbpHistograms, cooFeatures, labels, false);
+    WriteCSVFile(CSVFilename, centers, fractalDimentions, lbpHistograms, cooFeatures, labels, false);
 
     std::vector<SampleT> samples;
     FeaturesToDLibMatrix(fractalDimentions,lbpHistograms, cooFeatures, samples);

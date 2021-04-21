@@ -40,19 +40,18 @@ int main(/*int argc, char **argv*/)
 
 
     using rgbPixelT = itk::RGBPixel<uint>;
-    using rgbImageT = itk::Image   <rgbPixelT, 2 >;
+    using rgbImageT = itk::Image<rgbPixelT, 2 >;
     using rgbImageP = typename rgbImageT::Pointer;
 
 
+
+    //Reading image
     std::string imageDir  = "/home/oscar/data/biopsy/tiff/test/images";
-    std::string imageName = "B 2009 8854 A_1x";
+    std::string imageName = "FMRP_B 2017 11051 D01_1x";
     std::string imageType = ".tiff";
-
-
 
     using imageReaderT = ImageReader<rgbImageT>;
     std::unique_ptr<imageReaderT> imageReader(new imageReaderT());
-
     imageReader->read(imageDir+"/"+imageName+imageType);
 
 
@@ -64,12 +63,14 @@ int main(/*int argc, char **argv*/)
 
 
 
+
     using pleuraDetectorT = PleuraDetector<rgbImageT>;
     std::unique_ptr<pleuraDetectorT>  pleuraDetector(new pleuraDetectorT());
     pleuraDetector->SetInputImage(imageReader->getRGBImage());
     pleuraDetector->SetImageName(imageDir, imageName);
     pleuraDetector->SetLabelImage(labelReader->getRGBImage());
     pleuraDetector->SetCSVFileName("/home/oscar/data/biopsy/tiff/test/csv/"+imageName+".csv");
+    pleuraDetector->SetNeighborhoodSize(200);
     pleuraDetector->Detect();
 
 
